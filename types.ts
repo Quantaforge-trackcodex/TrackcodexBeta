@@ -73,7 +73,6 @@ export interface Repository {
   releaseVersion?: string;
 }
 
-// Added LiveSession interface to fix missing import in constants.tsx
 export interface LiveSession {
   id: string;
   title: string;
@@ -84,7 +83,6 @@ export interface LiveSession {
   participants: number;
 }
 
-// Added PinnedRepo interface to support ProfileData
 export interface PinnedRepo {
   name: string;
   description: string;
@@ -95,7 +93,6 @@ export interface PinnedRepo {
   isPublic: boolean;
 }
 
-// Added ProfileData interface to fix missing import in constants.tsx
 export interface ProfileData {
   name: string;
   username: string;
@@ -108,4 +105,30 @@ export interface ProfileData {
   website: string;
   rating: string;
   pinnedRepos: PinnedRepo[];
+}
+
+export interface LibraryResource {
+  id: string;
+  name: string;
+  description: string;
+  longDescription?: string;
+  category: string;
+  techStack: string;
+  techColor: string;
+  stars: number;
+  forks: number;
+  lastUpdated: string;
+  visibility: 'PUBLIC' | 'PRIVATE' | 'RESEARCH';
+  isAudited: boolean;
+  type: 'Template' | 'Guide' | 'Snippet' | 'Paper' | 'Kit';
+  tags: string[];
+  snippetPreview?: string;
+  version?: string;
+}
+
+export interface LibraryCategory {
+  id: string;
+  name: string;
+  icon: string;
+  count: number;
 }

@@ -18,17 +18,17 @@ const JobHub = () => {
   ];
 
   return (
-    <div className="bg-white border border-slate-200 rounded-2xl shadow-sm divide-y divide-slate-100 overflow-hidden">
+    <div className="bg-[#161b22] border border-[#30363d] rounded-2xl shadow-xl divide-y divide-[#30363d] overflow-hidden">
       {jobs.map((job, i) => (
-        <div key={i} className="p-5 hover:bg-slate-50 transition-all cursor-pointer group">
+        <div key={i} className="p-5 hover:bg-primary/5 transition-all cursor-pointer group">
            <div className="flex items-start justify-between mb-2">
-              <h4 className="text-sm font-bold text-slate-900 group-hover:text-teal-600">{job.title}</h4>
-              <span className="text-emerald-600 text-xs font-black">{job.pay}</span>
+              <h4 className="text-sm font-bold text-white group-hover:text-primary transition-colors">{job.title}</h4>
+              <span className="text-emerald-400 text-xs font-black bg-emerald-400/10 px-2 py-0.5 rounded border border-emerald-400/20">{job.pay}</span>
            </div>
-           <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed mb-4">{job.desc}</p>
+           <p className="text-[12px] text-slate-400 line-clamp-2 leading-relaxed mb-4">{job.desc}</p>
            <div className="flex gap-2">
               {job.tags.map(tag => (
-                <span key={tag} className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[9px] font-black uppercase rounded">
+                <span key={tag} className="px-2 py-0.5 bg-[#0d1117] text-slate-500 text-[9px] font-black uppercase tracking-widest rounded border border-[#30363d]">
                    {tag}
                 </span>
               ))}

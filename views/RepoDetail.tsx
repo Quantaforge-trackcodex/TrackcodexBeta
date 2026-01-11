@@ -12,98 +12,151 @@ const MOCK_COMMITS = [
   { id: 'h7g6f5e', message: 'fix: resolve race condition in auth middleware', author: 'alex-dev', avatar: 'https://picsum.photos/seed/alex/32', date: '1 month ago' },
 ];
 
-const MOCK_WORKFLOW_RUNS = [
-  { id: 'w1', name: 'CI Pipeline', status: 'Success', runNumber: '#124', branch: 'main', time: '2 hours ago', duration: '1m 24s', author: 'alex-dev' },
-  { id: 'w2', name: 'Security Scan', status: 'Running', runNumber: '#125', branch: 'feat/auth-v2', time: '10 mins ago', duration: '--', author: 'sarah-coder' },
-  { id: 'w3', name: 'Deployment to Staging', status: 'Failed', runNumber: '#123', branch: 'main', time: '5 hours ago', duration: '45s', author: 'alex-dev' },
-  { id: 'w4', name: 'Lint & Test', status: 'Success', runNumber: '#122', branch: 'main', time: 'Yesterday', duration: '2m 10s', author: 'mike-doc' },
-  { id: 'w5', name: 'CI Pipeline', status: 'Success', runNumber: '#121', branch: 'main', time: '2 days ago', duration: '1m 18s', author: 'alex-dev' },
+const MOCK_PULL_REQUESTS = [
+  { id: '#458', title: 'feat: implement two-factor authentication flow', author: 'sarah-coder', avatar: 'https://picsum.photos/seed/sarah/32', status: 'Open', ci: 'Passing', date: '5 hours ago', labels: ['Security', 'Critical'] },
+  { id: '#457', title: 'fix: resolve memory leak in websocket handler', author: 'alex-dev', avatar: 'https://picsum.photos/seed/alex/32', status: 'Open', ci: 'Failing', date: '1 day ago', labels: ['Bug', 'Performance'] },
+  { id: '#456', title: 'chore: bump dependencies to v2.4.0', author: 'github-actions', avatar: 'https://picsum.photos/seed/ai/64', status: 'Merged', ci: 'Passing', date: '2 days ago', labels: ['Chore'] },
+  { id: '#455', title: 'docs: add architecture decision records', author: 'mike-doc', avatar: 'https://picsum.photos/seed/mike/32', status: 'Merged', ci: 'Passing', date: '4 days ago', labels: ['Docs'] },
 ];
 
-const QuickEditor = ({ fileName, content, onSave, onCancel, onFullEditor }: { 
-  fileName: string; 
-  content: string; 
-  onSave: (newContent: string) => void; 
-  onCancel: () => void;
-  onFullEditor: () => void;
-}) => {
-  const [editedContent, setEditedContent] = useState(content);
-  const [isRefactoring, setIsRefactoring] = useState(false);
+const MOCK_WORKFLOW_RUNS = [
+  { id: 'w1', name: 'CI Pipeline', status: 'Success', runNumber: '#124', branch: 'main', time: '2 hours ago', duration: '1m 24s', author: 'alex-dev', event: 'push' },
+  { id: 'w2', name: 'Security Scan', status: 'Running', runNumber: '#125', branch: 'feat/auth-v2', time: '10 mins ago', duration: '--', author: 'sarah-coder', event: 'pull_request' },
+  { id: 'w3', name: 'Deployment to Staging', status: 'Failed', runNumber: '#123', branch: 'main', time: '5 hours ago', duration: '45s', author: 'alex-dev', event: 'push' },
+  { id: 'w4', name: 'Lint & Test', status: 'Success', runNumber: '#122', branch: 'main', time: 'Yesterday', duration: '2m 10s', author: 'mike-doc', event: 'push' },
+  { id: 'w5', name: 'Nightly Build', status: 'Success', runNumber: '#121', branch: 'main', time: '2 days ago', duration: '1m 18s', author: 'github-actions', event: 'schedule' },
+];
 
-  const handleAISuggestion = async () => {
-    setIsRefactoring(true);
+const WorkflowRunDetail = ({ run, onBack }: { run: any, onBack: () => void }) => {
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analysis, setAnalysis] = useState<string | null>(null);
+
+  const handleDiagnose = async () => {
+    setAnalyzing(true);
     try {
-      const suggestion = await forgeAIService.getCodeRefactorSuggestion(editedContent, fileName);
-      if (suggestion && confirm("ForgeAI has found an optimization. Would you like to view the suggestion and apply it?")) {
-        setEditedContent(editedContent + "\n\n// ForgeAI: Optimized memory allocation for buffer stream\n");
-      }
+      const mockLogs = "Error: Process completed with exit code 1. \n FAIL tests/auth.test.ts > login flow \n Expected '200' but got '401'. \n Missing AUTH_SECRET environment variable.";
+      const result = await forgeAIService.getSecurityFix("CI/CD Build Failure Diagnosis", mockLogs);
+      setAnalysis(result);
+    } catch (err) {
+      setAnalysis("AI analysis failed. Please check logs manually.");
     } finally {
-      setIsRefactoring(false);
+      setAnalyzing(false);
     }
   };
 
   return (
-    <div className="bg-[#161b22] border border-[#30363d] rounded-xl overflow-hidden flex flex-col h-[600px] animate-in fade-in zoom-in-95 duration-300 shadow-2xl">
-      <div className="p-3 bg-[#0d1117] border-b border-[#30363d] flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined !text-[18px] text-blue-400">description</span>
-            <span className="text-[12px] font-bold text-slate-300">Editing: <span className="text-white">{fileName}</span></span>
-          </div>
-          <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-500 text-[9px] font-black uppercase tracking-widest border border-amber-500/20">Unsaved</span>
+    <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+      <div className="flex items-center justify-between">
+        <button onClick={onBack} className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
+          <span className="material-symbols-outlined !text-[20px]">arrow_back</span>
+          <span className="text-sm font-bold">Back to all runs</span>
+        </button>
+        <div className="flex gap-2">
+           <button className="px-3 py-1.5 bg-[#161b22] border border-[#30363d] rounded-lg text-xs font-bold text-slate-300 hover:text-white transition-all">Re-run all jobs</button>
+           <button className="px-3 py-1.5 bg-rose-500/10 border border-rose-500/20 rounded-lg text-xs font-bold text-rose-500 hover:bg-rose-500 hover:text-white transition-all">Cancel run</button>
         </div>
-        <div className="flex items-center gap-2">
-          <button 
-            onClick={handleAISuggestion}
-            disabled={isRefactoring}
-            className="flex items-center gap-2 px-3 py-1 bg-primary/10 border border-primary/20 rounded-md text-[11px] font-bold text-primary hover:bg-primary/20 transition-all disabled:opacity-50"
-          >
-            <span className={`material-symbols-outlined !text-[14px] ${isRefactoring ? 'animate-spin' : 'filled'}`}>
-              {isRefactoring ? 'progress_activity' : 'auto_awesome'}
-            </span>
-            {isRefactoring ? 'Analyzing...' : 'ForgeAI Assist'}
-          </button>
-          <button 
-            onClick={onFullEditor}
-            className="flex items-center gap-2 px-3 py-1 bg-slate-800 border border-[#30363d] rounded-md text-[11px] font-bold text-slate-300 hover:text-white transition-all"
-          >
-            <span className="material-symbols-outlined !text-[14px]">open_in_new</span>
-            Full Editor
-          </button>
-        </div>
-      </div>
-      
-      <div className="flex-1 flex font-mono text-[13px] bg-[#0d1117] overflow-hidden">
-        <div className="w-12 bg-[#090d13] border-r border-[#30363d] flex flex-col items-center pt-4 text-slate-700 select-none">
-          {Array.from({ length: 30 }).map((_, i) => <span key={i} className="h-6 leading-6">{i + 1}</span>)}
-        </div>
-        <textarea
-          value={editedContent}
-          onChange={(e) => setEditedContent(e.target.value)}
-          className="flex-1 bg-transparent border-none focus:ring-0 p-4 text-slate-300 resize-none custom-scrollbar outline-none font-mono leading-6"
-          spellCheck={false}
-          autoFocus
-        />
       </div>
 
-      <div className="p-4 bg-[#0d1117] border-t border-[#30363d] flex items-center justify-between">
-        <p className="text-[10px] text-slate-500 italic flex items-center gap-2">
-          <span className="material-symbols-outlined !text-[14px] text-primary">security</span>
-          ForgeAI is monitoring for security vulnerabilities in real-time...
-        </p>
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={onCancel}
-            className="px-4 py-2 text-[11px] font-bold text-slate-400 hover:text-white transition-all"
-          >
-            Discard
-          </button>
-          <button 
-            onClick={() => onSave(editedContent)}
-            className="px-6 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-black uppercase tracking-widest text-[11px] transition-all shadow-lg shadow-emerald-500/20"
-          >
-            Commit Changes
-          </button>
+      <div className="bg-[#161b22] border border-[#30363d] rounded-2xl p-6 shadow-xl">
+        <div className="flex items-start justify-between mb-8">
+          <div className="flex items-center gap-4">
+            <div className={`size-12 rounded-2xl flex items-center justify-center ${
+              run.status === 'Success' ? 'bg-emerald-500/10 text-emerald-500' : 
+              run.status === 'Failed' ? 'bg-rose-500/10 text-rose-500' : 'bg-blue-500/10 text-blue-500'
+            }`}>
+              <span className={`material-symbols-outlined !text-[28px] ${run.status === 'Running' ? 'animate-spin' : 'filled'}`}>
+                {run.status === 'Success' ? 'check_circle' : run.status === 'Failed' ? 'cancel' : 'progress_activity'}
+              </span>
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-white flex items-center gap-3">
+                {run.name}
+                <span className="text-slate-500 font-normal">{run.runNumber}</span>
+              </h2>
+              <div className="flex items-center gap-3 mt-1 text-sm text-slate-400">
+                <span className="flex items-center gap-1 font-mono text-xs bg-[#0d1117] px-2 py-0.5 rounded border border-[#30363d]">
+                  <span className="material-symbols-outlined !text-[14px]">account_tree</span>
+                  {run.branch}
+                </span>
+                <span>•</span>
+                <span>Run by <span className="text-white font-bold">{run.author}</span></span>
+                <span>•</span>
+                <span>{run.time}</span>
+              </div>
+            </div>
+          </div>
+          {run.status === 'Failed' && (
+            <button 
+              onClick={handleDiagnose}
+              disabled={analyzing}
+              className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all hover:bg-blue-600 shadow-lg shadow-primary/20 disabled:opacity-50"
+            >
+              <span className={`material-symbols-outlined !text-[18px] ${analyzing ? 'animate-spin' : 'filled'}`}>
+                {analyzing ? 'progress_activity' : 'auto_awesome'}
+              </span>
+              {analyzing ? 'Diagnosing...' : 'Diagnose with ForgeAI'}
+            </button>
+          )}
+        </div>
+
+        {analysis && (
+          <div className="mb-8 p-5 bg-primary/5 border border-primary/30 rounded-2xl animate-in zoom-in-95 duration-500 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-1 h-full bg-primary"></div>
+            <div className="flex items-center gap-2 text-primary text-[10px] font-black uppercase tracking-widest mb-3">
+              <span className="material-symbols-outlined !text-[16px] filled">auto_awesome</span>
+              ForgeAI Root Cause Analysis
+            </div>
+            <div className="prose prose-invert prose-sm max-w-none text-slate-300">
+              {analysis}
+            </div>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
+          <div className="space-y-4">
+            <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest">Jobs</h3>
+            <div className="space-y-2">
+              {['Build Application', 'Unit Tests', 'Security Scan', 'Static Analysis'].map((job, i) => (
+                <div key={job} className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer ${
+                  i === 0 ? 'bg-[#0d1117] border-primary/50 text-white' : 'bg-transparent border-[#30363d] text-slate-400 hover:bg-white/5'
+                }`}>
+                  <div className="flex items-center gap-3">
+                    <span className={`material-symbols-outlined !text-[18px] ${
+                      run.status === 'Failed' && i === 1 ? 'text-rose-500' : 'text-emerald-500'
+                    }`}>
+                      {run.status === 'Failed' && i === 1 ? 'cancel' : 'check_circle'}
+                    </span>
+                    <span className="text-xs font-bold">{job}</span>
+                  </div>
+                  <span className="text-[10px] font-mono text-slate-600">45s</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex flex-col min-h-[400px]">
+            <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-4">Logs: Build Application</h3>
+            <div className="flex-1 bg-[#090d13] border border-[#30363d] rounded-2xl p-6 font-mono text-[12px] text-slate-400 overflow-y-auto custom-scrollbar shadow-inner">
+               <div className="space-y-1">
+                  <p className="text-slate-600">2024-03-24T10:30:12.450Z Initializing environment...</p>
+                  <p className="text-slate-600">2024-03-24T10:30:13.120Z Loading project metadata...</p>
+                  <p>2024-03-24T10:30:14.005Z <span className="text-emerald-500">✓</span> Repository fetched</p>
+                  <p>2024-03-24T10:30:15.890Z <span className="text-emerald-500">✓</span> Node modules installed from cache</p>
+                  <p>2024-03-24T10:30:16.442Z Running: <span className="text-white">npm run build</span></p>
+                  <p className="text-slate-500">Compiling typescript files...</p>
+                  <p className="text-slate-500">Bundling assets for production...</p>
+                  {run.status === 'Failed' ? (
+                    <p className="text-rose-500 mt-4 font-bold bg-rose-500/10 -mx-6 px-6 py-2 border-l-4 border-rose-500">
+                      Error: Build failed. Check stderr for details.
+                    </p>
+                  ) : (
+                    <p className="text-emerald-500 mt-4 font-bold bg-emerald-500/10 -mx-6 px-6 py-2 border-l-4 border-emerald-500">
+                      Success: Build artifacts generated in dist/
+                    </p>
+                  )}
+               </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -119,6 +172,7 @@ const RepoDetailView = () => {
   const [editingFile, setEditingFile] = useState<string | null>(null);
   const [fileContent, setFileContent] = useState("");
   const [isCommitting, setIsCommitting] = useState(false);
+  const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
 
   const startQuickEdit = (fileName: string) => {
     const mockContent = fileName === 'package.json' 
@@ -139,7 +193,7 @@ const RepoDetailView = () => {
     }, 1200);
   };
 
-  const tabs = ['Code', 'Commits', 'Issues', 'Pull Requests', 'Actions', 'Insights', 'Settings'];
+  const tabs = ['Code', 'Commits', 'Issues', 'Pull Requests', 'GitHub Actions', 'Insights', 'Settings'];
 
   const getWorkflowStatusIcon = (status: string) => {
     switch (status) {
@@ -149,6 +203,17 @@ const RepoDetailView = () => {
       default: return <span className="material-symbols-outlined text-slate-500 !text-xl">circle</span>;
     }
   };
+
+  const getPRStatusStyle = (status: string) => {
+    switch (status) {
+      case 'Open': return 'bg-primary/10 text-primary border-primary/30';
+      case 'Merged': return 'bg-purple-500/10 text-purple-400 border-purple-500/30';
+      case 'Closed': return 'bg-rose-500/10 text-rose-400 border-rose-500/30';
+      default: return 'bg-slate-800 text-slate-400 border-border-dark';
+    }
+  };
+
+  const selectedRun = MOCK_WORKFLOW_RUNS.find(r => r.id === selectedRunId);
 
   return (
     <div className="flex-1 overflow-y-auto custom-scrollbar bg-[#0d1117] p-8">
@@ -163,11 +228,15 @@ const RepoDetailView = () => {
               <span className="px-2 py-0.5 rounded-full border border-[#30363d] text-[10px] text-slate-500 font-bold uppercase tracking-wider">{repo.visibility}</span>
               
               <button 
-                onClick={() => setActiveTab('Pull Requests')}
-                className="flex items-center gap-1.5 px-2 py-0.5 rounded-md hover:bg-white/5 text-[11px] font-bold text-slate-400 hover:text-[#58a6ff] transition-all ml-2 group"
+                onClick={() => { setActiveTab('Pull Requests'); setSelectedRunId(null); }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all ml-2 group border ${
+                    activeTab === 'Pull Requests' 
+                    ? 'bg-primary text-white border-primary/50 shadow-lg shadow-primary/20' 
+                    : 'bg-surface-dark border-border-dark text-slate-400 hover:text-white hover:border-slate-500'
+                }`}
               >
                 <span className="material-symbols-outlined !text-[16px] group-hover:scale-110 transition-transform">fork_right</span>
-                <span>8 Pull Requests</span>
+                <span className="text-[11px] font-bold">8 Pull Requests</span>
               </button>
 
               <button 
@@ -199,7 +268,7 @@ const RepoDetailView = () => {
            {tabs.map((tab) => (
              <div 
                key={tab} 
-               onClick={() => { setActiveTab(tab); setEditingFile(null); }}
+               onClick={() => { setActiveTab(tab); setEditingFile(null); setSelectedRunId(null); }}
                className={`flex items-center gap-2 px-3 py-3 text-[13px] border-b-2 transition-colors cursor-pointer shrink-0 ${activeTab === tab ? 'text-white border-[#f78166] font-bold' : 'text-slate-400 border-transparent hover:text-white'}`}
              >
                 <span className="material-symbols-outlined !text-[18px]">{
@@ -207,7 +276,7 @@ const RepoDetailView = () => {
                   tab === 'Commits' ? 'history' :
                   tab === 'Issues' ? 'error' : 
                   tab === 'Pull Requests' ? 'fork_right' : 
-                  tab === 'Actions' ? 'play_circle' : 
+                  tab === 'GitHub Actions' ? 'play_circle' : 
                   tab === 'Insights' ? 'insights' : 'settings'
                 }</span>
                 {tab}
@@ -220,7 +289,6 @@ const RepoDetailView = () => {
            <div className="space-y-6 min-w-0">
               {activeTab === 'Code' && (
                 <>
-                  {/* File Explorer Table */}
                   <div className="bg-[#161b22] border border-[#30363d] rounded-xl overflow-hidden shadow-xl">
                     <div className="p-4 bg-[#0d1117] border-b border-[#30363d] flex items-center justify-between">
                         <div className="flex items-center gap-3">
@@ -250,15 +318,6 @@ const RepoDetailView = () => {
                                       </span>
                                       <span className="text-[13px] text-slate-200 group-hover:text-primary transition-colors">{file.name}</span>
                                   </div>
-                                  {file.type === 'file' && (
-                                    <button 
-                                      onClick={(e) => { e.stopPropagation(); startQuickEdit(file.name); }}
-                                      className="opacity-0 group-hover:opacity-100 flex items-center gap-1.5 px-2.5 py-1 bg-primary/10 border border-primary/20 rounded-md transition-all text-primary text-[10px] font-black uppercase tracking-widest hover:bg-primary hover:text-white"
-                                    >
-                                        <span className="material-symbols-outlined !text-[14px]">edit</span>
-                                        Edit
-                                    </button>
-                                  )}
                                 </td>
                                 <td className="px-4 py-3 text-[13px] text-slate-500 truncate max-w-[240px] font-medium">{file.commit}</td>
                                 <td className="px-4 py-3 text-[13px] text-slate-500 text-right">{file.time}</td>
@@ -267,193 +326,143 @@ const RepoDetailView = () => {
                         </tbody>
                     </table>
                   </div>
-
-                  {editingFile ? (
-                    <QuickEditor 
-                      fileName={editingFile}
-                      content={fileContent}
-                      onSave={handleCommit}
-                      onCancel={() => setEditingFile(null)}
-                      onFullEditor={() => navigate('/editor')}
-                    />
-                  ) : (
-                    <div className="space-y-6">
-                      <div className="bg-[#161b22] border border-primary/30 rounded-xl p-5 flex gap-5 relative overflow-hidden group shadow-lg">
-                        <div className="absolute top-0 left-0 w-1.5 h-full bg-primary"></div>
-                        <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0 shadow-inner">
-                            <span className="material-symbols-outlined !text-[24px] filled">auto_awesome</span>
-                        </div>
-                        <div className="flex-1">
-                            <div className="flex items-center justify-between mb-2">
-                              <h3 className="text-sm font-black text-white uppercase tracking-tight flex items-center gap-2">
-                                  ForgeAI Repo Insights
-                                  <span className="px-1.5 py-0.5 rounded bg-primary/20 text-primary text-[9px] font-black tracking-widest uppercase border border-primary/30">Intelligence</span>
-                              </h3>
-                              <div className="flex items-center gap-4 text-[11px] font-bold">
-                                  <div className="flex items-center gap-2 text-slate-400">
-                                    Health: <span className="text-emerald-400 font-black">92/100</span>
-                                  </div>
-                                  <div className="flex items-center gap-2 text-slate-400">
-                                    Grade: <span className="text-primary font-black">A+</span>
-                                  </div>
-                              </div>
-                            </div>
-                            <p className="text-[13px] text-slate-300 leading-relaxed">
-                              Recent activity focused on refactoring the <code className="bg-white/5 px-1 rounded text-primary">auth-middleware</code> and patching a potential SQL injection in the user service. Test coverage increased by <span className="text-emerald-400 font-bold">2.4%</span>.
-                            </p>
-                        </div>
-                      </div>
-
-                      <div className="bg-[#161b22] border border-[#30363d] rounded-xl overflow-hidden shadow-lg">
-                        <div className="p-3 bg-[#0d1117] border-b border-[#30363d] flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <span className="material-symbols-outlined !text-[18px] text-slate-500">menu_book</span>
-                              <span className="text-[12px] font-bold text-slate-300 uppercase tracking-widest">README.md</span>
-                            </div>
-                            <button 
-                              onClick={() => startQuickEdit('README.md')}
-                              className="px-3 py-1 bg-slate-800 border border-[#30363d] rounded-md text-[10px] font-bold text-slate-300 hover:text-white transition-all flex items-center gap-2"
-                            >
-                              <span className="material-symbols-outlined !text-[14px]">edit_note</span>
-                              Edit README
-                            </button>
-                        </div>
-                        <div className="p-10 prose prose-invert max-w-none">
-                            <h1 className="text-4xl font-black mb-6 border-b border-[#30363d] pb-4">TrackCodex Core API</h1>
-                            <p className="text-slate-400 text-lg mb-8 leading-relaxed">
-                              The central backend service for the TrackCodex dashboard. Handles user authentication, repository indexing, and AI analysis queuing. Built with performance and security at its core.
-                            </p>
-                            <h2 className="text-xl font-bold mb-4 text-white">Getting Started</h2>
-                            <pre className="bg-[#090d13] p-5 rounded-xl border border-[#30363d] text-[13px] text-slate-300 overflow-x-auto mb-8 shadow-inner">
-{`# Clone the repository
-git clone https://github.com/track-codex/core-api.git
-
-# Install dependencies
-npm install
-
-# Run the development server
-npm run dev`}
-                            </pre>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </>
               )}
 
-              {activeTab === 'Commits' && (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between px-2">
-                    <h3 className="text-[16px] font-bold text-white">Commit History</h3>
-                    <div className="flex items-center gap-2">
-                      <button className="px-3 py-1.5 bg-[#161b22] border border-[#30363d] rounded-md text-[12px] font-bold text-slate-300 hover:text-white transition-colors">
-                        Branch: main
-                      </button>
-                    </div>
-                  </div>
-                  <div className="bg-[#161b22] border border-[#30363d] rounded-xl overflow-hidden shadow-xl">
-                    <div className="divide-y divide-[#30363d]">
-                      {MOCK_COMMITS.map((commit) => (
-                        <div key={commit.id} className="p-4 flex items-center justify-between hover:bg-white/[0.02] transition-colors group">
-                          <div className="flex items-center gap-4">
-                            <img src={commit.avatar} alt={commit.author} className="size-9 rounded-full border border-[#30363d]" />
-                            <div>
-                              <p className="text-[14px] font-bold text-[#f0f6fc] group-hover:text-[#58a6ff] cursor-pointer transition-colors leading-tight">
-                                {commit.message}
-                              </p>
-                              <div className="flex items-center gap-2 mt-1.5 text-[12px] text-slate-500">
-                                <span className="font-bold text-slate-300 hover:underline cursor-pointer">{commit.author}</span>
-                                <span>committed {commit.date}</span>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <span className="font-mono text-[11px] bg-[#21262d] px-2 py-1 rounded border border-[#30363d] text-slate-400 group-hover:text-primary transition-colors">
-                              {commit.id}
-                            </span>
-                            <button className="size-8 flex items-center justify-center bg-[#21262d] border border-[#30363d] rounded hover:border-slate-500 transition-colors">
-                              <span className="material-symbols-outlined !text-[18px] text-slate-500">code</span>
-                            </button>
-                          </div>
+              {activeTab === 'Pull Requests' && (
+                <div className="space-y-4 animate-in fade-in duration-300">
+                   <div className="flex items-center justify-between px-1">
+                      <div className="flex items-center gap-3">
+                        <h3 className="text-[16px] font-bold text-white">Pull Requests</h3>
+                        <div className="flex items-center bg-surface-dark border border-border-dark p-0.5 rounded-lg">
+                           <button className="px-2.5 py-1 text-[10px] font-bold text-primary bg-primary/10 rounded">Open</button>
+                           <button className="px-2.5 py-1 text-[10px] font-bold text-slate-500 hover:text-white">Merged</button>
+                           <button className="px-2.5 py-1 text-[10px] font-bold text-slate-500 hover:text-white">Closed</button>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                  <button className="w-full py-2 bg-[#161b22] border border-[#30363d] rounded-xl text-xs font-bold text-slate-500 hover:text-white transition-colors">
-                    Load older commits
-                  </button>
-                </div>
-              )}
-
-              {activeTab === 'Actions' && (
-                <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-6">
-                  {/* Actions Sidebar */}
-                  <div className="space-y-6">
-                    <div>
-                      <h3 className="text-[12px] font-black text-slate-500 uppercase tracking-widest mb-3 px-2">Workflows</h3>
-                      <div className="space-y-1">
-                        {['All workflows', 'CI Pipeline', 'Security Scan', 'Deployment to Staging', 'Lint & Test'].map((wf, idx) => (
-                          <div 
-                            key={wf} 
-                            className={`px-3 py-2 rounded-lg text-[13px] font-medium cursor-pointer transition-colors ${idx === 0 ? 'bg-primary/10 text-primary' : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'}`}
-                          >
-                            {wf}
-                          </div>
-                        ))}
                       </div>
-                    </div>
-                  </div>
+                      <button className="bg-primary hover:bg-blue-600 text-white px-4 py-1.5 rounded-lg font-bold text-xs shadow-lg shadow-primary/20">New Pull Request</button>
+                   </div>
 
-                  {/* Run History List */}
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between px-1">
-                      <h3 className="text-[16px] font-bold text-white">All workflow runs</h3>
-                      <button className="px-3 py-1 bg-[#21262d] border border-[#30363d] rounded text-[11px] font-bold text-slate-300 hover:text-white">
-                        Filter runs
-                      </button>
-                    </div>
-                    
-                    <div className="bg-[#161b22] border border-[#30363d] rounded-xl overflow-hidden shadow-xl">
+                   <div className="bg-[#161b22] border border-[#30363d] rounded-xl overflow-hidden shadow-xl">
                       <div className="divide-y divide-[#30363d]">
-                        {MOCK_WORKFLOW_RUNS.map((run) => (
-                          <div key={run.id} className="p-4 flex items-center gap-4 hover:bg-white/[0.02] transition-colors group cursor-pointer">
-                            <div className="shrink-0">
-                              {getWorkflowStatusIcon(run.status)}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className="text-[14px] font-bold text-[#58a6ff] hover:underline truncate">
-                                  {run.name} <span className="text-slate-500 font-normal">{run.runNumber}</span>
+                        {MOCK_PULL_REQUESTS.map(pr => (
+                          <div key={pr.id} className="p-5 hover:bg-white/[0.02] transition-all group flex items-start gap-4">
+                             <div className="mt-1">
+                                <span className={`material-symbols-outlined !text-[20px] ${pr.status === 'Open' ? 'text-emerald-500' : pr.status === 'Merged' ? 'text-purple-400' : 'text-rose-400'}`}>
+                                   {pr.status === 'Open' ? 'fork_right' : pr.status === 'Merged' ? 'merge' : 'block'}
                                 </span>
-                                {run.status === 'Running' && (
-                                  <span className="px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-500 text-[9px] font-black uppercase tracking-widest border border-blue-500/20">Active</span>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-3 mt-1 text-[11px] text-slate-500 font-medium">
-                                <span className="flex items-center gap-1">
-                                  <span className="material-symbols-outlined !text-[14px]">account_tree</span>
-                                  {run.branch}
-                                </span>
-                                <span>•</span>
-                                <span>triggered by <span className="text-slate-300 font-bold">{run.author}</span></span>
-                              </div>
-                            </div>
-                            <div className="text-right shrink-0">
-                              <p className="text-[11px] text-slate-300 font-bold">{run.time}</p>
-                              <p className="text-[10px] text-slate-500 mt-0.5">{run.duration}</p>
-                            </div>
-                            <button className="opacity-0 group-hover:opacity-100 size-8 flex items-center justify-center bg-[#21262d] border border-[#30363d] rounded text-slate-400 hover:text-white transition-all ml-2">
-                              <span className="material-symbols-outlined !text-[18px]">more_horiz</span>
-                            </button>
+                             </div>
+                             <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-3 mb-1">
+                                   <h4 className="text-sm font-bold text-white group-hover:text-primary transition-colors truncate">{pr.title}</h4>
+                                   <div className="flex gap-1.5 shrink-0">
+                                      {pr.labels.map(l => (
+                                         <span key={l} className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-widest bg-slate-800 text-slate-400 border border-border-dark">
+                                            {l}
+                                         </span>
+                                      ))}
+                                   </div>
+                                </div>
+                                <div className="flex items-center gap-3 text-[11px] text-slate-500">
+                                   <span className="font-mono">{pr.id}</span>
+                                   <span>•</span>
+                                   <span className="flex items-center gap-1">
+                                      <img src={pr.avatar} className="size-4 rounded-full" alt="" />
+                                      {pr.author}
+                                   </span>
+                                   <span>•</span>
+                                   <span>{pr.date}</span>
+                                   <span>•</span>
+                                   <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full border border-border-dark bg-background-dark/30">
+                                      <span className={`material-symbols-outlined !text-[14px] ${pr.ci === 'Passing' ? 'text-emerald-500' : 'text-rose-500'}`}>
+                                         {pr.ci === 'Passing' ? 'check_circle' : 'cancel'}
+                                      </span>
+                                      <span className="text-[10px] font-bold uppercase tracking-tight">CI {pr.ci}</span>
+                                   </div>
+                                </div>
+                             </div>
+                             <div className="flex items-center gap-4 text-slate-500">
+                                <div className="flex items-center gap-1 text-[11px]">
+                                   <span className="material-symbols-outlined !text-[16px]">chat_bubble</span>
+                                   {Math.floor(Math.random() * 5)}
+                                </div>
+                                <span className="material-symbols-outlined text-[20px] opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
+                             </div>
                           </div>
                         ))}
                       </div>
-                    </div>
-                  </div>
+                   </div>
                 </div>
               )}
 
-              {['Issues', 'Pull Requests', 'Insights', 'Settings'].includes(activeTab) && (
+              {activeTab === 'GitHub Actions' && (
+                selectedRunId ? (
+                  <WorkflowRunDetail run={selectedRun} onBack={() => setSelectedRunId(null)} />
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-6 animate-in fade-in duration-300">
+                    <div className="space-y-6">
+                      <div>
+                        <h3 className="text-[12px] font-black text-slate-500 uppercase tracking-widest mb-3 px-2">Workflows</h3>
+                        <div className="space-y-1">
+                          {['All workflows', 'CI Pipeline', 'Security Scan', 'Deployment to Staging', 'Lint & Test', 'Nightly Build'].map((wf, idx) => (
+                            <div 
+                              key={wf} 
+                              className={`px-3 py-2 rounded-lg text-[13px] font-medium cursor-pointer transition-colors ${idx === 0 ? 'bg-primary/10 text-primary' : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'}`}
+                            >
+                              {wf}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between px-1">
+                        <h3 className="text-[16px] font-bold text-white">All workflow runs</h3>
+                      </div>
+                      <div className="bg-[#161b22] border border-[#30363d] rounded-xl overflow-hidden shadow-xl">
+                        <div className="divide-y divide-[#30363d]">
+                          {MOCK_WORKFLOW_RUNS.map((run) => (
+                            <div 
+                              key={run.id} 
+                              onClick={() => setSelectedRunId(run.id)}
+                              className="p-4 flex items-center gap-4 hover:bg-white/[0.02] transition-colors group cursor-pointer"
+                            >
+                              <div className="shrink-0">
+                                {getWorkflowStatusIcon(run.status)}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[14px] font-bold text-[#58a6ff] hover:underline truncate">
+                                    {run.name} <span className="text-slate-500 font-normal">{run.runNumber}</span>
+                                  </span>
+                                  {run.status === 'Running' && (
+                                    <span className="px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-500 text-[9px] font-black uppercase tracking-widest border border-blue-500/20">Active</span>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-3 mt-1 text-[11px] text-slate-500 font-medium">
+                                  <span className="flex items-center gap-1">
+                                    <span className="material-symbols-outlined !text-[14px]">account_tree</span>
+                                    {run.branch}
+                                  </span>
+                                  <span>•</span>
+                                  <span>{run.time}</span>
+                                </div>
+                              </div>
+                              <div className="text-right shrink-0">
+                                <p className="text-[11px] text-slate-300 font-bold">{run.time}</p>
+                                <p className="text-[10px] text-slate-500 mt-0.5">{run.duration}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )
+              )}
+
+              {['Issues', 'Insights', 'Settings'].includes(activeTab) && (
                 <div className="p-20 text-center bg-[#161b22] border border-dashed border-[#30363d] rounded-xl">
                   <span className="material-symbols-outlined text-4xl text-slate-600 mb-4">construction</span>
                   <h3 className="text-lg font-bold text-slate-400">{activeTab} section coming soon</h3>
@@ -462,7 +471,6 @@ npm run dev`}
               )}
            </div>
 
-           {/* Sidebar Info */}
            <div className="space-y-8 min-w-0">
               <div className="p-1">
                  <h3 className="text-[12px] font-black text-white uppercase tracking-widest mb-4">About</h3>
@@ -472,13 +480,6 @@ npm run dev`}
                  <div className="flex items-center gap-2 text-[#58a6ff] hover:underline cursor-pointer text-[13px] mb-4 group">
                     <span className="material-symbols-outlined !text-[16px] group-hover:scale-110 transition-transform">link</span>
                     <span>trackcodex.com/docs/api</span>
-                 </div>
-                 <div className="flex flex-wrap gap-1.5">
-                    {['typescript', 'ai-analytics', 'go-backend', 'security'].map(tag => (
-                      <span key={tag} className="px-2.5 py-1 rounded-full bg-primary/10 border border-primary/20 text-[11px] text-primary font-bold hover:bg-primary/20 cursor-pointer transition-all">
-                        {tag}
-                      </span>
-                    ))}
                  </div>
               </div>
 
@@ -497,54 +498,9 @@ npm run dev`}
                     </div>
                  </div>
               </div>
-
-              <div className="pt-6 border-t border-[#30363d]">
-                 <h3 className="text-[12px] font-black text-white uppercase tracking-widest mb-4">Languages</h3>
-                 <div className="w-full h-2.5 rounded-full overflow-hidden flex mb-4 bg-[#2d333b]">
-                    <div className="h-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]" style={{ width: '85%' }}></div>
-                    <div className="h-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]" style={{ width: '15%' }}></div>
-                 </div>
-                 <div className="space-y-2.5">
-                    <div className="flex items-center justify-between text-[11px]">
-                       <div className="flex items-center gap-2.5">
-                          <div className="size-2.5 rounded-full bg-blue-500"></div>
-                          <span className="text-white font-bold">TypeScript</span>
-                          <span className="text-slate-500">85.0%</span>
-                       </div>
-                    </div>
-                 </div>
-              </div>
-
-              <div className="pt-6 border-t border-[#30363d]">
-                 <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-[12px] font-black text-white uppercase tracking-widest">Latest Release</h3>
-                 </div>
-                 <div className="flex items-start gap-3 bg-[#161b22] p-4 rounded-xl border border-[#30363d] shadow-sm">
-                    <span className="material-symbols-outlined !text-[20px] text-emerald-500 filled">verified</span>
-                    <div>
-                       <p className="text-[13px] text-white font-black uppercase tracking-widest">v2.4.0</p>
-                       <p className="text-[11px] text-slate-500 mt-1 font-medium">Latest Release • 2 days ago</p>
-                    </div>
-                 </div>
-              </div>
            </div>
         </div>
       </div>
-      
-      {isCommitting && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-[100] flex items-center justify-center animate-in fade-in duration-300">
-          <div className="bg-[#161b22] border border-[#30363d] p-10 rounded-3xl flex flex-col items-center gap-6 shadow-2xl max-w-sm text-center">
-            <div className="relative">
-              <span className="material-symbols-outlined animate-spin text-primary text-5xl">progress_activity</span>
-              <span className="material-symbols-outlined absolute inset-0 flex items-center justify-center text-white text-xl">hub</span>
-            </div>
-            <div>
-              <p className="text-white text-lg font-black uppercase tracking-widest mb-1">Pushing Changes</p>
-              <p className="text-slate-500 text-sm font-medium">Securing commit and syncing with remote origin...</p>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

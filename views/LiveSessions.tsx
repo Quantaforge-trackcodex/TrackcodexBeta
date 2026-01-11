@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { MOCK_SESSIONS } from '../constants';
 import { forgeAIService } from '../services/gemini';
@@ -24,22 +25,49 @@ interface Participant {
 }
 
 const COMMON_EMOJIS = ['👍', '❤️', '🔥', '🚀', '😄', '💡'];
+const LANGUAGES = ['typescript', 'javascript', 'rust', 'go', 'python', 'json', 'markdown'];
 
-const SyntaxHighlighter: React.FC<{ code: string }> = ({ code }) => {
-  // Simple regex-based syntax highlighting for common keywords
+const SyntaxHighlighter: React.FC<{ code: string; lang?: string }> = ({ code, lang }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  // Improved regex-based syntax highlighting
   const highlight = (text: string) => {
     return text
-      .replace(/\b(const|let|var|function|return|if|else|for|while|import|from|export|default|async|await|try|catch|class|extends|interface|type)\b/g, '<span class="text-purple-400 font-bold">$1</span>')
-      .replace(/\b(string|number|boolean|any|void|never|unknown|object)\b/g, '<span class="text-blue-300">$1</span>')
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') // Basic escape
+      .replace(/\b(const|let|var|function|return|if|else|for|while|import|from|export|default|async|await|try|catch|class|extends|interface|type|enum|struct|pub|fn|use|mod|impl|trait)\b/g, '<span class="text-purple-400 font-bold">$1</span>')
+      .replace(/\b(string|number|boolean|any|void|never|unknown|object|i32|u32|f64|str|String|Vec|Option|Result|int|float|bool|dict|list)\b/g, '<span class="text-blue-300">$1</span>')
       .replace(/(\".*?\"|\'.*?\'|\`.*?\`)/g, '<span class="text-emerald-400">$1</span>')
       .replace(/\/\/.*/g, '<span class="text-slate-500">$1</span>')
-      .replace(/\b(\d+)\b/g, '<span class="text-orange-400">$1</span>');
+      .replace(/#.*/g, '<span class="text-slate-500">$1</span>') // Python/Markdown comments
+      .replace(/\b(\d+)\b/g, '<span class="text-orange-400">$1</span>')
+      .replace(/([{}()\[\]])/g, '<span class="text-slate-400">$1</span>');
   };
 
   return (
-    <pre className="p-3 bg-background-dark/80 rounded-lg font-mono text-xs overflow-x-auto border border-white/5 my-2 custom-scrollbar">
-      <code dangerouslySetInnerHTML={{ __html: highlight(code) }} />
-    </pre>
+    <div className="group/code relative my-4 rounded-xl overflow-hidden border border-[#30363d] bg-[#090d13]">
+      <div className="flex items-center justify-between px-4 py-1.5 bg-[#161b22] border-b border-[#30363d]">
+        <div className="flex items-center gap-2">
+          <span className="size-2 rounded-full bg-primary/50"></span>
+          <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{lang || 'code'}</span>
+        </div>
+        <button 
+          onClick={handleCopy}
+          className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500 hover:text-white transition-colors"
+        >
+          <span className="material-symbols-outlined !text-[14px]">{copied ? 'done' : 'content_copy'}</span>
+          {copied ? 'Copied' : 'Copy'}
+        </button>
+      </div>
+      <pre className="p-4 font-mono text-[13px] leading-relaxed overflow-x-auto custom-scrollbar">
+        <code dangerouslySetInnerHTML={{ __html: highlight(code) }} />
+      </pre>
+    </div>
   );
 };
 
@@ -80,6 +108,11 @@ const LiveSessions = () => {
   const [allMuted, setAllMuted] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   
+  // Snippet Modal State
+  const [isSnippetModalOpen, setIsSnippetModalOpen] = useState(false);
+  const [snippetCode, setSnippetCode] = useState('');
+  const [snippetLang, setSnippetLang] = useState('typescript');
+
   const [chatFontSize, setChatFontSize] = useState(13);
   const [showMentionPicker, setShowMentionPicker] = useState(false);
   const [mentionSearch, setMentionSearch] = useState('');
@@ -127,6 +160,37 @@ const LiveSessions = () => {
     setChatFontSize(prev => Math.min(Math.max(prev + delta, 11), 22));
   };
 
+  const filteredParticipants = useMemo(() => {
+    return participants.filter(p => p.name.toLowerCase().includes(mentionSearch));
+  }, [participants, mentionSearch]);
+
+  const selectMention = (participant: Participant) => {
+    const cursorPosition = inputRef.current?.selectionStart || 0;
+    const textBeforeCursor = inputValue.slice(0, cursorPosition);
+    const lastAtSymbol = textBeforeCursor.lastIndexOf('@');
+    
+    if (lastAtSymbol === -1) return;
+
+    const textBeforeMention = inputValue.slice(0, lastAtSymbol);
+    const textAfterMention = inputValue.slice(cursorPosition);
+    
+    // Format name to be machine-friendly but recognizable
+    const mentionText = `@${participant.name.replace(/\s/g, '')} `;
+    const newValue = `${textBeforeMention}${mentionText}${textAfterMention}`;
+    
+    setInputValue(newValue);
+    setShowMentionPicker(false);
+    
+    // Maintain focus and place cursor after the inserted mention
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+        const newPos = lastAtSymbol + mentionText.length;
+        inputRef.current.setSelectionRange(newPos, newPos);
+      }
+    }, 0);
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setInputValue(value);
@@ -135,6 +199,7 @@ const LiveSessions = () => {
     const textBeforeCursor = value.slice(0, cursorPosition);
     const lastAtSymbol = textBeforeCursor.lastIndexOf('@');
 
+    // Trigger picker if typing after @ and before a space
     if (lastAtSymbol !== -1 && !textBeforeCursor.slice(lastAtSymbol).includes(' ')) {
       setShowMentionPicker(true);
       setMentionSearch(textBeforeCursor.slice(lastAtSymbol + 1).toLowerCase());
@@ -144,30 +209,34 @@ const LiveSessions = () => {
     }
   };
 
-  const filteredParticipants = useMemo(() => {
-    return participants.filter(p => p.name.toLowerCase().includes(mentionSearch));
-  }, [participants, mentionSearch]);
-
-  const selectMention = (participant: Participant) => {
-    const cursorPosition = inputRef.current?.selectionStart || 0;
-    const textBeforeMention = inputValue.slice(0, inputValue.lastIndexOf('@', cursorPosition - 1));
-    const textAfterMention = inputValue.slice(cursorPosition);
-    
-    setInputValue(`${textBeforeMention}@${participant.name.replace(/\s/g, '')} ${textAfterMention}`);
-    setShowMentionPicker(false);
-    inputRef.current?.focus();
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (showMentionPicker && filteredParticipants.length > 0) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setPickerIndex(prev => (prev + 1) % filteredParticipants.length);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setPickerIndex(prev => (prev - 1 + filteredParticipants.length) % filteredParticipants.length);
+      } else if (e.key === 'Enter' || e.key === 'Tab') {
+        e.preventDefault();
+        selectMention(filteredParticipants[pickerIndex]);
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        setShowMentionPicker(false);
+      }
+    }
   };
 
-  const handleSendMessage = async (e?: React.FormEvent) => {
+  const handleSendMessage = async (e?: React.FormEvent, customText?: string) => {
     if (e) e.preventDefault();
-    if (!inputValue.trim()) return;
+    const textToSend = customText || inputValue;
+    if (!textToSend.trim()) return;
 
-    const currentInput = inputValue;
     const newUserMsg: ChatMessage = {
       id: Date.now().toString(),
       sender: 'You',
       avatar: 'https://picsum.photos/seed/user1/32',
-      text: currentInput,
+      text: textToSend,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       isMe: true,
     };
@@ -182,7 +251,7 @@ const LiveSessions = () => {
       const participantNames = participants.map(p => p.name);
       
       const aiResponse = await forgeAIService.getLiveChatResponse(
-        currentInput, 
+        textToSend, 
         `Debugging ${activeSession.project}: ${activeSession.title}`, 
         participantNames
       );
@@ -207,6 +276,14 @@ const LiveSessions = () => {
     }
   };
 
+  const handleShareSnippet = () => {
+    if (!snippetCode.trim()) return;
+    const formatted = `\`\`\`${snippetLang}\n${snippetCode}\n\`\`\``;
+    handleSendMessage(undefined, formatted);
+    setIsSnippetModalOpen(false);
+    setSnippetCode('');
+  };
+
   const handleReaction = (messageId: string, emoji: string) => {
     setMessages(prev => prev.map(msg => {
       if (msg.id === messageId) {
@@ -225,7 +302,7 @@ const LiveSessions = () => {
   };
 
   const renderMessageContent = (text: string) => {
-    // Detection for Code Blocks
+    // Robust detection for Code Blocks with language identifiers
     const parts = text.split(/```(\w+)?\n([\s\S]*?)```/g);
     
     if (parts.length > 1) {
@@ -233,10 +310,12 @@ const LiveSessions = () => {
       for (let i = 0; i < parts.length; i++) {
         if (i % 3 === 0) {
           // Normal text
-          if (parts[i]) elements.push(<div key={i}>{renderTextWithMentions(parts[i])}</div>);
+          if (parts[i].trim()) {
+            elements.push(<div key={i} className="mb-2 last:mb-0">{renderTextWithMentions(parts[i])}</div>);
+          }
         } else if (i % 3 === 2) {
-          // Code block content (parts[i-1] is language, parts[i] is code)
-          elements.push(<SyntaxHighlighter key={i} code={parts[i]} />);
+          // Code block content
+          elements.push(<SyntaxHighlighter key={i} code={parts[i]} lang={parts[i-1]} />);
         }
       }
       return elements;
@@ -256,7 +335,7 @@ const LiveSessions = () => {
   };
 
   return (
-    <div className="flex h-full overflow-hidden">
+    <div className="flex h-full overflow-hidden relative">
       <div className="flex-1 p-8 overflow-y-auto custom-scrollbar">
         <div className="flex items-start justify-between mb-8">
           <div>
@@ -569,7 +648,6 @@ const LiveSessions = () => {
 
                 {/* Reactions list under message */}
                 {msg.reactions && (Object.entries(msg.reactions) as [string, string[]][]).map(([emoji, users]) => {
-                  // Fix: Properly cast Object.entries result to string[] to resolve 'unknown' type errors for includes, join, and length
                   const hasReacted = users.includes('You');
                   return (
                     <button
@@ -644,16 +722,17 @@ const LiveSessions = () => {
               ref={inputRef}
               value={inputValue}
               onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
               className="w-full bg-surface-dark border-2 border-border-dark rounded-2xl text-[13px] p-4 pl-10 pr-24 focus:ring-0 focus:border-primary placeholder:text-slate-600 text-white transition-all shadow-inner font-medium" 
-              placeholder="Type message or code with ```..."
+              placeholder="Type message or reference someone with @..."
               autoComplete="off"
             />
             <div className="absolute right-3 top-2.5 flex items-center gap-2">
               <button 
                 type="button"
-                onClick={() => setInputValue(prev => prev + '```typescript\n\n```')}
+                onClick={() => setIsSnippetModalOpen(true)}
                 className="size-9 flex items-center justify-center text-slate-500 hover:text-primary transition-all rounded-xl hover:bg-primary/10"
-                title="Insert Code Snippet"
+                title="Share Code Snippet"
               >
                 <span className="material-symbols-outlined !text-[20px]">code</span>
               </button>
@@ -668,6 +747,86 @@ const LiveSessions = () => {
           </form>
         </div>
       </aside>
+
+      {/* Share Snippet Modal */}
+      {isSnippetModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-8 bg-black/70 backdrop-blur-sm animate-in fade-in duration-300">
+           <div className="bg-surface-dark border border-primary/30 w-full max-w-3xl rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[80vh]">
+              <div className="p-6 border-b border-[#30363d] flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                    <span className="material-symbols-outlined text-2xl">code_blocks</span>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-white tracking-tight">Share Code Snippet</h3>
+                    <p className="text-xs text-slate-500">Collaborate with syntax highlighting</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setIsSnippetModalOpen(false)}
+                  className="size-8 rounded-full flex items-center justify-center text-slate-500 hover:text-white hover:bg-white/5 transition-all"
+                >
+                  <span className="material-symbols-outlined">close</span>
+                </button>
+              </div>
+
+              <div className="p-6 space-y-4 flex-1 overflow-hidden flex flex-col">
+                <div className="flex items-center gap-4">
+                  <div className="flex-1">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Select Language</label>
+                    <div className="flex flex-wrap gap-2">
+                      {LANGUAGES.map(lang => (
+                        <button
+                          key={lang}
+                          onClick={() => setSnippetLang(lang)}
+                          className={`px-3 py-1 rounded-lg text-[11px] font-bold uppercase transition-all ${
+                            snippetLang === lang 
+                              ? 'bg-primary text-white border-transparent' 
+                              : 'bg-[#161b22] text-slate-500 border border-[#30363d] hover:border-slate-500 hover:text-slate-300'
+                          }`}
+                        >
+                          {lang}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex-1 flex flex-col min-h-0">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Code Content</label>
+                  <div className="flex-1 bg-[#090d13] border border-[#30363d] rounded-2xl overflow-hidden flex">
+                    <div className="w-10 bg-[#161b22] border-r border-[#30363d] flex flex-col items-center pt-4 text-[11px] text-slate-600 font-mono select-none">
+                      {[1,2,3,4,5,6,7,8,9,10].map(n => <span key={n} className="h-5">{n}</span>)}
+                    </div>
+                    <textarea
+                      value={snippetCode}
+                      onChange={(e) => setSnippetCode(e.target.value)}
+                      placeholder="// Paste or write your code here..."
+                      className="flex-1 bg-transparent border-none focus:ring-0 p-4 font-mono text-sm text-slate-300 resize-none custom-scrollbar outline-none"
+                      spellCheck={false}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6 bg-[#161b22] border-t border-[#30363d] flex items-center justify-end gap-3">
+                 <button 
+                  onClick={() => setIsSnippetModalOpen(false)}
+                  className="px-6 py-2.5 text-sm font-bold text-slate-400 hover:text-white transition-colors"
+                 >
+                   Discard
+                 </button>
+                 <button 
+                  onClick={handleShareSnippet}
+                  disabled={!snippetCode.trim()}
+                  className="px-8 py-2.5 bg-primary hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-primary/20"
+                 >
+                   Share to Chat
+                 </button>
+              </div>
+           </div>
+        </div>
+      )}
     </div>
   );
 };

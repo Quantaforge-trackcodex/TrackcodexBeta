@@ -1,8 +1,9 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 const ProfileCard = () => {
   const [isEditing, setIsEditing] = useState(false);
+  const bioRef = useRef<HTMLTextAreaElement>(null);
   const [profile, setProfile] = useState({
     name: 'Alex Chen',
     username: 'alexcoder',
@@ -13,9 +14,22 @@ const ProfileCard = () => {
     rating: '4.9/5'
   });
 
+  // Automatically focus the bio textarea when entering edit mode
+  useEffect(() => {
+    if (isEditing && bioRef.current) {
+      bioRef.current.focus();
+      // Move cursor to the end
+      const length = bioRef.current.value.length;
+      bioRef.current.setSelectionRange(length, length);
+    }
+  }, [isEditing]);
+
   const handleSave = () => {
     setIsEditing(false);
-    // In a real app, this would persist to a backend
+  };
+
+  const startEditing = () => {
+    setIsEditing(true);
   };
 
   return (
@@ -65,18 +79,34 @@ const ProfileCard = () => {
         <span className="px-2 py-0.5 rounded-full text-[11px] font-bold border border-purple-400/20 bg-purple-500/10 text-purple-400">Mentor</span>
       </div>
 
-      {/* Bio */}
+      {/* Bio Section with Direct Click-to-Edit */}
       {isEditing ? (
-        <textarea 
-          className="w-full bg-[#0d1117] border border-[#30363d] rounded-md px-3 py-2 text-sm text-white focus:ring-1 focus:ring-primary outline-none h-24 resize-none mb-6"
-          value={profile.bio}
-          onChange={(e) => setProfile({...profile, bio: e.target.value})}
-          placeholder="Bio"
-        />
+        <div className="relative mb-6">
+          <textarea 
+            ref={bioRef}
+            className="w-full bg-[#0d1117] border border-primary rounded-md px-3 py-2 text-sm text-white focus:ring-1 focus:ring-primary outline-none h-28 resize-none shadow-[0_0_15px_rgba(19,91,236,0.1)]"
+            value={profile.bio}
+            onChange={(e) => setProfile({...profile, bio: e.target.value})}
+            placeholder="Tell us about yourself..."
+          />
+          <div className="absolute bottom-2 right-2 flex items-center gap-1 text-[10px] text-slate-500 font-bold uppercase">
+            <span className="material-symbols-outlined !text-[12px]">keyboard_return</span>
+            Press Save below
+          </div>
+        </div>
       ) : (
-        <p className="text-[14px] text-[#c9d1d9] leading-relaxed mb-6">
-          {profile.bio}
-        </p>
+        <div 
+          onClick={startEditing}
+          className="relative group/bio cursor-pointer mb-6 p-2 -m-2 rounded-lg hover:bg-white/5 border border-transparent hover:border-white/10 transition-all"
+          title="Click to edit bio"
+        >
+          <div className="absolute top-2 right-2 opacity-0 group-hover/bio:opacity-100 transition-opacity">
+            <span className="material-symbols-outlined !text-[16px] text-primary">edit</span>
+          </div>
+          <p className="text-[14px] text-[#c9d1d9] leading-relaxed">
+            {profile.bio}
+          </p>
+        </div>
       )}
 
       {/* Meta Links */}

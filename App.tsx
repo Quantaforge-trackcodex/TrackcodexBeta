@@ -13,6 +13,7 @@ import WorkspacesView from './views/Workspaces';
 import CreateWorkspaceView from './views/CreateWorkspace';
 import WorkspaceDetailView from './views/WorkspaceDetail';
 import HomeView from './views/Home';
+import LibraryView from './views/Library';
 
 const SidebarItem = ({ to, icon, label, badgeCount }: { to: string; icon: string; label: string; badgeCount?: number }) => (
   <NavLink
@@ -36,68 +37,8 @@ const SidebarItem = ({ to, icon, label, badgeCount }: { to: string; icon: string
 );
 
 const Sidebar = () => {
-  const location = useLocation();
-  const isHome = location.pathname === '/dashboard/home';
-
-  if (isHome) {
-    return (
-      <aside className="w-[260px] flex-shrink-0 border-r border-slate-200 bg-white h-full flex flex-col p-5 font-display">
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-             <h2 className="text-[13px] font-bold text-slate-900">Top Workspaces</h2>
-             <span className="bg-teal-500/10 text-teal-600 text-[10px] font-black px-1.5 py-0.5 rounded uppercase">New</span>
-          </div>
-          <div className="relative mb-4">
-             <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 !text-[18px]">search</span>
-             <input 
-              type="text" 
-              placeholder="Find a workspace..." 
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 pl-10 pr-4 text-xs focus:ring-1 focus:ring-teal-500 outline-none text-slate-900"
-             />
-          </div>
-          <div className="flex gap-2 mb-6">
-             <button className="px-3 py-1 bg-blue-500 text-white text-[10px] font-bold rounded-full">All</button>
-             <button className="px-3 py-1 text-slate-500 hover:text-slate-800 text-[10px] font-bold">Personal</button>
-             <button className="px-3 py-1 text-slate-500 hover:text-slate-800 text-[10px] font-bold">Org</button>
-          </div>
-          <nav className="space-y-4">
-             {[
-               { icon: 'hub', label: 'Quantaforge/trackcodex-core', locked: false },
-               { icon: 'lock', label: 'Quantaforge/security-protocols', locked: true },
-               { icon: 'school', label: 'Univ-Projects/comp-sci-final', locked: false },
-               { icon: 'work', label: 'Freelance/client-dashboard-v2', locked: false }
-             ].map((ws, i) => (
-               <div key={i} className="flex items-center gap-3 text-slate-600 hover:text-teal-600 cursor-pointer group">
-                  <span className={`material-symbols-outlined !text-[18px] ${ws.locked ? 'text-slate-400' : 'text-slate-400 group-hover:text-teal-500'}`}>{ws.icon}</span>
-                  <span className="text-[13px] font-medium truncate">{ws.label}</span>
-               </div>
-             ))}
-          </nav>
-        </div>
-
-        <div className="mt-auto pt-6 border-t border-slate-100">
-           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Quick Actions</p>
-           <nav className="space-y-3">
-              <div className="flex items-center gap-3 text-slate-600 hover:text-teal-600 cursor-pointer">
-                 <span className="material-symbols-outlined !text-[18px]">add_circle</span>
-                 <span className="text-[13px] font-medium">New workspace</span>
-              </div>
-              <div className="flex items-center gap-3 text-slate-600 hover:text-teal-600 cursor-pointer">
-                 <span className="material-symbols-outlined !text-[18px]">cloud_sync</span>
-                 <span className="text-[13px] font-medium">Connect Git repo</span>
-              </div>
-              <div className="flex items-center gap-3 text-slate-600 hover:text-teal-600 cursor-pointer">
-                 <span className="material-symbols-outlined !text-[18px]">history</span>
-                 <span className="text-[13px] font-medium">Open last workspace</span>
-              </div>
-           </nav>
-        </div>
-      </aside>
-    );
-  }
-
   return (
-    <aside className="w-[260px] flex-shrink-0 border-r border-[#1e293b] bg-[#0d1117] h-full flex flex-col p-4">
+    <aside className="w-[260px] flex-shrink-0 border-r border-[#1e293b] bg-[#0d1117] h-full flex flex-col p-4 font-display">
       <div className="flex items-center gap-3 px-2 mb-8 cursor-pointer">
         <div className="size-8 bg-primary rounded-lg flex items-center justify-center text-white shadow-lg shadow-primary/20">
           <span className="material-symbols-outlined !text-[20px]">hub</span>
@@ -119,6 +60,7 @@ const Sidebar = () => {
             <SidebarItem to="/overview" icon="dashboard" label="Overview" />
             <SidebarItem to="/workspaces" icon="view_quilt" label="Workspaces" />
             <SidebarItem to="/repositories" icon="account_tree" label="Repositories" />
+            <SidebarItem to="/dashboard/library" icon="local_library" label="Library" />
             <SidebarItem to="/issues" icon="error" label="Issues" badgeCount={12} />
           </nav>
         </div>
@@ -153,18 +95,16 @@ const Sidebar = () => {
 
 const TopNav = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const isHome = location.pathname === '/dashboard/home';
 
   return (
-    <header className={`h-16 border-b flex items-center justify-between px-6 z-20 shrink-0 ${isHome ? 'bg-white border-slate-200' : 'bg-[#0d1117] border-[#1e293b]'}`}>
+    <header className="h-16 border-b flex items-center justify-between px-6 z-20 shrink-0 bg-[#0d1117] border-[#1e293b]">
       <div className="flex items-center gap-6">
         <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/repositories')}>
           <div className="size-8 bg-primary rounded-lg flex items-center justify-center border border-primary/20 shadow-lg shadow-primary/20">
             <span className="material-symbols-outlined !text-[20px] text-white">hub</span>
           </div>
-          <span className={`text-[16px] font-bold tracking-tight ${isHome ? 'text-slate-900' : 'text-white'}`}>TrackCodex</span>
-          <span className="px-2 py-0.5 rounded-full border border-slate-200 text-[10px] text-slate-500 font-bold bg-slate-50 ml-2">Dashboard</span>
+          <span className="text-[16px] font-bold tracking-tight text-white">TrackCodex</span>
+          <span className="px-2 py-0.5 rounded-full border border-[#30363d] text-[10px] text-slate-500 font-bold bg-[#161b22] ml-2">Dashboard</span>
         </div>
 
         <div className="relative group ml-4">
@@ -172,16 +112,16 @@ const TopNav = () => {
             <span className="material-symbols-outlined !text-[18px]">search</span>
           </div>
           <input 
-            className={`w-80 border rounded-lg text-[13px] py-1.5 pl-10 pr-8 focus:ring-1 focus:ring-primary focus:border-primary placeholder:text-slate-400 transition-all ${isHome ? 'bg-slate-50 border-slate-200 text-slate-900' : 'bg-[#161b22] border-[#30363d] text-white'}`} 
+            className="w-80 border rounded-lg text-[13px] py-1.5 pl-10 pr-8 focus:ring-1 focus:ring-primary focus:border-primary placeholder:text-slate-400 transition-all bg-[#161b22] border-[#30363d] text-white" 
             placeholder="Type / to search" 
             type="text"
           />
           <div className="absolute inset-y-0 right-2.5 flex items-center pointer-events-none">
-            <span className={`px-1.5 py-0.5 rounded border text-[10px] text-slate-400 font-mono ${isHome ? 'bg-white border-slate-200' : 'bg-[#21262d] border-[#30363d]'}`}>/</span>
+            <span className="px-1.5 py-0.5 rounded border text-[10px] text-slate-400 font-mono bg-[#21262d] border-[#30363d]">/</span>
           </div>
         </div>
 
-        <nav className={`hidden lg:flex items-center gap-6 ml-4 ${isHome ? 'text-slate-600' : 'text-slate-300'}`}>
+        <nav className="hidden lg:flex items-center gap-6 ml-4 text-slate-300">
           <a href="#" className="text-[13px] hover:text-primary transition-colors">Pulls</a>
           <a href="#" className="text-[13px] hover:text-primary transition-colors">Issues</a>
           <a href="#" className="text-[13px] hover:text-primary transition-colors">Codespaces</a>
@@ -190,16 +130,16 @@ const TopNav = () => {
       </div>
 
       <div className="flex items-center gap-5">
-        <button className={`text-slate-400 hover:text-primary relative transition-colors`}>
+        <button className="text-slate-400 hover:text-primary relative transition-colors">
           <span className="material-symbols-outlined !text-[24px]">notifications</span>
-          <span className="absolute top-0 right-0 size-2 bg-blue-500 rounded-full border-2 border-white"></span>
+          <span className="absolute top-0 right-0 size-2 bg-blue-500 rounded-full border-2 border-[#0d1117]"></span>
         </button>
-        <button className={`text-slate-400 hover:text-primary transition-colors`}>
+        <button className="text-slate-400 hover:text-primary transition-colors">
           <span className="material-symbols-outlined !text-[24px]">add</span>
         </button>
         <div 
           onClick={() => navigate('/profile')}
-          className="size-8 rounded-full bg-cover bg-center border-2 border-slate-200 cursor-pointer hover:border-primary transition-all overflow-hidden" 
+          className="size-8 rounded-full bg-cover bg-center border-2 border-[#30363d] cursor-pointer hover:border-primary transition-all overflow-hidden" 
         >
           <img src="https://picsum.photos/seed/alexprofile/64" alt="Avatar" className="w-full h-full" />
         </div>
@@ -229,6 +169,7 @@ const App = () => {
               <Route path="/workspace/:id" element={<WorkspaceDetailView />} />
               <Route path="/repositories" element={<RepositoriesView />} />
               <Route path="/repo/:id" element={<RepoDetailView />} />
+              <Route path="/dashboard/library" element={<LibraryView />} />
               <Route path="/editor" element={<EditorView />} />
               <Route path="/profile" element={<ProfileView />} />
               <Route path="/settings" element={<SettingsView />} />
