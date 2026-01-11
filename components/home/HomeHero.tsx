@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { GoogleGenAI } from "@google/genai";
+import TrackCodexLogo from '../branding/TrackCodexLogo';
 
 const HomeHero = () => {
   const [prompt, setPrompt] = useState('');
@@ -42,12 +43,14 @@ const HomeHero = () => {
   return (
     <div className="bg-[#161b22] border border-[#30363d] rounded-2xl p-6 shadow-xl relative overflow-hidden group">
       <div className="absolute top-0 right-0 p-8 opacity-5">
-        <span className="material-symbols-outlined text-[120px] text-primary filled">auto_awesome</span>
+        <TrackCodexLogo size="splash" collapsed={true} clickable={false} className="grayscale" />
       </div>
       
       <div className="flex items-center justify-between mb-5 relative z-10">
         <div className="flex items-center gap-2 text-primary">
-           <span className="material-symbols-outlined !text-[18px] filled animate-pulse">auto_awesome</span>
+           <div className="size-5">
+              <TrackCodexLogo size="sm" collapsed={true} clickable={false} />
+           </div>
            <span className="text-[13px] font-black uppercase tracking-widest">Ask TrackCodex or start a task...</span>
         </div>
         <div className="flex items-center gap-4">
@@ -88,7 +91,9 @@ const HomeHero = () => {
       {aiOutput && (
         <div className="mb-6 p-6 bg-primary/5 border border-primary/20 rounded-2xl animate-in slide-in-from-top-4 duration-500 relative z-10">
           <div className="flex items-center gap-2 text-primary text-[10px] font-black uppercase tracking-widest mb-4">
-            <span className="material-symbols-outlined !text-[16px] filled">auto_awesome</span>
+            <div className="size-4">
+              <TrackCodexLogo size="sm" collapsed={true} clickable={false} />
+            </div>
             AI Assistance Protocol Active
           </div>
           <div className="prose prose-invert prose-sm max-w-none text-slate-300 leading-relaxed font-medium">

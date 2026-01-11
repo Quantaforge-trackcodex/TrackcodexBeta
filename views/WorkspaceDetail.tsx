@@ -1,219 +1,442 @@
 
-import React from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+
+// --- Sub-components for VS Code UI ---
+
+const ActivityBarItem = ({ icon, label, active, onClick, badge }: any) => (
+  <button 
+    onClick={onClick}
+    className={`w-12 h-12 flex items-center justify-center relative group transition-all ${active ? 'text-white border-l-2 border-primary' : 'text-slate-500 hover:text-slate-300'}`}
+    title={label}
+  >
+    <span className={`material-symbols-outlined !text-[24px] ${active ? 'filled' : ''}`}>{icon}</span>
+    {badge && (
+      <span className="absolute top-2 right-2 size-4 bg-primary text-white text-[9px] font-black rounded-full flex items-center justify-center border-2 border-[#333333]">
+        {badge}
+      </span>
+    )}
+  </button>
+);
+
+const ExplorerSection = ({ title, count, children, defaultOpen = true }: any) => {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+  return (
+    <div className="flex flex-col">
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        className="h-9 flex items-center px-4 hover:bg-[#2a2d2e] transition-colors text-[11px] font-black uppercase tracking-widest text-slate-500 gap-2 select-none"
+      >
+        <span className={`material-symbols-outlined !text-[16px] transition-transform duration-200 ${isOpen ? '' : '-rotate-90'}`}>expand_more</span>
+        <span className="flex-1 text-left">{title}</span>
+        {count !== undefined && <span className="text-[10px] opacity-50">({count})</span>}
+      </button>
+      {isOpen && <div className="pb-2">{children}</div>}
+    </div>
+  );
+};
+
+const QuickSelector = ({ label, value, options, icon, subValue }: any) => {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <div className="relative group">
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 bg-[#1e1e1e] hover:bg-[#2d2d2d] border border-[#3c3c3c] px-3 py-1.5 rounded-lg text-[12px] font-bold text-slate-300 transition-all active:scale-95 shadow-sm"
+      >
+        <span className="text-slate-500 font-medium">{label}:</span>
+        <span className="text-white flex items-center gap-1.5">
+          {icon && <span className="material-symbols-outlined !text-[16px] text-slate-400">{icon}</span>}
+          {value}
+          {subValue && <span className="text-slate-500 font-normal ml-1">({subValue})</span>}
+        </span>
+        <span className="material-symbols-outlined !text-[16px] text-slate-500">expand_more</span>
+      </button>
+      {isOpen && (
+        <div className="absolute top-full left-0 mt-2 w-72 bg-[#252526] border border-[#454545] rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.6)] z-50 animate-in fade-in zoom-in-95 duration-150 overflow-hidden ring-1 ring-black/50">
+           <div className="p-3 border-b border-[#3c3c3c] bg-[#1e1e1e]">
+              <div className="relative">
+                <span className="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-slate-500 !text-[14px]">search</span>
+                <input autoFocus placeholder="Search..." className="w-full bg-[#3c3c3c] border-none text-[12px] rounded-md pl-7 pr-2 py-1.5 text-white outline-none placeholder:text-slate-500 focus:ring-1 focus:ring-primary/50" />
+              </div>
+           </div>
+           <div className="max-h-64 overflow-y-auto py-1 custom-scrollbar">
+              {options.map((opt: any) => (
+                <div key={opt} onClick={() => setIsOpen(false)} className="px-4 py-2.5 text-[12px] text-slate-300 hover:bg-primary hover:text-white cursor-pointer transition-colors flex items-center justify-between group/opt">
+                  <span className="group-hover/opt:font-bold">{opt}</span>
+                  {opt === value && <span className="material-symbols-outlined !text-[16px] text-primary group-hover/opt:text-white">check</span>}
+                </div>
+              ))}
+           </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const WorkspaceDetailView = () => {
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('database.config.ts');
+  const [activePR, setActivePR] = useState('#453');
+  const [rightPanel, setRightPanel] = useState<'ai' | 'ci' | 'approvals'>('ai');
+  const [viewMode, setViewMode] = useState<'split' | 'unified'>('split');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  // Mock code data reflecting the screenshot
+  const leftLines = [
+    "import { Sareost } from 'testLocal';",
+    "import { C1aimDat } from 'api.cotentafivomemardate';",
+    "import ForgeA from 'origess';",
+    "",
+    "export debw = {",
+    "  connection: {",
+    "    methods: 'connection pool',",
+    "    pav: 'sistemwt.passiowen.connection.pool',",
+    "    paq: 'slnarmut.asseimtensepteas'",
+    "  },",
+    "  metacoement: {",
+    "    writIid: 'applicationL',",
+    "    rename: 'string-contaimed',",
+    "    lintename: 'Scereipt',",
+    "    username: 'string'",
+    "  }",
+    "};"
+  ];
+
+  const rightLines = [
+    "import { Evert } from 'testLocal';",
+    "import { ClaimAs } from 'api.contoi@emenardate';",
+    "import Forget from 'origess';",
+    "",
+    "export debw = {",
+    "  connection: {",
+    "    methods: 'connection pool',",
+    "    pav: 'sistemwt.passiowen.connection.pool',",
+    "    paq: 'slnarmut.pass%asseptman'",
+    "  },",
+    "  metacoement: {",
+    "    writIid: 'applicationL',",
+    "    rename: 'string-contaimed',",
+    "    lintename: 'Scereipt',",
+    "    username: 'string',",
+    "    consicolorContnent: {",
+    "      enableId: \"config.tsas\",",
+    "      addressubtsd: 'amdroverest.pool',",
+    "    }",
+    "  }",
+    "};"
+  ];
+
+  // Keyboard Shortcuts Handler
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+        e.preventDefault();
+        console.log('Quick Open Triggered');
+      }
+      if (e.altKey && e.key === 'n') {
+        console.log('Next Diff');
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden bg-[#0d1117] font-display">
-      {/* Workspace Header Bar */}
-      <header className="h-14 border-b border-[#1e293b] bg-[#0d1117] flex items-center justify-between px-4 shrink-0">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1.5 bg-white/5 border border-white/10 px-3 py-1.5 rounded-lg text-xs font-bold group cursor-pointer hover:bg-white/10">
-            <span className="text-slate-500 font-normal">Workspace:</span>
-            <span className="text-white">Core Services</span>
-            <span className="material-symbols-outlined !text-[16px] text-slate-500 group-hover:text-white transition-colors">expand_more</span>
-          </div>
-          <div className="flex items-center gap-1.5 bg-white/5 border border-white/10 px-3 py-1.5 rounded-lg text-xs font-bold group cursor-pointer hover:bg-white/10">
-            <span className="text-slate-500 font-normal">Project:</span>
-            <span className="text-white">Phoenix Core</span>
-            <span className="material-symbols-outlined !text-[16px] text-slate-500 group-hover:text-white transition-colors">expand_more</span>
-          </div>
-          <div className="flex items-center gap-2 bg-[#161b22] border border-[#30363d] px-3 py-1.5 rounded-lg text-xs font-mono">
-            <span className="material-symbols-outlined !text-[16px] text-slate-500">account_tree</span>
-            <span className="text-white">main</span>
-            <span className="text-slate-500">(4 commits ahead)</span>
+    <div className="flex-1 flex flex-col h-full bg-[#0d0d0f] font-display overflow-hidden select-none">
+      
+      {/* VS Code Context Top Bar */}
+      <header className="h-14 border-b border-[#1e1e1e] bg-[#0d0d0f] flex items-center justify-between px-4 shrink-0 z-40">
+        <div className="flex items-center gap-3">
+          <QuickSelector label="Workspace" value="Core Services" options={['Core Services', 'Frontend', 'Auth Stack', 'Infra-Module']} />
+          <QuickSelector label="Project" value="Phoenix Core" options={['Phoenix Core', 'Identity V2', 'Bridge API']} />
+          <div className="h-6 w-px bg-[#3c3c3c] mx-2"></div>
+          <QuickSelector label="Branch" value="main" subValue="4 commits ahead" options={['main', 'develop', 'feat/auth-fix']} icon="account_tree" />
+          
+          <div className="flex items-center gap-2 text-[11px] font-bold text-emerald-500 bg-emerald-500/5 px-3 py-1 rounded-full border border-emerald-500/20">
+             <span className="material-symbols-outlined !text-[16px] animate-pulse">check_circle</span>
+             SYNCED
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Environment:</span>
-            <span className="px-3 py-1 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-md">Dev</span>
-          </div>
-          <div className="flex items-center gap-2 text-emerald-500 text-[10px] font-bold uppercase">
-             <span className="material-symbols-outlined !text-[16px] filled">check_circle</span>
-             Synced
-          </div>
-          <div className="w-px h-6 bg-border-dark mx-1"></div>
-          <button className="flex items-center gap-2 bg-blue-500/10 border border-blue-500/20 text-blue-400 px-3 py-1.5 rounded-lg text-xs font-bold">
-             <span className="material-symbols-outlined !text-[16px]">shield</span>
-             CSS
-          </button>
+        <div className="flex items-center gap-4">
+           <div className="flex items-center gap-2">
+              <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Environment:</span>
+              <div className="flex bg-[#1e1e1e] p-1 rounded-lg border border-[#3c3c3c]">
+                 {['DEV', 'STG', 'PRD'].map(e => (
+                   <button key={e} className={`px-3 py-1 rounded-md text-[10px] font-black transition-all ${e === 'DEV' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-500 hover:text-slate-400'}`}>{e}</button>
+                 ))}
+              </div>
+           </div>
+           <button className="text-slate-500 hover:text-white transition-colors">
+              <span className="material-symbols-outlined !text-[20px]">shield</span>
+           </button>
         </div>
       </header>
 
       <div className="flex-1 flex overflow-hidden">
-        {/* Left Sidebar: Pull Requests */}
-        <aside className="w-[320px] border-r border-[#1e293b] bg-[#0d1117] flex flex-col shrink-0">
-          <div className="p-4 border-b border-[#1e293b] flex items-center justify-between">
-            <span className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">Pull Requests</span>
-            <span className="material-symbols-outlined !text-[18px] text-slate-500 cursor-pointer">filter_list</span>
-          </div>
-          <div className="flex-1 overflow-y-auto no-scrollbar">
-             {[
-               { id: '#452', title: 'Fix API endpoint bug', status: 'Open, Failing CI', color: 'border-emerald-500 bg-emerald-500/10' },
-               { id: '#453', title: 'Database schema update', status: 'Open, Passing CI', color: 'border-amber-500 bg-amber-500/10' },
-               { id: '#454', title: 'UI enhancements', status: 'Merged', color: 'border-purple-500 bg-purple-500/10' }
-             ].map(pr => (
-               <div key={pr.id} className={`p-4 border-l-4 mb-2 cursor-pointer transition-all hover:brightness-125 ${pr.color}`}>
-                  <h4 className="text-[13px] font-bold text-white mb-1">{pr.id}: {pr.title}</h4>
-                  <p className="text-[10px] text-slate-400 font-medium italic">{pr.status}</p>
-               </div>
-             ))}
-          </div>
+        
+        {/* Activity Bar (Side) */}
+        <aside className="w-12 bg-[#09090b] flex flex-col border-r border-[#1e1e1e] shrink-0 z-50">
+           <ActivityBarItem icon="source_control" label="Source Control" active />
+           <ActivityBarItem icon="search" label="Global Search" />
+           <ActivityBarItem icon="extension" label="Extensions" />
+           <ActivityBarItem icon="psychology" label="ForgeAI Insights" badge={2} />
+           <div className="mt-auto">
+              <ActivityBarItem icon="account_circle" label="Profile" />
+              <ActivityBarItem icon="settings" label="Settings" />
+           </div>
         </aside>
 
-        {/* Main Split Editor */}
-        <main className="flex-1 flex flex-col bg-[#0b0e14] overflow-hidden">
-          <div className="h-10 border-b border-[#1e293b] bg-[#0d1117] flex items-center px-4 justify-between">
-             <div className="flex items-center gap-2 text-[12px] text-white">
-                <span className="material-symbols-outlined !text-[14px] text-blue-400">javascript</span>
-                <span className="font-bold">database.config.ts</span>
-             </div>
-             <div className="flex items-center gap-4">
-                <button className="flex items-center gap-1.5 text-slate-400 hover:text-white transition-colors text-[11px] font-bold">
-                   Comment <span className="material-symbols-outlined !text-[14px]">expand_more</span>
-                </button>
-                <div className="flex items-center bg-[#161b22] border border-[#30363d] p-0.5 rounded-lg">
-                   <button className="size-7 flex items-center justify-center text-slate-400"><span className="material-symbols-outlined !text-[16px]">view_sidebar</span></button>
-                   <button className="size-7 flex items-center justify-center text-white bg-[#2d333b] rounded"><span className="material-symbols-outlined !text-[16px]">view_column</span></button>
+        {/* Side Bar (PR Explorer) */}
+        {isSidebarOpen && (
+          <aside className="w-[320px] border-r border-[#1e1e1e] bg-[#09090b] flex flex-col shrink-0 animate-in slide-in-from-left duration-200">
+            <div className="h-14 px-4 flex items-center justify-between border-b border-[#1e1e1e]">
+              <span className="text-[12px] font-black uppercase tracking-[0.2em] text-slate-300">Pull Requests</span>
+              <div className="flex gap-1.5">
+                 <button className="p-1 hover:bg-white/5 rounded text-slate-500 hover:text-white transition-colors"><span className="material-symbols-outlined !text-[18px]">filter_list</span></button>
+                 <button className="p-1 hover:bg-white/5 rounded text-slate-500 hover:text-white transition-colors"><span className="material-symbols-outlined !text-[18px]">refresh</span></button>
+              </div>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto custom-scrollbar">
+              <ExplorerSection title="Open" count={2}>
+                 <div 
+                    onClick={() => setActivePR('#452')}
+                    className={`px-4 py-4 mb-2 mx-2 rounded-xl flex flex-col gap-1 cursor-pointer transition-all border-l-4 ${activePR === '#452' ? 'bg-[#161b22] border-emerald-500 ring-1 ring-white/5 shadow-xl' : 'hover:bg-white/5 border-transparent'}`}
+                 >
+                    <h4 className="text-[13px] font-black text-white leading-tight">#452: Fix API endpoint bug</h4>
+                    <p className="text-[11px] text-slate-500 font-medium italic">Open, Failing CI</p>
+                 </div>
+                 <div 
+                    onClick={() => setActivePR('#453')}
+                    className={`px-4 py-4 mx-2 rounded-xl flex flex-col gap-1 cursor-pointer transition-all border-l-4 ${activePR === '#453' ? 'bg-amber-500/10 border-amber-500 ring-1 ring-amber-500/20 shadow-xl shadow-amber-500/5' : 'hover:bg-white/5 border-transparent'}`}
+                 >
+                    <h4 className="text-[13px] font-black text-slate-100 leading-tight">#453: Database schema update</h4>
+                    <p className="text-[11px] text-amber-500/80 font-bold uppercase tracking-widest">Active Review, Passing CI</p>
+                 </div>
+              </ExplorerSection>
+
+              <ExplorerSection title="Merged" count={1} defaultOpen={false}>
+                 <div 
+                    onClick={() => setActivePR('#454')}
+                    className={`px-4 py-4 mx-2 rounded-xl flex flex-col gap-1 cursor-pointer transition-all border-l-4 ${activePR === '#454' ? 'bg-purple-500/10 border-purple-500 ring-1 ring-purple-500/20 shadow-xl' : 'hover:bg-white/5 border-transparent'}`}
+                 >
+                    <h4 className="text-[13px] font-black text-slate-300 leading-tight">#454: UI enhancements</h4>
+                    <p className="text-[11px] text-purple-500/80 font-black uppercase tracking-widest">Merged</p>
+                 </div>
+              </ExplorerSection>
+
+              <ExplorerSection title="Drafts" count={0} defaultOpen={false}></ExplorerSection>
+            </div>
+          </aside>
+        )}
+
+        {/* Editor Main Section */}
+        <main className="flex-1 flex flex-col min-w-0 bg-[#1e1e1e] relative">
+          {/* Tab Bar */}
+          <div className="h-10 bg-[#09090b] flex items-center border-b border-[#1e1e1e] shrink-0 overflow-x-auto no-scrollbar">
+             {['database.config.ts', 'server.ts', 'auth.module.ts'].map(tab => (
+               <div 
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`h-full px-5 flex items-center gap-2.5 text-[12px] font-bold border-r border-[#1e1e1e] cursor-pointer transition-all ${activeTab === tab ? 'bg-[#1e1e1e] text-white border-t-2 border-primary' : 'bg-[#141417] text-slate-500 hover:bg-[#202023]'}`}
+               >
+                  <span className="material-symbols-outlined !text-[16px] text-blue-400">javascript</span>
+                  {tab}
+                  <span className="material-symbols-outlined !text-[16px] opacity-0 group-hover:opacity-100 hover:bg-white/10 rounded transition-opacity">close</span>
+               </div>
+             ))}
+             <div className="flex-1 h-full flex items-center justify-end px-4 gap-4">
+                <div className="flex items-center gap-2 text-slate-500 text-[11px] font-bold">
+                   <span>Comment</span>
+                   <span className="material-symbols-outlined !text-[16px]">expand_more</span>
+                </div>
+                <div className="flex bg-[#1e1e1e] rounded-lg border border-[#3c3c3c] overflow-hidden p-0.5">
+                   <button className="px-2 py-0.5 rounded hover:bg-white/5 text-slate-500"><span className="material-symbols-outlined !text-[18px]">view_column</span></button>
+                   <button className="px-2 py-0.5 rounded bg-[#3c3c3c] text-white shadow-sm"><span className="material-symbols-outlined !text-[18px]">view_stream</span></button>
                 </div>
              </div>
           </div>
 
-          <div className="flex-1 grid grid-cols-2 font-mono text-[13px] overflow-hidden divide-x divide-[#1e293b]">
-             <div className="overflow-y-auto no-scrollbar pt-4 relative bg-[#0d1117]">
-                <div className="absolute left-0 top-0 w-10 h-full bg-[#0d1117] border-r border-[#1e293b] flex flex-col items-center pt-4 text-slate-700 select-none">
-                   {[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15].map(n => <span key={n} className="h-6">{n}</span>)}
+          {/* Diff Editor Engine */}
+          <div className="flex-1 flex flex-col overflow-hidden relative">
+            <div className={`flex-1 grid ${viewMode === 'split' ? 'grid-cols-2' : 'grid-cols-1'} divide-x divide-[#2b2b2b] overflow-hidden`}>
+              
+              {/* Left Side (Deleted Content) */}
+              <div className="overflow-y-auto no-scrollbar bg-[#1e1e1e] relative flex">
+                <div className="w-12 bg-[#1e1e1e] flex flex-col items-end pt-4 pr-3 text-slate-700 font-mono text-[12px] select-none shrink-0 border-r border-white/5">
+                  {leftLines.map((_, i) => <span key={i} className={`h-6 leading-6 ${i >= 12 && i <= 13 ? 'text-rose-500 font-black bg-rose-500/20 w-full text-right pr-3 border-r-2 border-rose-500' : ''}`}>{i + 1}</span>)}
                 </div>
-                <div className="pl-14 pr-4 space-y-0.5 text-slate-400">
-                   <div className="h-6">import &#123; Sareost &#125; from 'testLocal';</div>
-                   <div className="h-6">import &#123; C1aimDat &#125; from 'api.cotentafivomemardate';</div>
-                   <div className="h-6 text-purple-400">import ForgeA from 'origess';</div>
-                   <div className="h-6"></div>
-                   <div className="h-6">export debw = &#123;</div>
-                   <div className="h-6">  connection: &#123;</div>
-                   <div className="h-6">    methods: 'connection pool',</div>
-                   <div className="h-6">    pav: 'sistemwt.passiowen.connection.pool',</div>
-                   <div className="h-6">    paq: 'slnarmut.asseimtensepteas'</div>
-                   <div className="h-6">  &#125;,</div>
-                   <div className="h-6">  metacoement: &#123;</div>
-                   <div className="h-6 bg-red-950/40 text-red-300 -mx-4 px-4 border-l-2 border-red-500">    writIid: 'applicationL',</div>
-                   <div className="h-6 bg-red-950/40 text-red-300 -mx-4 px-4 border-l-2 border-red-500">    rename: 'string-contaimed',</div>
-                   <div className="h-6">    lintename: 'Scereipt',</div>
-                   <div className="h-6">    username: 'string'</div>
-                </div>
-                {/* Inline Comment */}
-                <div className="ml-14 mt-4 mr-4 p-4 bg-[#161b22] border border-[#30363d] rounded-xl relative shadow-2xl">
-                   <div className="flex gap-3 mb-3">
-                      <img src="https://picsum.photos/seed/sarah/32" className="size-6 rounded-full" />
-                      <div>
-                         <p className="text-[11px] font-bold text-white">Sarah K. <span className="text-slate-500 font-normal">This looks good, but consider line 14 with nnajor connection...</span></p>
+                <div className="flex-1 pt-4 font-mono text-[13px] leading-6 whitespace-pre">
+                  {leftLines.map((line, i) => (
+                    <div key={i} className={`h-6 px-4 ${i >= 12 && i <= 13 ? 'bg-rose-500/20 text-rose-200 line-through decoration-rose-500/50' : 'text-slate-500'}`}>
+                      {line || ' '}
+                    </div>
+                  ))}
+                  
+                  {/* Inline Comment in Diff (Left) */}
+                  <div className="mx-4 mt-4 p-4 bg-[#252526] border border-primary/40 rounded-2xl shadow-2xl relative animate-in slide-in-from-top-2 duration-300 ring-1 ring-black/50">
+                      <div className="flex items-start gap-3 mb-4">
+                         <img src="https://picsum.photos/seed/sarah/32" className="size-8 rounded-full border-2 border-primary/20 shadow-lg" />
+                         <div className="flex-1 min-w-0">
+                            <p className="text-[12px] font-black text-white mb-1 flex items-center justify-between">
+                               Sarah K. 
+                               <span className="text-slate-500 font-normal">2 hours ago</span>
+                            </p>
+                            <p className="text-[13px] text-slate-300 leading-relaxed font-medium">
+                               This looks good, but consider line 14 with major connection pool optimizations.
+                            </p>
+                         </div>
                       </div>
-                   </div>
-                   <div className="flex gap-3">
-                      <img src="https://picsum.photos/seed/alex/32" className="size-6 rounded-full" />
-                      <div>
-                         <p className="text-[11px] font-bold text-white">David L. <span className="text-slate-500 font-normal">Added a fix.</span></p>
+                      <div className="flex items-start gap-3 mb-4 pl-4 border-l-2 border-white/10">
+                         <img src="https://picsum.photos/seed/alex/32" className="size-6 rounded-full border border-white/10 shadow-md" />
+                         <div className="flex-1 min-w-0">
+                            <p className="text-[11px] font-black text-slate-300 mb-1 flex items-center justify-between">
+                               David L. 
+                            </p>
+                            <p className="text-[12px] text-slate-400 leading-relaxed">
+                               Added a fix.
+                            </p>
+                         </div>
                       </div>
-                   </div>
-                   <input className="w-full bg-[#0d1117] border border-[#30363d] rounded-lg mt-3 p-2 text-[10px] text-slate-500" placeholder="Reply..." />
+                      <div className="mt-2 bg-[#1e1e1e] border border-[#3c3c3c] rounded-xl flex items-center px-4 py-2 group-focus-within:border-primary transition-all">
+                        <input placeholder="Reply..." className="w-full bg-transparent border-none text-[12px] text-slate-400 outline-none" />
+                        <span className="material-symbols-outlined text-slate-600 group-hover:text-primary transition-colors cursor-pointer">send</span>
+                      </div>
+                  </div>
                 </div>
-             </div>
+              </div>
 
-             <div className="overflow-y-auto no-scrollbar pt-4 relative bg-[#0d1117]">
-                <div className="absolute left-0 top-0 w-10 h-full bg-[#0d1117] border-r border-[#1e293b] flex flex-col items-center pt-4 text-slate-700 select-none">
-                   {[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20].map(n => <span key={n} className="h-6">{n}</span>)}
+              {/* Right Side (Added Content) */}
+              <div className="overflow-y-auto no-scrollbar bg-[#1e1e1e] relative flex group/gutter">
+                {/* Minimap Placeholder */}
+                <div className="absolute top-0 right-0 w-14 h-full bg-black/20 border-l border-white/5 pointer-events-none z-20 backdrop-blur-sm">
+                    <div className="absolute top-48 left-0 right-0 h-24 bg-emerald-500/20 border-y border-emerald-500/30"></div>
                 </div>
-                <div className="pl-14 pr-4 space-y-0.5 text-slate-400">
-                   <div className="h-6">import &#123; Evert &#125; from 'testLocal';</div>
-                   <div className="h-6">import &#123; ClaimAs &#125; from 'api.contoi@emenardate';</div>
-                   <div className="h-6 text-purple-400">import Forget from 'origess';</div>
-                   <div className="h-6"></div>
-                   <div className="h-6">export debw = &#123;</div>
-                   <div className="h-6">  connection: &#123;</div>
-                   <div className="h-6">    methods: 'connection pool',</div>
-                   <div className="h-6">    pav: 'sistemwt.passiowen.connection.pool',</div>
-                   <div className="h-6">    paq: 'slnarmut.pass%asseptman'</div>
-                   <div className="h-6">  &#125;,</div>
-                   <div className="h-6">  metacoement: &#123;</div>
-                   <div className="h-6 bg-emerald-950/40 text-emerald-300 -mx-4 px-4 border-l-2 border-emerald-500">    writIid: 'applicationL',</div>
-                   <div className="h-6 bg-emerald-950/40 text-emerald-300 -mx-4 px-4 border-l-2 border-emerald-500">    rename: 'string-contaimed',</div>
-                   <div className="h-6">    lintename: 'Scereipt',</div>
-                   <div className="h-6">    username: 'string'</div>
-                   <div className="h-6 bg-emerald-950/40 text-emerald-300 -mx-4 px-4 border-l-2 border-emerald-500">    consicolorContnent: &#123;</div>
-                   <div className="h-6 bg-emerald-950/40 text-emerald-300 -mx-4 px-4 border-l-2 border-emerald-500">      enableId: "config.tsas",</div>
-                   <div className="h-6 bg-emerald-950/40 text-emerald-300 -mx-4 px-4 border-l-2 border-emerald-500">      addressubtsd: 'amdroverest.pool',</div>
+
+                <div className="w-12 bg-[#1e1e1e] flex flex-col items-end pt-4 pr-3 text-slate-700 font-mono text-[12px] select-none shrink-0 border-r border-white/5">
+                  {rightLines.map((_, i) => (
+                    <div key={i} className={`h-6 leading-6 w-full flex items-center justify-end relative group/line`}>
+                      <button className="absolute left-1 size-4 opacity-0 group-hover/line:opacity-100 transition-opacity bg-primary text-white rounded flex items-center justify-center scale-90 shadow-lg">
+                         <span className="material-symbols-outlined !text-[12px]">add</span>
+                      </button>
+                      <span className={`${i >= 12 && i <= 19 ? 'text-emerald-500 font-black bg-emerald-500/20 w-full text-right pr-3 border-r-2 border-emerald-500' : ''}`}>{i + 1}</span>
+                    </div>
+                  ))}
                 </div>
-             </div>
-          </div>
-          
-          <div className="p-4 border-t border-[#1e293b] flex items-center justify-end gap-3 bg-[#0d1117]">
-             <button className="bg-primary hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-black uppercase tracking-widest text-[11px] transition-all">Merge Pull Request</button>
-             <button className="bg-slate-800 hover:bg-slate-700 text-white px-6 py-2 rounded-lg font-bold text-[11px] transition-all">Request Changes</button>
+                <div className="flex-1 pt-4 font-mono text-[13px] leading-6 whitespace-pre">
+                  {rightLines.map((line, i) => (
+                    <div key={i} className={`h-6 px-4 relative ${i >= 12 && i <= 19 ? 'bg-emerald-500/20 text-emerald-100 font-medium' : 'text-slate-300'}`}>
+                      {line || ' '}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Merge Control Bar */}
+            <div className="h-16 border-t border-[#2b2b2b] bg-[#0d0d0f] flex items-center justify-center px-8 gap-4 shrink-0 z-30">
+               <button className="px-10 h-11 bg-primary text-white rounded-xl font-black uppercase tracking-widest shadow-[0_10px_30px_rgba(19,91,236,0.4)] hover:brightness-110 flex items-center gap-2 transition-all active:scale-95">
+                  <span className="material-symbols-outlined !text-[20px]">merge</span>
+                  MERGE PULL REQUEST
+               </button>
+               <button className="px-8 h-11 bg-[#1e1e1e] hover:bg-[#2d2d2d] text-white rounded-xl font-black uppercase tracking-widest border border-white/5 transition-all shadow-xl">
+                  Request Changes
+               </button>
+            </div>
           </div>
         </main>
 
-        {/* Right Sidebar: AI Review */}
-        <aside className="w-[340px] border-l border-[#1e293b] bg-[#0d1117] flex flex-col shrink-0">
-           <div className="p-6 space-y-8">
-              <section className="p-5 bg-white/[0.02] border border-[#30363d] rounded-2xl relative overflow-hidden group">
-                 <div className="absolute top-0 right-0 p-3 opacity-10">
-                    <span className="material-symbols-outlined text-4xl text-primary filled">auto_awesome</span>
-                 </div>
-                 <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 mb-6">AI Review Summary & CI/CD</h3>
-                 
-                 <div className="space-y-6">
-                    <div>
-                       <h4 className="text-[12px] font-black text-white mb-2">AI Summary:</h4>
-                       <p className="text-[12px] text-slate-400 leading-relaxed">
-                          The changes introduce a new connection pool. No major issues found. 92% test coverage.
-                       </p>
-                    </div>
+        {/* Modular Activity Side Bar (Right) */}
+        <aside className="w-[400px] border-l border-[#1e1e1e] bg-[#09090b] flex flex-col shrink-0 animate-in slide-in-from-right duration-300">
+           <div className="h-14 px-6 flex items-center justify-between border-b border-[#1e1e1e] bg-black/20">
+              <span className="text-[12px] font-black uppercase tracking-[0.2em] text-slate-400">
+                 {rightPanel === 'ai' ? '🤖 AI REVIEW SUMMARY & CI/CD' : '👥 Reviewers'}
+              </span>
+              <span className="material-symbols-outlined !text-[18px] text-primary filled animate-pulse">auto_awesome</span>
+           </div>
 
-                    <div>
-                       <h4 className="text-[12px] font-black text-white mb-2">CI/CD Status:</h4>
-                       <ul className="space-y-2 text-[12px]">
-                          <li className="flex items-center justify-between">
-                             <span className="text-slate-500">- Build:</span>
-                             <span className="text-emerald-500 font-bold">Passing</span>
-                          </li>
-                          <li className="flex items-center justify-between">
-                             <span className="text-slate-500">- Tests:</span>
-                             <span className="text-red-500 font-bold">Failing (2/234)</span>
-                          </li>
-                          <li className="flex items-center justify-between">
-                             <span className="text-slate-500">- Linting:</span>
-                             <span className="text-emerald-500 font-bold">Passing</span>
-                          </li>
-                       </ul>
+           <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-10">
+              <div className="space-y-6">
+                 <div className="p-6 bg-primary/5 border border-primary/20 rounded-2xl relative overflow-hidden group">
+                    <div className="absolute -top-4 -right-4 size-32 bg-primary/10 rounded-full blur-3xl group-hover:scale-110 transition-transform"></div>
+                    <h4 className="text-[13px] font-black text-white uppercase tracking-widest mb-4">AI Summary:</h4>
+                    <p className="text-[14px] text-slate-300 leading-relaxed font-medium">
+                       The changes introduce a new connection pool. No major issues found. <span className="text-emerald-500 font-black">92% test coverage</span>.
+                    </p>
+                 </div>
+
+                 <div className="space-y-4">
+                    <h4 className="text-[11px] font-black text-slate-500 uppercase tracking-widest border-b border-white/5 pb-2">CI/CD Status:</h4>
+                    <div className="space-y-3">
+                       <div className="flex items-center justify-between text-[13px]">
+                          <span className="text-slate-400">Build:</span>
+                          <span className="text-emerald-500 font-black flex items-center gap-1.5"><span className="size-1.5 rounded-full bg-emerald-500"></span> Passing</span>
+                       </div>
+                       <div className="flex items-center justify-between text-[13px]">
+                          <span className="text-slate-400">Tests:</span>
+                          <span className="text-rose-500 font-black flex items-center gap-1.5"><span className="size-1.5 rounded-full bg-rose-500 animate-pulse"></span> Failing (2/234)</span>
+                       </div>
+                       <div className="flex items-center justify-between text-[13px]">
+                          <span className="text-slate-400">Linting:</span>
+                          <span className="text-emerald-500 font-black flex items-center gap-1.5"><span className="size-1.5 rounded-full bg-emerald-500"></span> Passing</span>
+                       </div>
                     </div>
                  </div>
-              </section>
+              </div>
 
-              <section className="p-5 bg-white/[0.02] border border-[#30363d] rounded-2xl">
-                 <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 mb-6">Merge Approval</h3>
+              <div className="space-y-6 pt-10 border-t border-white/5">
+                 <h4 className="text-[11px] font-black text-slate-500 uppercase tracking-widest">MERGE APPROVAL</h4>
                  <div className="space-y-4">
                     {[
-                      { name: 'Sarah K.', status: 'Approved', color: 'text-emerald-500', avatar: 'https://picsum.photos/seed/sarah/32' },
-                      { name: 'David L.', status: 'Approved', color: 'text-emerald-500', avatar: 'https://picsum.photos/seed/alex/32' },
-                      { name: 'Michael R.', status: 'Pending', color: 'text-amber-500', avatar: 'https://picsum.photos/seed/marcus/32' }
-                    ].map(u => (
-                       <div key={u.name} className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                             <img src={u.avatar} className="size-8 rounded-full border border-border-dark" />
-                             <span className="text-[12px] font-bold text-white">{u.name}</span>
-                          </div>
-                          <span className={`text-[11px] font-bold ${u.color}`}>({u.status})</span>
-                       </div>
+                      { name: 'Sarah K.', status: '(Approved)', color: 'text-emerald-500', avatar: 'https://picsum.photos/seed/sarah/32' },
+                      { name: 'David L.', status: '(Approved)', color: 'text-emerald-500', avatar: 'https://picsum.photos/seed/david/32' },
+                      { name: 'Michael R.', status: '(Pending)', color: 'text-amber-500', avatar: 'https://picsum.photos/seed/u3/32' }
+                    ].map(user => (
+                      <div key={user.name} className="flex items-center justify-between group">
+                         <div className="flex items-center gap-3">
+                            <img src={user.avatar} className="size-9 rounded-full border border-white/10 group-hover:border-primary transition-all" />
+                            <span className="text-[14px] font-bold text-white">{user.name}</span>
+                         </div>
+                         <span className={`text-[12px] font-black ${user.color}`}>{user.status}</span>
+                      </div>
                     ))}
                  </div>
-              </section>
+                 <button className="w-full py-4 bg-[#1e1e1e] border border-white/5 hover:border-primary/50 text-slate-400 hover:text-white rounded-xl text-[11px] font-black uppercase tracking-widest transition-all mt-4">
+                    MANAGE REVIEWERS
+                 </button>
+              </div>
            </div>
         </aside>
       </div>
+
+      {/* VS Code Status Bar */}
+      <footer className="h-6 bg-primary text-white flex items-center justify-between px-3 text-[10px] font-medium shrink-0 z-50 shadow-[0_-4px_15px_rgba(0,0,0,0.4)]">
+         <div className="flex items-center gap-4 h-full">
+            <div className="flex items-center gap-1.5 hover:bg-white/10 px-2 h-full cursor-pointer transition-colors">
+               <span className="material-symbols-outlined !text-[15px]">account_tree</span>
+               <span className="font-bold">main*</span>
+            </div>
+            <div className="flex items-center gap-1.5 hover:bg-white/10 px-2 h-full cursor-pointer transition-colors">
+               <span className="material-symbols-outlined !text-[15px]">sync</span>
+               <span>0 ↓ 4 ↑</span>
+            </div>
+            <div className="flex items-center gap-2 hover:bg-white/10 px-2 h-full cursor-pointer transition-colors">
+               <span className="flex items-center gap-1"><span className="material-symbols-outlined !text-[15px]">error_outline</span> 2</span>
+               <span className="flex items-center gap-1"><span className="material-symbols-outlined !text-[15px]">warning_amber</span> 1</span>
+            </div>
+         </div>
+         <div className="flex items-center gap-5 h-full">
+            <div className="hover:bg-white/10 px-2 h-full flex items-center cursor-pointer">Spaces: 2</div>
+            <div className="hover:bg-white/10 px-2 h-full flex items-center cursor-pointer">UTF-8</div>
+            <div className="hover:bg-white/10 px-2 h-full flex items-center cursor-pointer">TypeScript JSX</div>
+            <div className="hover:bg-white/10 px-2 h-full flex items-center cursor-pointer gap-1 text-emerald-200">
+               <span className="material-symbols-outlined !text-[15px] filled">auto_awesome</span>
+               ForgeAI: Optimized
+            </div>
+         </div>
+      </footer>
     </div>
   );
 };

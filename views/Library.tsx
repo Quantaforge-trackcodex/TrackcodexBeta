@@ -82,7 +82,8 @@ const LibraryDetail = ({ resource, onBack }: { resource: LibraryResource, onBack
     try {
       const insight = await forgeAIService.getLiveChatResponse(
         `Provide a quick technical preview and security analysis for the template: ${resource.name}. Describe why it's a good choice for high-fidelity production apps.`,
-        `Analyzing Library Resource: ${resource.name}`,
+        [], 
+        `Analyzing Library Resource: ${resource.name}`, 
         ['ForgeAI Specialist']
       );
       setAiInsight(insight);
@@ -321,8 +322,10 @@ const LibraryView = () => {
 
   const filteredResources = useMemo(() => {
     return MOCK_LIBRARY_RESOURCES.filter(r => {
-      const matchesSearch = r.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                           r.description.toLowerCase().includes(searchQuery.toLowerCase());
+      const query = searchQuery.toLowerCase().trim();
+      const matchesSearch = !query || 
+                           r.name.toLowerCase().includes(query) || 
+                           r.description.toLowerCase().includes(query);
       const matchesCategory = activeCategory ? r.category === activeCategory : true;
       return matchesSearch && matchesCategory;
     });
@@ -428,40 +431,50 @@ const LibraryView = () => {
               </div>
            </div>
 
-           <div className="flex items-center justify-between">
-              <div className="flex items-center gap-8">
-                 <button className="flex items-center gap-2 text-sm font-bold text-white relative pb-2">
+           <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-6">
+              <div className="flex items-center gap-8 border-b lg:border-none border-[#1e293b] pb-2 lg:pb-0">
+                 <button className="flex items-center gap-2 text-sm font-bold text-white relative pb-2 lg:pb-0">
                     <span className="material-symbols-outlined !text-[18px]">grid_view</span>
                     Overview
-                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full"></div>
+                    <div className="absolute bottom-[-8px] lg:bottom-[-2px] left-0 right-0 h-0.5 bg-primary rounded-full"></div>
                  </button>
-                 <button className="flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-white transition-colors pb-2">
+                 <button className="flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-white transition-colors">
                     <span className="material-symbols-outlined !text-[18px]">list</span>
                     List View
                  </button>
-                 <button className="flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-white transition-colors pb-2">
+                 <button className="flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-white transition-colors">
                     <span className="material-symbols-outlined !text-[18px]">history</span>
                     Recent
                  </button>
               </div>
               
-              <div className="flex items-center gap-4">
-                 <div className="relative group">
-                    <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">search</span>
+              <div className="flex flex-1 flex-col sm:flex-row items-stretch sm:items-center gap-4">
+                 <div className="relative group flex-1">
+                    <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm group-focus-within:text-primary transition-colors">search</span>
                     <input 
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="bg-[#161b22] border border-[#30363d] rounded-lg pl-9 pr-4 py-1.5 text-xs text-slate-200 focus:ring-1 focus:ring-primary focus:border-primary w-64 placeholder:text-slate-600 transition-all"
-                      placeholder="Find a template..."
+                      className="w-full bg-[#161b22] border border-[#30363d] rounded-xl pl-10 pr-10 py-2.5 text-sm text-slate-200 focus:ring-1 focus:ring-primary focus:border-primary placeholder:text-slate-600 transition-all shadow-inner"
+                      placeholder="Global library search (title or description)..."
                     />
+                    {searchQuery && (
+                      <button 
+                        onClick={() => setSearchQuery('')}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors"
+                      >
+                        <span className="material-symbols-outlined !text-[18px]">close</span>
+                      </button>
+                    )}
                  </div>
-                 <div className="flex items-center bg-[#161b22] border border-[#30363d] px-3 py-1.5 rounded-lg text-[11px] font-bold text-slate-400 gap-2 cursor-pointer hover:border-slate-500 transition-all">
-                    Language: All
-                    <span className="material-symbols-outlined !text-[14px]">expand_more</span>
-                 </div>
-                 <div className="flex items-center bg-[#161b22] border border-[#30363d] px-3 py-1.5 rounded-lg text-[11px] font-bold text-slate-400 gap-2 cursor-pointer hover:border-slate-500 transition-all">
-                    Sort: Most stars
-                    <span className="material-symbols-outlined !text-[14px]">expand_more</span>
+                 <div className="flex items-center gap-3 shrink-0">
+                    <div className="flex items-center bg-[#161b22] border border-[#30363d] px-3 py-2 rounded-xl text-[11px] font-bold text-slate-400 gap-2 cursor-pointer hover:border-slate-500 transition-all">
+                       Language: All
+                       <span className="material-symbols-outlined !text-[14px]">expand_more</span>
+                    </div>
+                    <div className="flex items-center bg-[#161b22] border border-[#30363d] px-3 py-2 rounded-xl text-[11px] font-bold text-slate-400 gap-2 cursor-pointer hover:border-slate-500 transition-all">
+                       Sort: Most stars
+                       <span className="material-symbols-outlined !text-[14px]">expand_more</span>
+                    </div>
                  </div>
               </div>
            </div>
@@ -482,8 +495,14 @@ const LibraryView = () => {
                    <div className="size-20 rounded-full bg-slate-800 flex items-center justify-center text-slate-500 mb-6">
                      <span className="material-symbols-outlined !text-[40px]">search_off</span>
                    </div>
-                   <h3 className="text-lg font-bold text-white mb-2">No results found</h3>
-                   <p className="text-slate-500 text-sm">Try adjusting your filters or search query.</p>
+                   <h3 className="text-xl font-bold text-white mb-2">No results found for "{searchQuery}"</h3>
+                   <p className="text-slate-500 text-sm max-w-sm">Try adjusting your filters or search query to find the resources you need.</p>
+                   <button 
+                    onClick={() => { setSearchQuery(''); setActiveCategory(null); }}
+                    className="mt-6 px-6 py-2 bg-primary/10 text-primary hover:bg-primary hover:text-white rounded-xl font-bold text-sm transition-all border border-primary/20"
+                   >
+                     Reset All Filters
+                   </button>
                 </div>
               )}
            </div>
@@ -497,9 +516,9 @@ const LibraryView = () => {
            </div>
            <div className="flex items-center gap-4">
               <span className="flex items-center gap-1.5 text-emerald-500/70 font-bold uppercase tracking-widest"><span className="material-symbols-outlined !text-[14px] filled">auto_awesome</span> Copilot Ready</span>
-              <span>Ln 1, Col 1</span>
+              <span>Showing {filteredResources.length} items</span>
               <span>UTF-8</span>
-              <span>JavaScript</span>
+              <span>TypeScript</span>
            </div>
         </footer>
       </main>

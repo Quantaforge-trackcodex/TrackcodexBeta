@@ -1,77 +1,91 @@
 
-import React from 'react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-
-const data = [
-  { name: '00:00', requests: 120 },
-  { name: '04:00', requests: 180 },
-  { name: '08:00', requests: 450 },
-  { name: '12:00', requests: 380 },
-  { name: '16:00', requests: 540 },
-  { name: '20:00', requests: 320 },
-  { name: '23:59', requests: 280 },
-];
-
-const MetricCard = ({ title, value, change, description, trend }: any) => (
-  <div className="p-5 rounded-xl bg-surface-dark border border-border-dark shadow-sm">
-    <div className="flex justify-between items-start mb-2">
-      <p className="text-slate-500 text-sm font-medium">{title}</p>
-      <span className={`${trend === 'up' ? 'text-emerald-500 bg-emerald-500/10' : 'text-rose-500 bg-rose-500/10'} text-[10px] font-bold px-1.5 py-0.5 rounded`}>
-        {change}
-      </span>
-    </div>
-    <div className="text-3xl font-bold text-white mb-1">{value}</div>
-    <p className="text-slate-500 text-[10px] uppercase tracking-wider">{description}</p>
-  </div>
-);
+import React, { useState } from 'react';
+import { GoogleGenAI } from "@google/genai";
 
 const ForgeAIView = () => {
+  const [prompt, setPrompt] = useState('');
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [results, setResults] = useState<{ type: string; content: string }[]>([]);
+
+  const handleAsk = async () => {
+    if (!prompt.trim()) return;
+    setIsAnalyzing(true);
+    
+    try {
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const response = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: prompt,
+        config: {
+          systemInstruction: 'You are ForgeAI, an advanced engineering co-pilot. Help the user with technical questions, code reviews, and project planning.',
+          temperature: 0.7,
+        }
+      });
+      
+      setResults(prev => [{ type: 'AI', content: response.text || 'No response.' }, ...prev]);
+      setPrompt('');
+    } catch (error) {
+      console.error(error);
+      setResults(prev => [{ type: 'Error', content: 'Failed to connect to AI services.' }, ...prev]);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
   return (
-    <div className="p-10 flex-1 overflow-y-auto custom-scrollbar">
-      <div className="max-w-6xl mx-auto space-y-8">
-        <div>
-          <h1 className="text-3xl font-black tracking-tight mb-2">ForgeAI Dashboard</h1>
-          <p className="text-slate-500">Monitor and manage your multi-tenant AI infrastructure.</p>
+    <div className="flex-1 flex flex-col bg-[#0d1117] font-display">
+      <div className="p-8 border-b border-[#1e293b]">
+        <h1 className="text-2xl font-black text-white flex items-center gap-3">
+          <span className="material-symbols-outlined text-primary filled">auto_awesome</span>
+          ForgeAI Insights
+        </h1>
+        <p className="text-slate-500 text-sm mt-1">Your advanced engineering co-pilot for code analysis and project strategy.</p>
+      </div>
+
+      <div className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-6">
+        <div className="max-w-4xl mx-auto flex flex-col gap-6">
+          {results.length === 0 && (
+            <div className="py-20 text-center">
+              <div className="size-20 rounded-full bg-primary/10 flex items-center justify-center text-primary mx-auto mb-6">
+                <span className="material-symbols-outlined !text-[40px] filled">psychology</span>
+              </div>
+              <h2 className="text-xl font-bold text-white mb-2">How can I assist you today?</h2>
+              <p className="text-slate-500 max-w-sm mx-auto">Ask about architecture, security vulnerabilities, or refactoring opportunities in your current workspace.</p>
+            </div>
+          )}
+
+          {results.map((res, i) => (
+            <div key={i} className={`p-6 rounded-2xl border ${res.type === 'Error' ? 'border-red-500/20 bg-red-500/5 text-red-400' : 'border-border-dark bg-[#161b22] text-slate-300'}`}>
+              <div className="flex items-center gap-2 mb-4">
+                <span className="material-symbols-outlined text-xs filled text-primary">auto_awesome</span>
+                <span className="text-[10px] font-black uppercase tracking-widest">ForgeAI Response</span>
+              </div>
+              <div className="prose prose-invert prose-sm max-w-none">
+                {res.content}
+              </div>
+            </div>
+          ))}
         </div>
+      </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          <div className="xl:col-span-1 grid grid-cols-1 gap-4">
-            <MetricCard title="Tokens Used" value="1,248,390" change="+12%" description="Across all tenants" trend="up" />
-            <MetricCard title="Daily Requests" value="4,502" change="-3%" description="Peak: 540 req/min" trend="down" />
-            <MetricCard title="Estimated Cost" value="$142.00" change="+$12.40" description="Projected: $450/mo" trend="up" />
-          </div>
-
-          <div className="xl:col-span-2 p-6 rounded-xl bg-surface-dark border border-border-dark flex flex-col min-h-[400px]">
-            <div className="flex justify-between items-center mb-6">
-              <div>
-                <h3 className="text-white font-bold">AI Activity Trend</h3>
-                <p className="text-slate-500 text-xs">Request volume over the last 24 hours</p>
-              </div>
-              <div className="flex gap-2">
-                <button className="px-2 py-1 text-[10px] uppercase font-bold text-primary bg-primary/10 rounded">Live</button>
-                <button className="px-2 py-1 text-[10px] uppercase font-bold text-slate-500 hover:text-white">24h</button>
-              </div>
-            </div>
-            <div className="flex-1">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={data}>
-                  <defs>
-                    <linearGradient id="colorRequests" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#135bec" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#135bec" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <XAxis dataKey="name" stroke="#4b5563" fontSize={10} tickLine={false} axisLine={false} />
-                  <YAxis stroke="#4b5563" fontSize={10} tickLine={false} axisLine={false} />
-                  <Tooltip 
-                    contentStyle={{ backgroundColor: '#18181b', border: '1px solid #27272a', borderRadius: '8px' }}
-                    itemStyle={{ color: '#135bec', fontSize: '12px' }}
-                  />
-                  <Area type="monotone" dataKey="requests" stroke="#135bec" fillOpacity={1} fill="url(#colorRequests)" strokeWidth={3} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
+      <div className="p-8 bg-[#161b22] border-t border-[#30363d]">
+        <div className="max-w-4xl mx-auto relative">
+          <textarea
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleAsk())}
+            placeholder="Ask ForgeAI for technical insights or security analysis..."
+            className="w-full bg-[#0d1117] border border-[#30363d] rounded-2xl p-5 pr-20 text-slate-200 focus:ring-1 focus:ring-primary outline-none min-h-[100px] resize-none"
+          />
+          <button
+            onClick={handleAsk}
+            disabled={isAnalyzing || !prompt.trim()}
+            className="absolute right-4 bottom-4 size-10 bg-primary text-white rounded-xl flex items-center justify-center shadow-lg disabled:opacity-50"
+          >
+            <span className={`material-symbols-outlined ${isAnalyzing ? 'animate-spin' : ''}`}>
+              {isAnalyzing ? 'progress_activity' : 'send'}
+            </span>
+          </button>
         </div>
       </div>
     </div>

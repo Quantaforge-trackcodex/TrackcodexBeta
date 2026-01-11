@@ -1,5 +1,5 @@
 
-import { Workspace, AITask, SecurityAlert, Repository, LiveSession, ProfileData, LibraryResource, LibraryCategory } from './types';
+import { Workspace, AITask, SecurityAlert, Repository, LiveSession, ProfileData, LibraryResource, LibraryCategory, Job } from './types';
 
 export const MOCK_REPOS: Repository[] = [
   {
@@ -91,7 +91,7 @@ export const MOCK_REPOS: Repository[] = [
 
 export const MOCK_WORKSPACES: Workspace[] = [
   {
-    id: '1',
+    id: 'trackcodex-backend',
     name: 'track-api-prod',
     status: 'Running',
     runtime: 'Node 20.x',
@@ -100,6 +100,17 @@ export const MOCK_WORKSPACES: Workspace[] = [
     branch: 'main',
     commit: 'f29a1d4',
     collaborators: ['https://picsum.photos/seed/1/32', 'https://picsum.photos/seed/2/32']
+  },
+  {
+    id: 'dashboard-ui',
+    name: 'ui-stage',
+    status: 'Stopped',
+    runtime: 'React 18',
+    lastModified: '1d ago',
+    repo: 'trackcodex/dashboard-ui',
+    branch: 'develop',
+    commit: 'a1b2c3d',
+    collaborators: ['https://picsum.photos/seed/3/32']
   }
 ];
 
@@ -266,4 +277,72 @@ export const MOCK_LIBRARY_CATEGORIES: LibraryCategory[] = [
   { id: 'utilities', name: 'Utilities', icon: 'build', count: 10 },
   { id: 'research-papers', name: 'Research Papers', icon: 'menu_book', count: 5 },
   { id: 'ui-design', name: 'UI & Design', icon: 'design_services', count: 4 }
+];
+
+export const MOCK_JOBS: Job[] = [
+  {
+    id: 'job-1',
+    title: 'DeFi Protocol Security Audit',
+    description: 'Perform a comprehensive security audit on our upcoming DeFi lending protocol built on Solana.',
+    longDescription: 'We are seeking a senior security engineer to perform a 2-week intensive audit of our Solana smart contracts. Focus areas include liquidations logic, oracle integration, and flash loan prevention. You will be working directly with our lead developer in a dedicated workspace.',
+    budget: '$8,500',
+    type: 'Contract',
+    status: 'Open',
+    techStack: ['Rust', 'Solana', 'Security'],
+    repoId: 'trackcodex-backend',
+    creator: {
+      name: 'SolanaLend Team',
+      avatar: 'https://picsum.photos/seed/solana/64'
+    },
+    postedDate: '2 hours ago'
+  },
+  {
+    id: 'job-2',
+    title: 'React Performance Optimization',
+    description: 'Optimize a data-heavy analytics dashboard to reduce bundle size and improve TTI.',
+    longDescription: 'Our main dashboard has grown too complex. We need a React expert to implement code-splitting, optimize memoization, and refactor expensive computations to web workers. The project uses Recharts and Tailwind CSS.',
+    budget: '$3,200',
+    type: 'Gig',
+    status: 'In Progress',
+    techStack: ['React', 'TypeScript', 'Performance'],
+    repoId: 'dashboard-ui',
+    creator: {
+      name: 'AnalyticsPro',
+      avatar: 'https://picsum.photos/seed/analytics/64'
+    },
+    postedDate: 'Yesterday'
+  },
+  {
+    id: 'job-3',
+    title: 'Senior Go Backend Engineer',
+    description: 'Join our team full-time to lead the infrastructure migration to a microservices architecture.',
+    longDescription: 'Looking for a long-term partner to help us scale our backend infrastructure. You will be responsible for designing gRPC interfaces, implementing distributed tracing, and mentoring junior engineers. This is a high-impact role with competitive equity.',
+    budget: '$160k/year',
+    type: 'Full-time',
+    status: 'Open',
+    techStack: ['Go', 'Kubernetes', 'gRPC'],
+    repoId: 'trackcodex-backend',
+    creator: {
+      name: 'TrackCodex Core',
+      avatar: 'https://picsum.photos/seed/track/64'
+    },
+    postedDate: '3 days ago'
+  },
+  {
+    id: 'job-4',
+    title: 'Mobile Camera WebSocket Integration',
+    description: 'Implement real-time camera stream syncing via WebSockets for a Flutter application.',
+    budget: '$2,500',
+    type: 'Gig',
+    status: 'Completed',
+    techStack: ['Dart', 'Flutter', 'WebSockets'],
+    repoId: 'mobile-app-flutter',
+    creator: {
+      name: 'FieldAgent Inc',
+      avatar: 'https://picsum.photos/seed/field/64'
+    },
+    postedDate: '1 week ago',
+    rating: 5,
+    feedback: 'Excellent work! The latency is incredibly low and the implementation is clean.'
+  }
 ];

@@ -1,4 +1,13 @@
 
+export type SystemRole = 'Super Admin' | 'Org Admin' | 'Team Admin' | 'Moderator' | 'Developer' | 'Viewer';
+
+export interface UserRole {
+  id: string;
+  name: string;
+  permissions: string[];
+  isCustom: boolean;
+}
+
 export interface Workspace {
   id: string;
   name: string;
@@ -131,4 +140,102 @@ export interface LibraryCategory {
   name: string;
   icon: string;
   count: number;
+}
+
+export interface Job {
+  id: string;
+  title: string;
+  description: string;
+  longDescription?: string;
+  budget: string;
+  type: 'Contract' | 'Gig' | 'Full-time';
+  status: 'Open' | 'In Progress' | 'Completed' | 'Pending';
+  techStack: string[];
+  repoId: string;
+  creator: {
+    name: string;
+    avatar: string;
+  };
+  rating?: number;
+  feedback?: string;
+  postedDate: string;
+  targetUserId?: string; // For direct offers
+  personalNote?: string;
+}
+
+// --- Community Enhancement Types ---
+
+export type KarmaLevel = 'Contributor' | 'Collaborator' | 'Expert' | 'Maintainer';
+
+export interface CommunityComment {
+  id: string;
+  author: {
+    name: string;
+    username: string;
+    avatar: string;
+    karma: number;
+  };
+  text: string;
+  timestamp: string;
+  replies?: CommunityComment[];
+  upvotes: number;
+}
+
+export interface CommunityPost {
+  id: string;
+  author: {
+    name: string;
+    username: string;
+    role: string;
+    avatar: string;
+    isLive?: boolean;
+    karma?: number;
+  };
+  time: string;
+  visibility: string;
+  title: string;
+  content: string;
+  tags: string[];
+  upvotes: number;
+  comments: number;
+  commentsData?: CommunityComment[];
+  linkedEntity?: {
+    type: 'repo' | 'workspace';
+    id: string;
+    label: string;
+  };
+  codeSnippet?: {
+    filename: string;
+    language: string;
+    content: string;
+  };
+  image?: string;
+  type?: string;
+  moderation?: 'SAFE' | 'WARNING' | 'FLAGGED';
+  moderationReason?: string;
+}
+
+// --- Admin Types ---
+
+export interface AuditLogEntry {
+  id: string;
+  timestamp: string;
+  actor: {
+    name: string;
+    username: string;
+    avatar: string;
+  };
+  action: string;
+  target: string;
+  severity: 'Info' | 'Warning' | 'Critical';
+  metadata?: any;
+}
+
+export interface SystemMetrics {
+  activeUsers: number;
+  liveWorkspaces: number;
+  repoActivityCount: number;
+  jobsCreatedToday: number;
+  communityHealthScore: number;
+  pendingFlags: number;
 }
