@@ -1,39 +1,55 @@
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const Highlights = () => {
+  const navigate = useNavigate();
+
   return (
-    <div className="mb-8 font-display">
-      <div className="flex items-center gap-2 mb-4">
+    <div className="font-display">
+      <div className="flex items-center gap-3 mb-8">
         <span className="material-symbols-outlined text-amber-500 filled !text-xl">bolt</span>
-        <h3 className="text-[16px] font-bold text-[#f0f6fc]">Highlights</h3>
+        <h3 className="text-[16px] font-black uppercase tracking-tight text-white">Highlights</h3>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="p-5 rounded-xl bg-[#161b22] border border-[#30363d] group hover:border-[#8b949e] transition-all cursor-pointer">
-          <div className="flex justify-between items-start mb-3">
-            <span className="text-[11px] font-black text-primary uppercase tracking-[0.1em]">Top Community Post</span>
-            <span className="text-amber-500 font-black flex items-center gap-1 text-[12px] bg-amber-500/10 px-1.5 py-0.5 rounded">
-              <span className="material-symbols-outlined !text-[14px]">arrow_upward</span> 342
-            </span>
-          </div>
-          <h4 className="text-[14px] font-bold text-[#f0f6fc] group-hover:text-primary transition-colors leading-tight">Guide: Implementing Zero-Trust with Rust in 2024</h4>
-        </div>
-        
-        <div className="p-5 rounded-xl bg-[#161b22] border border-[#30363d] group hover:border-[#8b949e] transition-all cursor-pointer">
-          <div className="flex justify-between items-start mb-3">
-            <span className="text-[11px] font-black text-emerald-400 uppercase tracking-[0.1em]">Best Project</span>
-            <span className="material-symbols-outlined text-emerald-500 filled !text-[18px]">check_circle</span>
-          </div>
-          <h4 className="text-[14px] font-bold text-[#f0f6fc] group-hover:text-emerald-400 transition-colors leading-tight">rust-crypto-guard</h4>
-          <p className="text-[11px] text-slate-500 mt-1">Used by 1.2k developers</p>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Community Highlight */}
+        <div 
+          onClick={() => navigate('/community')}
+          className="p-8 bg-[#161b22] border border-[#30363d] rounded-2xl group hover:border-primary/50 transition-all cursor-pointer relative overflow-hidden shadow-lg hover:shadow-primary/5"
+        >
+           <div className="flex justify-between items-start mb-6">
+              <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Top Community Post</span>
+              <div className="flex items-center gap-1 text-amber-500 font-black text-xs bg-amber-500/10 px-2 py-0.5 rounded-lg border border-amber-500/20">
+                 <span className="material-symbols-outlined !text-[16px]">arrow_upward</span> 342
+              </div>
+           </div>
+           <h4 className="text-[17px] font-bold text-white group-hover:text-primary transition-colors leading-snug">Guide: Implementing Zero-Trust with Rust in 2024</h4>
         </div>
 
-        <div className="p-5 rounded-xl bg-[#161b22] border border-[#30363d] group hover:border-[#8b949e] transition-all cursor-pointer">
-          <div className="flex justify-between items-start mb-3">
-            <span className="text-[11px] font-black text-amber-500 uppercase tracking-[0.1em]">Featured Gig</span>
-            <span className="px-2 py-0.5 bg-amber-500/10 text-amber-500 text-[9px] font-black rounded uppercase tracking-widest border border-amber-500/20">Open</span>
-          </div>
-          <h4 className="text-[14px] font-bold text-[#f0f6fc] group-hover:text-amber-500 transition-colors leading-tight">Security Audit for Enterprise DeFi Protocol</h4>
+        {/* Best Project Highlight */}
+        <div 
+          onClick={() => navigate('/repo/rust-crypto-guard')}
+          className="p-8 bg-[#161b22] border border-[#30363d] rounded-2xl group hover:border-emerald-500/50 transition-all cursor-pointer shadow-lg hover:shadow-emerald-500/5"
+        >
+           <div className="flex justify-between items-start mb-6">
+              <span className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.2em]">Best Project</span>
+              <span className="material-symbols-outlined text-emerald-500 filled !text-[20px]">check_circle</span>
+           </div>
+           <h4 className="text-[17px] font-bold text-white group-hover:text-emerald-400 transition-colors uppercase tracking-tight leading-none mb-2">rust-crypto-guard</h4>
+           <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">Used by 1.2k developers</p>
+        </div>
+
+        {/* Gig Highlight */}
+        <div 
+          onClick={() => navigate('/dashboard/jobs')}
+          className="p-8 bg-[#161b22] border border-[#30363d] rounded-2xl group hover:border-amber-500/50 transition-all cursor-pointer shadow-lg hover:shadow-amber-500/5"
+        >
+           <div className="flex justify-between items-start mb-6">
+              <span className="text-[10px] font-black text-amber-500 uppercase tracking-[0.2em]">Featured Gig</span>
+              <span className="px-2 py-0.5 bg-amber-500/10 text-amber-500 text-[9px] font-black rounded border border-amber-500/20 uppercase tracking-widest">Open</span>
+           </div>
+           <h4 className="text-[17px] font-bold text-white group-hover:text-amber-500 transition-colors uppercase tracking-tight leading-none mb-2">Security Audit for DeFi Protocol</h4>
+           <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">High Value Contract</p>
         </div>
       </div>
     </div>

@@ -1,34 +1,41 @@
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const SecurityImpact = () => {
+  const navigate = useNavigate();
+
   return (
-    <div className="p-6 rounded-xl bg-[#161b22] border border-[#30363d] font-display relative overflow-hidden group">
-      <div className="absolute -top-10 -right-10 size-32 bg-primary/5 rounded-full blur-3xl group-hover:scale-150 transition-transform"></div>
+    <div className="bg-[#161b22] border border-[#30363d] rounded-3xl p-8 h-full flex flex-col shadow-xl relative overflow-hidden group hover:border-emerald-500/30 transition-all">
+      <div className="absolute -top-12 -right-12 size-48 bg-emerald-500/5 rounded-full blur-3xl group-hover:bg-emerald-500/10 transition-all duration-1000"></div>
       
-      <div className="flex items-center gap-2 mb-8">
-        <span className="material-symbols-outlined text-emerald-500 !text-xl">verified_user</span>
-        <h3 className="text-[14px] font-black text-[#f0f6fc] tracking-tight uppercase">Security Impact</h3>
-        <div className="ml-auto size-6 bg-[#0d1117] border border-[#30363d] rounded flex items-center justify-center">
-            <span className="material-symbols-outlined !text-[14px] text-slate-600">shield</span>
-        </div>
+      <div className="flex items-center gap-3 mb-10 relative z-10">
+         <span className="material-symbols-outlined text-emerald-500 !text-[22px] filled">verified_user</span>
+         <h3 className="text-[15px] font-black text-white tracking-tight uppercase">Security Impact</h3>
+         <div className="ml-auto size-8 bg-[#0d1117] border border-[#30363d] rounded-lg flex items-center justify-center shadow-inner group-hover:border-emerald-500/30 transition-all">
+            <span className="material-symbols-outlined !text-[18px] text-slate-600">shield</span>
+         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 mb-6">
-        <div className="p-4 rounded-xl bg-[#0d1117] border border-[#30363d] flex flex-col justify-center">
-          <p className="text-[32px] font-black text-emerald-500 leading-none mb-1">142</p>
-          <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Vulns Fixed</p>
-        </div>
-        <div className="p-4 rounded-xl bg-[#0d1117] border border-[#30363d] flex flex-col justify-center">
-          <p className="text-[32px] font-black text-rose-500 leading-none mb-1">2</p>
-          <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Intro'd (90d)</p>
-        </div>
+      <div className="grid grid-cols-2 gap-6 mb-10 flex-1 relative z-10">
+         <div className="p-7 rounded-2xl bg-[#0d1117] border border-white/5 flex flex-col justify-center shadow-inner group-hover:border-emerald-500/20 transition-all">
+            <p className="text-5xl font-black text-emerald-500 leading-none mb-3 tracking-tighter shadow-emerald-500/10 drop-shadow-lg">142</p>
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.25em]">Vulns Fixed</p>
+         </div>
+         <div className="p-7 rounded-2xl bg-[#0d1117] border border-white/5 flex flex-col justify-center shadow-inner group-hover:border-rose-500/20 transition-all">
+            <p className="text-5xl font-black text-rose-500 leading-none mb-3 tracking-tighter">2</p>
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.25em]">Intro'd (90d)</p>
+         </div>
       </div>
 
-      <div className="flex items-center gap-2 text-[12px] text-slate-400">
-        <span className="material-symbols-outlined text-emerald-500 filled !text-[18px]">check_circle</span>
-        <span className="font-medium text-[#c9d1d9]">340 Reviews Completed</span>
-      </div>
+      <button 
+        onClick={() => navigate('/activity')}
+        className="flex items-center gap-3 pt-6 border-t border-white/5 w-full text-left group/btn"
+      >
+         <span className="material-symbols-outlined text-emerald-500 filled !text-[22px] group-hover/btn:scale-110 transition-transform">check_circle</span>
+         <span className="text-[13px] font-bold text-slate-300 group-hover/btn:text-white transition-colors">340 Reviews Completed</span>
+         <span className="material-symbols-outlined ml-auto text-slate-600 !text-[18px] group-hover/btn:translate-x-1 transition-transform">arrow_forward</span>
+      </button>
     </div>
   );
 };

@@ -17,15 +17,13 @@ interface ChatMessage {
 interface Participant {
   id: string;
   name: string;
+  username: string; // Added for mention system
   avatar: string;
   isMuted: boolean;
   isSharingScreen: boolean;
   role: 'host' | 'participant' | 'ai';
   isTalking?: boolean; 
 }
-
-const COMMON_EMOJIS = ['👍', '❤️', '🔥', '🚀', '😄', '💡'];
-const LANGUAGES = ['typescript', 'javascript', 'rust', 'go', 'python', 'json', 'markdown'];
 
 const SyntaxHighlighter: React.FC<{ code: string; lang?: string }> = ({ code, lang }) => {
   const [copied, setCopied] = useState(false);
@@ -49,11 +47,11 @@ const SyntaxHighlighter: React.FC<{ code: string; lang?: string }> = ({ code, la
   };
 
   return (
-    <div className="group/code relative my-4 rounded-xl overflow-hidden border border-[#30363d] bg-[#090d13]">
+    <div className="group/code relative my-4 rounded-lg overflow-hidden border border-[#30363d] bg-[#090d13]">
       <div className="flex items-center justify-between px-4 py-1.5 bg-[#161b22] border-b border-[#30363d]">
         <div className="flex items-center gap-2">
           <span className="size-2 rounded-full bg-primary/50"></span>
-          <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{lang || 'code'}</span>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">{lang || 'code'}</span>
         </div>
         <button 
           onClick={handleCopy}
@@ -91,10 +89,10 @@ const INITIAL_MESSAGES: ChatMessage[] = [
 ];
 
 const INITIAL_PARTICIPANTS: Participant[] = [
-  { id: 'p1', name: 'Sarah Chen', avatar: 'https://picsum.photos/seed/sarah/64', isMuted: false, isSharingScreen: true, role: 'host', isTalking: true },
-  { id: 'p2', name: 'Marcus Thorne', avatar: 'https://picsum.photos/seed/marcus/64', isMuted: true, isSharingScreen: false, role: 'participant' },
-  { id: 'p3', name: 'Alex Rivers', avatar: 'https://picsum.photos/seed/alex/64', isMuted: false, isSharingScreen: false, role: 'participant', isTalking: false },
-  { id: 'ai-1', name: 'ForgeAI', avatar: 'https://picsum.photos/seed/ai/64', isMuted: false, isSharingScreen: false, role: 'ai' },
+  { id: 'p1', name: 'Sarah Chen', username: 'sarahchen', avatar: 'https://picsum.photos/seed/sarah/64', isMuted: false, isSharingScreen: true, role: 'host', isTalking: true },
+  { id: 'p2', name: 'Marcus Thorne', username: 'marcusthorne', avatar: 'https://picsum.photos/seed/marcus/64', isMuted: true, isSharingScreen: false, role: 'participant' },
+  { id: 'p3', name: 'Alex Rivers', username: 'alexrivers', avatar: 'https://picsum.photos/seed/alex/64', isMuted: false, isSharingScreen: false, role: 'participant', isTalking: false },
+  { id: 'ai-1', name: 'ForgeAI', username: 'forgeai', avatar: 'https://picsum.photos/seed/ai/64', isMuted: false, isSharingScreen: false, role: 'ai' },
 ];
 
 const LiveSessions = () => {
@@ -104,17 +102,8 @@ const LiveSessions = () => {
   const [isHosting, setIsHosting] = useState(true);
   const [participants, setParticipants] = useState<Participant[]>(INITIAL_PARTICIPANTS);
   const [isSharingMyScreen, setIsSharingMyScreen] = useState(false);
-  const [allMuted, setAllMuted] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
-  const [auditLog, setAuditLog] = useState<string[]>([
-    'Sarah Chen started screen sharing via IDE instance',
-    'Audio channels synchronized with ForgeAI noise reduction'
-  ]);
   
-  const [isSnippetModalOpen, setIsSnippetModalOpen] = useState(false);
-  const [snippetCode, setSnippetCode] = useState('');
-  const [snippetLang, setSnippetLang] = useState('typescript');
-
   // Mention system states
   const [showMentionPicker, setShowMentionPicker] = useState(false);
   const [mentionSearch, setMentionSearch] = useState('');
@@ -140,33 +129,23 @@ const LiveSessions = () => {
     }));
   };
 
-  const toggleMuteAll = () => {
-    const nextState = !allMuted;
-    setAllMuted(nextState);
-    setParticipants(prev => prev.map(p => 
-      p.role === 'participant' ? { ...p, isMuted: nextState, isTalking: nextState ? false : p.isTalking } : p
-    ));
-  };
-
-  const kickParticipant = (id: string, name: string) => {
-    if (confirm(`Are you sure you want to remove ${name} from this session?`)) {
-      setParticipants(prev => prev.filter(p => p.id !== id));
-    }
-  };
-
   const stopSession = () => {
-    if (confirm("Are you sure you want to end this live session for everyone?")) {
+    if (confirm("Are you sure you want to end this live session?")) {
       setIsHosting(false);
     }
   };
 
   const adjustFontSize = (delta: number) => {
-    setChatFontSize(prev => Math.min(Math.max(prev + delta, 11), 22));
+    setChatFontSize(prev => Math.min(Math.max(prev + delta, 11), 20));
   };
 
-  // Mentions logic
+  // --- Mention System Logic ---
+
   const filteredParticipants = useMemo(() => {
-    return participants.filter(p => p.name.toLowerCase().includes(mentionSearch.toLowerCase()));
+    return participants.filter(p => 
+      p.username.toLowerCase().includes(mentionSearch.toLowerCase()) ||
+      p.name.toLowerCase().includes(mentionSearch.toLowerCase())
+    );
   }, [participants, mentionSearch]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -177,7 +156,7 @@ const LiveSessions = () => {
     const textBeforeCursor = value.slice(0, cursorPosition);
     const lastAtSymbol = textBeforeCursor.lastIndexOf('@');
 
-    // Show picker if '@' is at the end of word or start of string
+    // Trigger if '@' is at start or follows a space, and no spaces follow it
     if (lastAtSymbol !== -1 && (lastAtSymbol === 0 || textBeforeCursor[lastAtSymbol - 1] === ' ')) {
       const query = textBeforeCursor.slice(lastAtSymbol + 1);
       if (!query.includes(' ')) {
@@ -200,12 +179,13 @@ const LiveSessions = () => {
     const textBeforeMention = inputValue.slice(0, lastAtSymbol);
     const textAfterMention = inputValue.slice(cursorPosition);
     
-    const mentionText = `@${participant.name} `;
+    const mentionText = `@${participant.username} `;
     const newValue = `${textBeforeMention}${mentionText}${textAfterMention}`;
     
     setInputValue(newValue);
     setShowMentionPicker(false);
     
+    // Maintain focus and set cursor after the inserted mention
     setTimeout(() => {
       if (inputRef.current) {
         inputRef.current.focus();
@@ -233,10 +213,6 @@ const LiveSessions = () => {
     }
   };
 
-  const addToAuditLog = (msg: string) => {
-    setAuditLog(prev => [msg, ...prev].slice(0, 5));
-  };
-
   const handleSendMessage = async (e?: React.FormEvent, customText?: string) => {
     if (e) e.preventDefault();
     const textToSend = (customText || inputValue).trim();
@@ -262,8 +238,6 @@ const LiveSessions = () => {
 
     if (shouldTriggerAI) {
       setIsTyping(true);
-      addToAuditLog(`ForgeAI analyzing request...`);
-
       try {
         const activeSession = MOCK_SESSIONS[0];
         const participantNames = participants.map(p => p.name);
@@ -283,7 +257,7 @@ const LiveSessions = () => {
           id: (Date.now() + 1).toString(),
           sender: 'ForgeAI',
           avatar: 'https://picsum.photos/seed/ai/64',
-          text: aiResponse || "Analysis complete.",
+          text: aiResponse || "Understood. Analyzing code blocks now.",
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           isMe: false,
           isAI: true,
@@ -296,31 +270,6 @@ const LiveSessions = () => {
         setIsTyping(false);
       }
     }
-  };
-
-  const handleShareSnippet = () => {
-    if (!snippetCode.trim()) return;
-    const formatted = `\`\`\`${snippetLang}\n${snippetCode}\n\`\`\``;
-    handleSendMessage(undefined, formatted);
-    setIsSnippetModalOpen(false);
-    setSnippetCode('');
-  };
-
-  const handleReaction = (messageId: string, emoji: string) => {
-    setMessages(prev => prev.map(msg => {
-      if (msg.id === messageId) {
-        const reactions = { ...(msg.reactions || {}) };
-        const users = (reactions[emoji] ? [...reactions[emoji]] : []) as string[];
-        if (users.includes('You')) {
-          reactions[emoji] = users.filter(u => u !== 'You');
-          if (reactions[emoji].length === 0) delete reactions[emoji];
-        } else {
-          reactions[emoji] = [...users, 'You'];
-        }
-        return { ...msg, reactions };
-      }
-      return msg;
-    }));
   };
 
   const renderMessageContent = (text: string) => {
@@ -344,182 +293,104 @@ const LiveSessions = () => {
   };
 
   const renderTextWithMentions = (text: string) => {
-    const parts = text.split(/(@\w+(?:\s\w+)?)/g);
+    // Regex for @username (matches alphanumeric and common separators)
+    const parts = text.split(/(@[a-zA-Z0-9_]+)/g);
     return parts.map((part, i) => {
       if (part.startsWith('@')) {
-        return <span key={i} className="text-primary font-bold">{part}</span>;
+        return (
+          <span key={i} className="text-primary font-bold hover:underline cursor-pointer transition-all">
+            {part}
+          </span>
+        );
       }
       return part;
     });
   };
 
   return (
-    <div className="flex h-full overflow-hidden relative">
+    <div className="flex h-full overflow-hidden bg-gh-bg font-display">
       <div className="flex-1 p-8 overflow-y-auto custom-scrollbar">
-        <div className="flex items-start justify-between mb-8">
+        <div className="flex items-start justify-between mb-8 border-b border-gh-border pb-6">
           <div>
-            <h1 className="text-3xl font-black tracking-tight mb-2 font-display">Live Sessions</h1>
-            <p className="text-slate-500 text-sm max-w-xl leading-relaxed">
-              Real-time high-fidelity collaboration for distributed engineering teams.
+            <h1 className="text-2xl font-bold text-white tracking-tight">Live Engineering Session</h1>
+            <p className="text-gh-text-secondary text-sm mt-1">
+              Synchronized cloud environment for {MOCK_SESSIONS[0].project}.
             </p>
           </div>
-          {!isHosting && (
-             <button 
-              onClick={() => setIsHosting(true)}
-              className="bg-primary hover:bg-blue-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all shadow-lg shadow-primary/20"
-             >
-               <span className="material-symbols-outlined text-lg">add_circle</span>
-               New Live Session
-             </button>
-          )}
+          <div className="flex items-center gap-3">
+             {isHosting && (
+                <>
+                   <button 
+                    onClick={() => setIsRecording(!isRecording)}
+                    className={`flex items-center gap-2 px-4 h-9 rounded-md text-xs font-bold transition-all border ${isRecording ? 'bg-rose-500/10 text-rose-500 border-rose-500/20' : 'bg-gh-bg-secondary text-gh-text-secondary border-gh-border hover:text-white'}`}
+                   >
+                     <span className={`material-symbols-outlined !text-[18px] ${isRecording ? 'animate-pulse filled' : ''}`}>fiber_manual_record</span>
+                     {isRecording ? 'RECORDING' : 'Record'}
+                   </button>
+                   <button 
+                    onClick={stopSession}
+                    className="flex items-center gap-2 px-4 h-9 bg-rose-600 hover:bg-rose-500 text-white rounded-md text-xs font-bold transition-all shadow-sm"
+                   >
+                     End Session
+                   </button>
+                </>
+             )}
+          </div>
         </div>
 
-        {isHosting && (
-          <section className="mb-10 animate-in fade-in slide-in-from-top-4 duration-500">
-            <div className="bg-surface-dark border-2 border-primary/20 rounded-2xl overflow-hidden shadow-2xl">
-              <div className="p-6 bg-gradient-to-r from-primary/10 to-transparent border-b border-border-dark flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="size-12 rounded-xl bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/30">
-                    <span className="material-symbols-outlined text-2xl">settings_input_component</span>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {participants.map(p => (
+            <div key={p.id} className="bg-gh-bg-secondary border border-gh-border rounded-xl p-5 flex items-center justify-between group hover:border-gh-text-secondary transition-all">
+               <div className="flex items-center gap-4">
+                  <div className="relative">
+                    <img src={p.avatar} alt={p.name} className={`size-12 rounded-full border-2 transition-all ${p.isTalking ? 'border-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]' : 'border-gh-border'}`} />
+                    {p.isTalking && <span className="absolute -bottom-1 -right-1 size-3 bg-emerald-500 rounded-full border-2 border-gh-bg-secondary"></span>}
                   </div>
                   <div>
-                    <h2 className="text-lg font-bold flex items-center gap-2">
-                      Host Command Console 
-                      <span className="px-2 py-0.5 rounded-full bg-primary text-[10px] font-black uppercase tracking-widest text-white">Master</span>
-                    </h2>
-                    <p className="text-xs text-slate-400 font-mono flex items-center gap-2">
-                      <span className="size-2 rounded-full bg-emerald-500"></span>
-                      Streaming 1080p • Low Latency
-                    </p>
+                    <h3 className="font-bold text-white text-sm">{p.name}</h3>
+                    <p className="text-[10px] text-gh-text-secondary font-bold uppercase tracking-widest">{p.role}</p>
                   </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <button 
-                    onClick={() => setIsRecording(!isRecording)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all border ${isRecording ? 'bg-red-500 text-white border-red-400 animate-pulse' : 'bg-surface-dark text-slate-400 border-border-dark hover:text-white hover:border-slate-500'}`}
-                  >
-                    <span className="material-symbols-outlined text-[18px]">{isRecording ? 'radio_button_checked' : 'fiber_manual_record'}</span>
-                    {isRecording ? 'REC 00:45:12' : 'Record Session'}
+               </div>
+               <div className="flex items-center gap-2">
+                  <button onClick={() => toggleMute(p.id)} className={`size-8 rounded-md flex items-center justify-center border transition-all ${p.isMuted ? 'bg-rose-500/10 border-rose-500/20 text-rose-500' : 'bg-gh-bg border-gh-border text-gh-text-secondary hover:text-white'}`}>
+                     <span className="material-symbols-outlined !text-[18px]">{p.isMuted ? 'mic_off' : 'mic'}</span>
                   </button>
-                  <button 
-                    onClick={() => setIsSharingMyScreen(!isSharingMyScreen)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all border ${isSharingMyScreen ? 'bg-emerald-500 text-white border-emerald-400 shadow-lg shadow-emerald-500/20' : 'bg-surface-dark text-slate-400 border-border-dark hover:text-white hover:border-slate-500'}`}
-                  >
-                    <span className="material-symbols-outlined text-[18px]">{isSharingMyScreen ? 'screen_share' : 'stop_screen_share'}</span>
-                    {isSharingMyScreen ? 'Sharing' : 'Share Screen'}
+                  <button className="size-8 rounded-md flex items-center justify-center bg-gh-bg border border-gh-border text-gh-text-secondary hover:text-white transition-all opacity-0 group-hover:opacity-100">
+                     <span className="material-symbols-outlined !text-[18px]">more_vert</span>
                   </button>
-                  <button 
-                    onClick={stopSession}
-                    className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-red-500/20"
-                  >
-                    <span className="material-symbols-outlined text-[18px]">power_settings_new</span>
-                    End Session
-                  </button>
-                </div>
-              </div>
-
-              <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500 flex items-center gap-2">
-                      <span className="material-symbols-outlined text-sm">engineering</span>
-                      Manage Engineers ({participants.length})
-                    </h3>
-                  </div>
-                  <div className="space-y-2 max-h-[320px] overflow-y-auto custom-scrollbar pr-3">
-                    {participants.map(p => (
-                      <div key={p.id} className={`flex items-center justify-between p-3 rounded-xl bg-background-dark/40 border transition-all group ${p.isMuted ? 'border-red-500/10 opacity-70' : 'border-border-dark hover:border-primary/30'}`}>
-                        <div className="flex items-center gap-3">
-                          <img src={p.avatar} alt={p.name} className="size-10 rounded-full border border-border-dark object-cover" />
-                          <div>
-                            <p className="text-sm font-bold text-slate-200">{p.name}</p>
-                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{p.role}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <button onClick={() => toggleMute(p.id)} className="size-8 rounded-lg flex items-center justify-center bg-slate-800 text-slate-400 hover:text-white">
-                             <span className="material-symbols-outlined text-[18px]">{p.isMuted ? 'mic_off' : 'mic'}</span>
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex flex-col">
-                   <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500 mb-4 flex items-center gap-2">
-                      <span className="material-symbols-outlined text-sm">analytics</span>
-                      Session Health
-                   </h3>
-                   <div className="flex-1 grid grid-cols-2 gap-4">
-                      <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10 flex flex-col justify-center">
-                        <p className="text-[10px] font-bold text-primary uppercase">Spectators</p>
-                        <p className="text-3xl font-black">124</p>
-                      </div>
-                      <div className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 flex flex-col justify-center">
-                        <p className="text-[10px] font-bold text-emerald-500 uppercase">Commits</p>
-                        <p className="text-3xl font-black">12</p>
-                      </div>
-                   </div>
-                </div>
-              </div>
+               </div>
             </div>
-          </section>
-        )}
-
-        <section>
-          <div className="flex items-center gap-3 mb-6">
-            <h3 className="text-lg font-bold">Recommended Sessions</h3>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {MOCK_SESSIONS.map(session => (
-              <div key={session.id} className="bg-surface-dark rounded-2xl border border-border-dark p-6 hover:border-primary/50 transition-all group">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                    <span className="material-symbols-outlined">hub</span>
-                  </div>
-                  <h4 className="font-bold text-sm text-slate-100">{session.title}</h4>
-                </div>
-                <button className="w-full bg-primary/10 hover:bg-primary text-primary hover:text-white py-2 rounded-xl text-xs font-black transition-all">
-                  Join Session
-                </button>
-              </div>
-            ))}
-          </div>
-        </section>
+          ))}
+        </div>
       </div>
 
-      <aside className="w-85 border-l border-border-dark bg-surface-dark/10 flex flex-col shrink-0 relative backdrop-blur-sm">
-        <div className="p-5 border-b border-border-dark bg-background-dark/50">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary filled">diversity_3</span>
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Live Chat</span>
-            </div>
-            <div className="flex items-center bg-surface-dark border border-border-dark rounded-lg p-0.5 overflow-hidden">
-                <button onClick={() => adjustFontSize(-1)} className="size-6 flex items-center justify-center text-slate-400 hover:text-white text-xs"><span className="material-symbols-outlined !text-[14px]">remove</span></button>
-                <button onClick={() => adjustFontSize(1)} className="size-6 flex items-center justify-center text-slate-400 hover:text-white text-xs"><span className="material-symbols-outlined !text-[14px]">add</span></button>
-            </div>
+      {/* Chat Sidebar with Mention System */}
+      <aside className="w-[400px] border-l border-gh-border bg-gh-bg flex flex-col shrink-0 relative">
+        <div className="h-14 px-6 flex items-center justify-between border-b border-gh-border bg-black/10">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-primary !text-[18px] filled">forum</span>
+            <span className="text-[11px] font-bold uppercase tracking-widest text-gh-text-secondary">Session Chat</span>
+          </div>
+          <div className="flex items-center gap-2">
+             <button onClick={() => adjustFontSize(-1)} className="text-gh-text-secondary hover:text-white transition-colors"><span className="material-symbols-outlined !text-[16px]">remove</span></button>
+             <button onClick={() => adjustFontSize(1)} className="text-gh-text-secondary hover:text-white transition-colors"><span className="material-symbols-outlined !text-[16px]">add</span></button>
           </div>
         </div>
 
-        <div 
-          ref={scrollRef}
-          className="flex-1 p-5 overflow-y-auto custom-scrollbar flex flex-col gap-6"
-        >
+        <div ref={scrollRef} className="flex-1 p-6 overflow-y-auto custom-scrollbar flex flex-col gap-6">
           {messages.map((msg) => (
             <div key={msg.id} className={`flex gap-3 ${msg.isMe ? 'flex-row-reverse' : ''}`}>
-              <img src={msg.avatar} alt={msg.sender} className="size-9 rounded-full shrink-0 border border-border-dark object-cover" />
+              <img src={msg.avatar} alt={msg.sender} className="size-8 rounded-full shrink-0 border border-gh-border object-cover" />
               <div className={`flex flex-col max-w-[85%] ${msg.isMe ? 'items-end' : ''}`}>
                 <div className="flex items-center gap-2 mb-1 px-1">
-                  <span className={`text-[11px] font-black uppercase tracking-tight ${msg.isAI ? 'text-primary' : 'text-slate-400'}`}>{msg.sender}</span>
+                  <span className={`text-[10px] font-bold uppercase ${msg.isAI ? 'text-primary' : 'text-gh-text-secondary'}`}>{msg.sender}</span>
                 </div>
                 <div 
                   style={{ fontSize: `${chatFontSize}px` }}
-                  className={`p-3 rounded-2xl ${
+                  className={`p-3 rounded-xl border leading-relaxed ${
                     msg.isMe 
-                      ? 'bg-primary text-white rounded-tr-none' 
-                      : 'bg-surface-dark border border-border-dark text-slate-200 rounded-tl-none'
+                      ? 'bg-primary text-gh-bg font-medium border-primary' 
+                      : 'bg-gh-bg-secondary border-gh-border text-gh-text'
                   }`}
                 >
                   {renderMessageContent(msg.text)}
@@ -529,57 +400,63 @@ const LiveSessions = () => {
           ))}
           {isTyping && (
             <div className="flex gap-3 animate-pulse">
-               <div className="size-9 rounded-full bg-slate-800" />
-               <div className="bg-surface-dark p-3 rounded-2xl rounded-tl-none w-16 h-8" />
+               <div className="size-8 rounded-full bg-gh-bg-secondary border border-gh-border" />
+               <div className="bg-gh-bg-secondary border border-gh-border p-3 rounded-xl w-16 h-8" />
             </div>
           )}
         </div>
 
-        {/* Mention Picker Dropdown */}
+        {/* --- Mention Picker Dropdown --- */}
         {showMentionPicker && filteredParticipants.length > 0 && (
-          <div className="absolute bottom-24 left-5 right-5 bg-[#161b22] border-2 border-primary/30 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-50 overflow-hidden animate-in fade-in slide-in-from-bottom-2">
-            <div className="p-2 border-b border-[#30363d] bg-black/20">
-              <p className="text-[9px] font-black text-primary uppercase tracking-widest pl-2">Mention Participant</p>
+          <div className="absolute bottom-24 left-6 right-6 bg-[#1c2128] border border-gh-border rounded-lg shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-bottom-2 ring-1 ring-black/50">
+            <div className="px-3 py-2 border-b border-gh-border bg-black/20">
+              <p className="text-[9px] font-bold text-gh-text-secondary uppercase tracking-widest">Suggestions</p>
             </div>
-            <div className="max-h-56 overflow-y-auto custom-scrollbar">
+            <div className="max-h-64 overflow-y-auto custom-scrollbar">
               {filteredParticipants.map((p, i) => (
                 <button
                   key={p.id}
-                  className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-all ${
-                    i === pickerIndex ? 'bg-primary/20 border-l-4 border-primary' : 'hover:bg-white/5 border-l-4 border-transparent'
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-all ${
+                    i === pickerIndex ? 'bg-primary text-gh-bg' : 'hover:bg-white/5'
                   }`}
                   onClick={() => selectMention(p)}
                 >
-                  <img src={p.avatar} alt={p.name} className="size-7 rounded-full border border-[#30363d]" />
-                  <div>
-                    <span className="text-xs font-bold text-slate-100 block">{p.name}</span>
-                    <span className="text-[9px] text-slate-500 uppercase">{p.role}</span>
+                  <img src={p.avatar} alt={p.name} className={`size-6 rounded-full border ${i === pickerIndex ? 'border-gh-bg' : 'border-gh-border'}`} />
+                  <div className="min-w-0">
+                    <span className={`text-[13px] font-bold block truncate ${i === pickerIndex ? 'text-gh-bg' : 'text-gh-text'}`}>{p.name}</span>
+                    <span className={`text-[10px] font-medium uppercase tracking-tight ${i === pickerIndex ? 'text-gh-bg/70' : 'text-gh-text-secondary'}`}>@{p.username}</span>
                   </div>
+                  {p.role === 'ai' && (
+                    <span className={`ml-auto material-symbols-outlined !text-[16px] filled ${i === pickerIndex ? 'text-gh-bg' : 'text-primary'}`}>auto_awesome</span>
+                  )}
                 </button>
               ))}
             </div>
           </div>
         )}
 
-        <div className="p-5 bg-background-dark/80 border-t border-border-dark">
+        <div className="p-6 bg-gh-bg border-t border-gh-border">
           <form onSubmit={handleSendMessage} className="relative">
             <input 
               ref={inputRef}
               value={inputValue}
               onChange={handleInputChange}
               onKeyDown={handleKeyDown}
-              className="w-full bg-surface-dark border-2 border-border-dark rounded-2xl text-[13px] p-4 pr-12 focus:ring-0 focus:border-primary placeholder:text-slate-600 text-white transition-all shadow-inner" 
-              placeholder="Type @ to mention..."
+              className="w-full bg-gh-bg-secondary border border-gh-border rounded-md text-[13px] p-3 pr-12 focus:ring-1 focus:ring-primary focus:border-primary placeholder:text-slate-600 text-gh-text transition-all outline-none" 
+              placeholder="Message session... (Type @ for mentions)"
               autoComplete="off"
             />
             <button 
               type="submit"
               disabled={!inputValue.trim()}
-              className="absolute right-3 top-2.5 size-9 flex items-center justify-center bg-primary disabled:bg-slate-800 text-white disabled:text-slate-600 rounded-xl transition-all"
+              className="absolute right-2 top-1.5 size-8 flex items-center justify-center text-gh-text-secondary hover:text-primary transition-all disabled:opacity-30"
             >
-              <span className="material-symbols-outlined !text-[20px] filled">arrow_forward</span>
+              <span className="material-symbols-outlined !text-[20px] filled">send</span>
             </button>
           </form>
+          <p className="text-[10px] text-gh-text-secondary mt-3 font-medium text-center">
+             ForgeAI summarizes session chat every 15 minutes.
+          </p>
         </div>
       </aside>
     </div>

@@ -8,13 +8,15 @@ import { communityBus } from '../../services/communityBus';
 import { CommunityComment } from '../../types';
 import { profileService } from '../../services/profile';
 
-const PostCard = ({ post }: { post: any }) => {
+// Typed as React.FC to allow standard props like 'key' when rendered in lists
+const PostCard: React.FC<{ post: any }> = ({ post }) => {
   const navigate = useNavigate();
   const [upvotes, setUpvotes] = useState(post.upvotes);
   const [isTyping, setIsTyping] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [commentInput, setCommentInput] = useState('');
   const [showHoverCard, setShowHoverCard] = useState(false);
+  const [justLiked, setJustLiked] = useState(false);
   const [commentsList, setCommentsList] = useState<CommunityComment[]>(post.commentsData || [
     {
       id: 'c1',
@@ -44,22 +46,44 @@ const PostCard = ({ post }: { post: any }) => {
         setIsTyping(true);
         setTimeout(() => setIsTyping(false), 3000);
       }
+      
       if (event.type === 'REACTION_ADDED' && event.data.postId === post.id) {
-        setUpvotes(prev => prev + 1);
-        // Karma: receiving likes (+1)
-        if (post.author.username === profileService.getProfile().username) {
-          profileService.receiveLike();
+        // Only increment if it's from another user (to avoid double count)
+        if (event.data.userId !== 'current') {
+          setUpvotes(prev => prev + 1);
+          setJustLiked(true);
+          setTimeout(() => setJustLiked(false), 1000);
+
+          // If current user is author, show notification and gain karma
+          const currentUser = profileService.getProfile();
+          if (post.author.username === currentUser.username) {
+            profileService.receiveLike();
+            window.dispatchEvent(new CustomEvent('trackcodex-notification', {
+              detail: {
+                title: 'Post Liked',
+                message: `@${event.data.userId} upvoted your post!`,
+                type: 'success'
+              }
+            }));
+          }
         }
       }
+
       if (event.type === 'COMMUNITY_COMMENT_ADDED' && event.data.postId === post.id) {
-        addCommentToState(event.data.comment, event.data.parentCommentId);
-        // Karma: receiving comments (+2)
-        if (post.author.username === profileService.getProfile().username) {
-          profileService.receiveComment();
+        // Check if we already have this comment (local submission)
+        const isDuplicate = commentsList.some(c => c.id === event.data.comment.id);
+        if (!isDuplicate) {
+          addCommentToState(event.data.comment, event.data.parentCommentId);
+          setShowComments(true);
+          
+          // Karma for receiving comments
+          if (post.author.username === profileService.getProfile().username) {
+            profileService.receiveComment();
+          }
         }
       }
     });
-  }, [post.id]);
+  }, [post.id, commentsList]);
 
   const addCommentToState = (newComment: CommunityComment, parentId?: string) => {
     if (!parentId) {
@@ -102,7 +126,11 @@ const PostCard = ({ post }: { post: any }) => {
       return;
     }
     
+    // Optimistic local update
     setUpvotes(prev => prev + delta);
+    setJustLiked(true);
+    setTimeout(() => setJustLiked(false), 1000);
+
     communityBus.publish({ 
       type: 'REACTION_ADDED', 
       data: { postId: post.id, emoji: 'up', userId: 'current' } 
@@ -133,6 +161,9 @@ const PostCard = ({ post }: { post: any }) => {
       upvotes: 0,
       replies: []
     };
+
+    // Add locally immediately for smoothness
+    addCommentToState(newComment, replyTo?.id);
 
     communityBus.publish({
       type: 'COMMUNITY_COMMENT_ADDED',
@@ -258,9 +289,12 @@ const PostCard = ({ post }: { post: any }) => {
       <div className="flex items-center justify-between pt-4 border-t border-[#30363d]">
         <div className="flex items-center gap-4">
           <div className="flex items-center bg-[#0d1117] border border-[#30363d] rounded-lg p-1">
-            <button onClick={() => handleVote(1)} className="px-3 py-1 flex items-center gap-1.5 text-slate-400 hover:text-white transition-colors">
-              <span className="material-symbols-outlined !text-[18px]">arrow_upward</span>
-              <span className="text-[13px] font-bold text-white">{upvotes}</span>
+            <button 
+              onClick={() => handleVote(1)} 
+              className={`px-3 py-1 flex items-center gap-1.5 transition-all ${justLiked ? 'text-primary scale-110' : 'text-slate-400 hover:text-white'}`}
+            >
+              <span className={`material-symbols-outlined !text-[18px] ${justLiked ? 'filled' : ''}`}>arrow_upward</span>
+              <span className="text-[13px] font-bold">{upvotes}</span>
             </button>
             <div className="w-px h-4 bg-[#30363d] mx-1"></div>
             <button onClick={() => handleVote(-1)} className="px-3 py-1 flex items-center gap-1.5 text-slate-400 hover:text-white transition-colors">

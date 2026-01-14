@@ -1,11 +1,10 @@
-
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TrackCodex | Enterprise IDE</title>
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23135bec'/><path d='M30 30h40v40h-40z' fill='white' opacity='0.2'/></svg>">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg viewBox='0 0 512 512' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M256 64L448 256L320 384L128 192L256 64Z' fill='%23135bec'/><path d='M256 448L64 256L192 128L384 320L256 448Z' fill='%230a46c2'/></svg>">
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
@@ -15,23 +14,54 @@
             theme: {
                 extend: {
                     colors: {
-                        "primary": "#135bec",
-                        "background-light": "#f6f6f8",
-                        "background-dark": "#09090b",
-                        "surface-dark": "#18181b",
-                        "border-dark": "#27272a",
-                        "card-dark": "#1a212f",
+                        "primary": "#58a6ff",
+                        "gh-bg": "var(--gh-bg)",
+                        "gh-bg-secondary": "var(--gh-bg-secondary)",
+                        "gh-border": "var(--gh-border)",
+                        "gh-text": "var(--gh-text)",
+                        "gh-text-secondary": "var(--gh-text-secondary)",
+                        "vscode-editor": "#0d1117",
+                        "vscode-sidebar": "#010409",
+                        "vscode-border": "#30363d",
                     },
                     fontFamily: {
-                        "display": ["Inter", "sans-serif"],
-                        "mono": ["JetBrains Mono", "monospace"]
+                        "display": ["Inter", "SF Pro Display", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
+                        "mono": ["JetBrains Mono", "ui-monospace", "SFMono-Regular", "Menlo", "Monaco", "Consolas", "monospace"]
                     }
                 },
             },
         }
     </script>
     <style>
-        body { margin: 0; padding: 0; font-family: 'Inter', sans-serif; overflow: hidden; height: 100vh; }
+        :root {
+            --gh-bg: #ffffff;
+            --gh-bg-secondary: #f6f8fa;
+            --gh-border: #d0d7de;
+            --gh-text: #24292f;
+            --gh-text-secondary: #57606a;
+        }
+        .dark {
+            --gh-bg: #0d1117;
+            --gh-bg-secondary: #161b22;
+            --gh-border: #30363d;
+            --gh-text: #c9d1d9;
+            --gh-text-secondary: #8b949e;
+        }
+        :root.high-contrast {
+            --gh-border: #aeaeae;
+            --gh-text: #000000;
+            --gh-text-secondary: #444444;
+        }
+        .dark.high-contrast {
+            --gh-bg: #010409;
+            --gh-bg-secondary: #010409;
+            --gh-border: #484f58;
+            --gh-text: #f0f6fc;
+            --gh-text-secondary: #a1a9b2;
+        }
+
+        html { scroll-behavior: smooth; }
+        body { margin: 0; padding: 0; font-family: 'Inter', sans-serif; overflow: hidden; height: 100vh; background-color: var(--gh-bg); color: var(--gh-text); }
         .material-symbols-outlined {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
             display: inline-block;
@@ -39,20 +69,22 @@
         }
         .material-symbols-outlined.filled { font-variation-settings: 'FILL' 1; }
         
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #27272a; border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
+        /* More prominent scrollbars for accessibility */
+        .custom-scrollbar::-webkit-scrollbar { width: 10px; height: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: var(--gh-bg); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--gh-border); border-radius: 10px; border: 2px solid var(--gh-bg); }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #58a6ff; }
 
-        @keyframes shimmer {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
+        /* Utilitarian Transitions */
+        * { transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease; }
+
+        pre { font-family: 'JetBrains Mono', monospace; }
+
+        @keyframes fadeInScale {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
         }
-        .skeleton {
-            background: linear-gradient(90deg, #1f2937 25%, #374151 50%, #1f2937 75%);
-            background-size: 200% 100%;
-            animation: shimmer 1.5s infinite linear;
-        }
+        .animate-fab { animation: fadeInScale 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
     </style>
 <script type="importmap">
 {
@@ -62,12 +94,18 @@
     "@google/genai": "https://esm.sh/@google/genai@^1.35.0",
     "react/": "https://esm.sh/react@^19.2.3/",
     "react": "https://esm.sh/react@^19.2.3",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/"
+    "react-dom": "https://esm.sh/react-dom@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "@monaco-editor/react": "https://esm.sh/@monaco-editor/react@^4.7.0",
+    "fastify": "https://esm.sh/fastify@^5.6.2",
+    "@fastify/websocket": "https://esm.sh/@fastify/websocket@^11.2.0",
+    "@fastify/cors": "https://esm.sh/@fastify/cors@^11.2.0",
+    "process": "https://esm.sh/process@^0.11.10"
   }
 }
 </script>
 </head>
-<body class="bg-background-dark text-slate-100 antialiased">
+<body class="antialiased">
     <div id="root"></div>
 </body>
 </html>

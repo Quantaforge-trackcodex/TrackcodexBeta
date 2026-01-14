@@ -1,33 +1,55 @@
 
 import React from 'react';
-import { BarChart, Bar, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, ResponsiveContainer, Cell } from 'recharts';
+import { useNavigate } from 'react-router-dom';
 
 const DATA = [
-  { value: 20 }, { value: 45 }, { value: 65 }, { value: 35 }, { value: 85 }
+  { value: 40 }, { value: 65 }, { value: 85 }, { value: 50 }, { value: 95 }
 ];
 
 const ForgeAIUsage = () => {
+  const navigate = useNavigate();
+
   return (
-    <div className="p-6 rounded-xl bg-[#161b22] border border-[#30363d] font-display flex flex-col h-full">
+    <div className="bg-[#161b22] border border-[#30363d] rounded-3xl p-8 flex flex-col shadow-xl group hover:border-cyan-500/30 transition-all">
       <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-2">
-          <span className="material-symbols-outlined text-cyan-400 filled !text-xl">auto_awesome</span>
-          <h3 className="text-[14px] font-black text-[#f0f6fc] tracking-tight uppercase">ForgeAI Usage</h3>
+        <div className="flex items-center gap-3">
+           <span className="material-symbols-outlined text-cyan-400 filled !text-[22px]">auto_awesome</span>
+           <h3 className="text-[15px] font-black text-white tracking-tight uppercase">ForgeAI Usage</h3>
         </div>
-        <span className="px-2 py-0.5 bg-cyan-500/10 text-cyan-400 text-[9px] font-black rounded uppercase border border-cyan-400/20 tracking-widest">Pro</span>
+        <button 
+          onClick={() => navigate('/settings')}
+          className="px-3 py-1 bg-cyan-400/5 border border-cyan-400/20 text-cyan-400 text-[9px] font-black uppercase tracking-widest rounded-lg shadow-[0_0_10px_rgba(34,211,238,0.1)] hover:bg-cyan-400 hover:text-white transition-all"
+        >
+          Pro
+        </button>
       </div>
 
-      <div className="h-20 w-full mb-6 flex-1">
+      <div className="h-32 w-full mb-8">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={DATA}>
-            <Bar dataKey="value" fill="#22d3ee" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+              {DATA.map((entry, index) => (
+                <Cell 
+                  key={`cell-${index}`} 
+                  fill={index === DATA.length - 1 ? '#22d3ee' : '#2d333b'} 
+                  className="transition-all hover:fill-cyan-400 cursor-help"
+                />
+              ))}
+            </Bar>
           </BarChart>
         </ResponsiveContainer>
       </div>
 
-      <div className="flex items-center justify-between">
-        <span className="text-[11px] text-slate-500 font-bold uppercase tracking-widest">856 Sessions</span>
-        <span className="text-[12px] text-cyan-400 font-black">32% Code AI-Assisted</span>
+      <div className="flex items-center justify-between pt-6 border-t border-white/5">
+         <div className="flex flex-col">
+            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">856 SESSIONS</span>
+            <div className="flex items-center gap-1">
+               <span className="size-1.5 rounded-full bg-emerald-500"></span>
+               <span className="text-[10px] font-bold text-slate-400 uppercase">Operational</span>
+            </div>
+         </div>
+         <span className="text-[15px] font-black text-cyan-400 uppercase tracking-tight shadow-cyan-400/10 drop-shadow-md">32% Code AI-Assisted</span>
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
-const SIDEBAR_STORAGE_KEY = 'trackcodex_sidebar_expanded';
+const SIDEBAR_STORAGE_KEY = 'tc_sidebar_expanded_v2';
 
 export const useSidebarState = () => {
   const [isExpanded, setIsExpanded] = useState<boolean>(() => {
@@ -17,6 +17,7 @@ export const useSidebarState = () => {
     });
   }, []);
 
+  // Keyboard shortcut: Ctrl/Cmd + B to toggle sidebar
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'b') {
@@ -24,7 +25,6 @@ export const useSidebarState = () => {
         toggleSidebar();
       }
     };
-
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [toggleSidebar]);

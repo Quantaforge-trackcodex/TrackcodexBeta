@@ -3,7 +3,13 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Job } from '../../types';
 
-const JobCard = ({ job, onClick }: { job: Job, onClick: () => void }) => {
+interface JobCardProps {
+  job: Job;
+  onClick: () => void;
+}
+
+// Typed as React.FC to resolve 'key' prop errors when component is used in list mappings
+const JobCard: React.FC<JobCardProps> = ({ job, onClick }) => {
   const navigate = useNavigate();
   const statusColors = {
     'Open': 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20',

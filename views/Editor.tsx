@@ -1,613 +1,458 @@
-
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { 
+  AreaChart, 
+  Area, 
+  ResponsiveContainer, 
+  Tooltip as RechartsTooltip, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Legend 
+} from 'recharts';
 import { forgeAIService } from '../services/gemini';
-import { profileService } from '../services/profile';
-import EditorCommentThread from '../components/editor/EditorCommentThread';
+import { colab } from '../services/websocket';
+import { useForgeAI } from '../hooks/useForgeAI';
+import Spinner from '../components/ui/Spinner';
 
-const BlameTooltip = ({ blame, position }: { blame: any, position: { top: number, left: number } }) => {
-  if (!blame) return null;
+interface FileNode {
+  name: string;
+  type: 'file' | 'folder';
+  children?: FileNode[];
+  path: string;
+  gitStatus?: 'added' | 'modified' | 'untracked';
+}
+
+const FILE_STRUCTURE: FileNode[] = [
+  {
+    name: 'src',
+    type: 'folder',
+    path: 'src',
+    children: [
+      {
+        name: 'components',
+        type: 'folder',
+        path: 'src/components',
+        children: [
+          { name: 'Button.tsx', type: 'file', path: 'src/components/Button.tsx', gitStatus: 'modified' },
+          { name: 'Card.tsx', type: 'file', path: 'src/components/Card.tsx' },
+          { name: 'Input.tsx', type: 'file', path: 'src/components/Input.tsx', gitStatus: 'added' },
+        ],
+      },
+      { name: 'services',
+        type: 'folder',
+        path: 'src/services',
+        children: [
+          { name: 'api.ts', type: 'file', path: 'src/services/api.ts' },
+          { name: 'auth.ts', type: 'file', path: 'src/services/auth.ts' },
+        ]
+      },
+      { name: 'App.tsx', type: 'file', path: 'src/App.tsx', gitStatus: 'modified' },
+      { name: 'index.tsx', type: 'file', path: 'src/index.tsx' },
+    ],
+  },
+  { name: 'package.json', type: 'file', path: 'package.json' },
+  { name: 'tsconfig.json', type: 'file', path: 'tsconfig.json' },
+];
+
+const MOCK_GRAPH_DATA = [
+  { name: 'Mon', human: 12, ai: 4 },
+  { name: 'Tue', human: 19, ai: 8 },
+  { name: 'Wed', human: 15, ai: 18 },
+  { name: 'Thu', human: 22, ai: 24 },
+  { name: 'Fri', human: 30, ai: 42 },
+  { name: 'Sat', human: 10, ai: 15 },
+  { name: 'Sun', human: 8, ai: 5 },
+];
+
+const FileEntry = ({ node, depth, expandedFolders, onToggleFolder, activeFile, onSelectFile }: any) => {
+  const isExpanded = expandedFolders.has(node.path);
+  const isFolder = node.type === 'folder';
+  const isActive = node.name === activeFile;
+
+  const getGitColor = () => {
+    if (node.gitStatus === 'added') return 'text-emerald-500';
+    if (node.gitStatus === 'modified') return 'text-amber-500';
+    return '';
+  };
+
   return (
-    <div 
-      className="fixed z-[100] w-64 bg-[#161b22] border border-[#30363d] rounded-lg shadow-2xl p-4 animate-in fade-in zoom-in-95 duration-100 ring-1 ring-black/50"
-      style={{ top: position.top, left: position.left }}
-    >
-      <div className="flex items-start gap-3 mb-3">
-        <img src={blame.avatar || `https://picsum.photos/seed/${blame.author}/32`} className="size-8 rounded-full border border-white/10" alt="" />
-        <div className="min-w-0 flex-1">
-          <p className="text-[12px] font-bold text-white truncate">{blame.author}</p>
-          <p className="text-[10px] text-slate-500">{blame.time} ({blame.fullDate || 'Oct 12, 2023'})</p>
+    <div className="select-none">
+      <div 
+        onClick={() => isFolder ? onToggleFolder(node.path) : onSelectFile(node.name)}
+        style={{ paddingLeft: `${(depth * 12) + 12}px` }}
+        className={`h-8 flex items-center gap-2 cursor-pointer transition-all group relative border-l-2 ${
+          isActive 
+            ? 'bg-primary/10 border-primary text-primary font-bold' 
+            : 'border-transparent hover:bg-white/[0.03] text-gh-text-secondary hover:text-slate-200'
+        }`}
+      >
+        <div className="w-4 flex items-center justify-center">
+          {isFolder && <span className={`material-symbols-outlined !text-[16px] transition-transform duration-200 ${isExpanded ? '' : '-rotate-90'}`}>expand_more</span>}
         </div>
+        <span className={`material-symbols-outlined !text-[18px] ${isFolder ? 'text-gh-text-secondary' : 'text-slate-500'} group-hover:scale-110 transition-transform`}>
+          {isFolder ? (isExpanded ? 'folder_open' : 'folder') : 'description'}
+        </span>
+        <span className={`text-[12px] truncate flex-1 ${getGitColor()}`}>{node.name}</span>
+        {node.gitStatus && (
+          <span className={`text-[9px] font-black uppercase tracking-tighter opacity-60 group-hover:opacity-100 mr-2 ${getGitColor()}`}>
+            {node.gitStatus === 'modified' ? 'MOD' : 'ADD'}
+          </span>
+        )}
       </div>
-      <div className="space-y-2">
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] font-mono text-primary bg-primary/10 px-1 rounded border border-primary/20">{blame.hash}</span>
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Commit</span>
+      {isFolder && isExpanded && node.children && (
+        <div className="overflow-hidden">
+          {node.children.map((child: any) => (
+            <FileEntry 
+              key={child.path} 
+              node={child} 
+              depth={depth + 1} 
+              expandedFolders={expandedFolders} 
+              onToggleFolder={onToggleFolder} 
+              activeFile={activeFile} 
+              onSelectFile={onSelectFile} 
+            />
+          ))}
         </div>
-        <p className="text-[11px] text-slate-300 leading-relaxed font-medium">
-          {blame.message || 'Optimized rendering logic for high-fidelity interactive co-pilot components.'}
-        </p>
-      </div>
-      <div className="mt-3 pt-3 border-t border-white/5 flex items-center justify-between text-[9px] font-bold text-slate-500 uppercase tracking-widest">
-         <span>4 changes in this commit</span>
-         <span className="text-primary hover:underline cursor-pointer">View Commit</span>
-      </div>
+      )}
     </div>
   );
 };
 
 const EditorView = () => {
+  const navigate = useNavigate();
+  const { getCompletion, isProcessing: aiProcessing } = useForgeAI();
   const [activeFile, setActiveFile] = useState('Button.tsx');
-  const [openFolders, setOpenFolders] = useState<Set<string>>(new Set(['src', 'components']));
-  const [searchQuery, setSearchQuery] = useState('');
-  
-  // View Modes
-  const [viewMode, setViewMode] = useState<'code' | 'blame' | 'history'>('code');
-
-  // Hover States for Blame
-  const [hoveredLineIndex, setHoveredLineIndex] = useState<number | null>(null);
-  const [tooltipData, setTooltipData] = useState<{ blame: any, pos: { top: number, left: number } } | null>(null);
-
-  // AI States
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [aiInsight, setAiInsight] = useState<string | null>(null);
-  const [showInsight, setShowInsight] = useState(false);
-
-  // Commenting States
-  const [activeCommentLine, setActiveCommentLine] = useState<number | null>(null);
-  const [commentsByLine, setCommentsByLine] = useState<Record<number, any[]>>({
-    6: [
-      {
-        id: 'ec1',
-        author: { name: 'Sarah Chen', username: 'sarah_backend', avatar: 'https://picsum.photos/seed/sarah/64' },
-        text: 'We should probably extract this Spinner to a shared component instead of inlining it everywhere.',
-        timestamp: '2h ago',
-        replies: [
-          {
-            id: 'ec2',
-            author: { name: 'Alex Chen', username: 'alexcoder', avatar: 'https://picsum.photos/seed/alexprofile/600' },
-            text: '@sarah_backend Good point. I\'ll handle this in the next PR.',
-            timestamp: '1h ago',
-            replies: []
-          }
-        ]
-      }
-    ]
-  });
-
-  const codeContent = `import React from 'react';
+  const [showInsights, setShowInsights] = useState(true);
+  const [codeContent, setCodeContent] = useState(`import React from 'react';
 import { clsx } from 'clsx';
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'danger';
-  isLoading?: boolean; // TODO: Refactor prop drilling
-}
-
-export const Button = ({
-  className,
-  variant = 'primary',
-  isLoading,
-  children,
-  ...props
-}: ButtonProps) => {
+/**
+ * High-fidelity Button component
+ * Standardized across the TrackCodex ecosystem
+ * Powered by ForgeAI Intelligence
+ */
+export const Button = ({ className, variant = 'primary', children, ...props }) => {
   return (
     <button
       className={clsx(
-        'px-4 py-2 rounded-lg font-bold transition-all',
-        variant === 'primary' && 'bg-primary text-white shadow-lg shadow-primary/20',
-        className
+        'px-4 py-2 rounded-lg font-bold transition-all active:scale-95', 
+        variant === 'primary' && 'bg-primary text-white hover:brightness-110 shadow-lg shadow-primary/20'
       )}
       {...props}
     >
-      {isLoading ? <Spinner /> : children}
+      {children}
     </button>
   );
-};`;
+};`);
+
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set(['src', 'src/components']));
+  const [remoteCursors, setRemoteCursors] = useState<any[]>([]);
+
+  useEffect(() => {
+    colab.connect('default-workspace');
+    return colab.subscribe('REMOTE_CURSOR', (data) => {
+      setRemoteCursors(prev => [...prev.filter(c => c.id !== data.id), data]);
+    });
+  }, []);
+
+  const toggleFolder = useCallback((path: string) => {
+    setExpandedFolders(prev => {
+      const next = new Set(prev);
+      next.has(path) ? next.delete(path) : next.add(path);
+      return next;
+    });
+  }, []);
 
   const lines = useMemo(() => codeContent.split('\n'), [codeContent]);
 
-  // Enhanced Mock Blame Data
-  const blameData = useMemo(() => [
-    { hash: 'f29a1d4', author: 'Alex Chen', time: '2mo ago', color: 'bg-slate-700/20', message: 'Initial architecture setup', avatar: 'https://picsum.photos/seed/alex/32' },
-    { hash: 'f29a1d4', author: 'Alex Chen', time: '2mo ago', color: 'bg-slate-700/20', message: 'Initial architecture setup' },
-    { hash: 'f29a1d4', author: 'Alex Chen', time: '2mo ago', color: 'bg-slate-700/20', message: 'Initial architecture setup' },
-    { hash: 'a1b2c3d', author: 'Sarah Chen', time: '1mo ago', color: 'bg-primary/10', message: 'Implement base UI primitives', avatar: 'https://picsum.photos/seed/sarah/32' },
-    { hash: 'a1b2c3d', author: 'Sarah Chen', time: '1mo ago', color: 'bg-primary/10', message: 'Implement base UI primitives' },
-    { hash: 'e5f6g7h', author: 'Alex Chen', time: '5d ago', color: 'bg-emerald-500/10', message: 'Fix: accessibility on buttons' },
-    { hash: 'e5f6g7h', author: 'Alex Chen', time: '5d ago', color: 'bg-emerald-500/10', message: 'Fix: accessibility on buttons' },
-    { hash: 'e5f6g7h', author: 'Alex Chen', time: '5d ago', color: 'bg-emerald-500/10', message: 'Fix: accessibility on buttons' },
-    { hash: 'j9k0l1m', author: 'Marcus Thorne', time: '2h ago', color: 'bg-amber-500/10', message: 'chore: updated styles for v2.4.0', avatar: 'https://picsum.photos/seed/marcus/32' },
-    { hash: 'j9k0l1m', author: 'Marcus Thorne', time: '2h ago', color: 'bg-amber-500/10', message: 'chore: updated styles for v2.4.0' },
-    { hash: 'j9k0l1m', author: 'Marcus Thorne', time: '2h ago', color: 'bg-amber-500/10', message: 'chore: updated styles for v2.4.0' },
-    { hash: 'j9k0l1m', author: 'Marcus Thorne', time: '2h ago', color: 'bg-amber-500/10', message: 'chore: updated styles for v2.4.0' },
-    { hash: 'j9k0l1m', author: 'Marcus Thorne', time: '2h ago', color: 'bg-amber-500/10', message: 'chore: updated styles for v2.4.0' },
-    { hash: 'j9k0l1m', author: 'Marcus Thorne', time: '2h ago', color: 'bg-amber-500/10', message: 'chore: updated styles for v2.4.0' },
-    { hash: 'j9k0l1m', author: 'Marcus Thorne', time: '2h ago', color: 'bg-amber-500/10', message: 'chore: updated styles for v2.4.0' },
-    { hash: 'j9k0l1m', author: 'Marcus Thorne', time: '2h ago', color: 'bg-amber-500/10', message: 'chore: updated styles for v2.4.0' },
-    { hash: 'j9k0l1m', author: 'Marcus Thorne', time: '2h ago', color: 'bg-amber-500/10', message: 'chore: updated styles for v2.4.0' },
-    { hash: 'j9k0l1m', author: 'Marcus Thorne', time: '2h ago', color: 'bg-amber-500/10', message: 'chore: updated styles for v2.4.0' },
-    { hash: 'j9k0l1m', author: 'Marcus Thorne', time: '2h ago', color: 'bg-amber-500/10', message: 'chore: updated styles for v2.4.0' },
-    { hash: 'j9k0l1m', author: 'Marcus Thorne', time: '2h ago', color: 'bg-amber-500/10', message: 'chore: updated styles for v2.4.0' },
-    { hash: 'j9k0l1m', author: 'Marcus Thorne', time: '2h ago', color: 'bg-amber-500/10', message: 'chore: updated styles for v2.4.0' },
-    { hash: 'j9k0l1m', author: 'Marcus Thorne', time: '2h ago', color: 'bg-amber-500/10', message: 'chore: updated styles for v2.4.0' },
-    { hash: 'j9k0l1m', author: 'Marcus Thorne', time: '2h ago', color: 'bg-amber-500/10', message: 'chore: updated styles for v2.4.0' },
-    { hash: 'j9k0l1m', author: 'Marcus Thorne', time: '2h ago', color: 'bg-amber-500/10', message: 'chore: updated styles for v2.4.0' },
-    { hash: 'j9k0l1m', author: 'Marcus Thorne', time: '2h ago', color: 'bg-amber-500/10', message: 'chore: updated styles for v2.4.0' },
-    { hash: 'j9k0l1m', author: 'Marcus Thorne', time: '2h ago', color: 'bg-amber-500/10', message: 'chore: updated styles for v2.4.0' },
-  ], []);
-
-  const handleAskAI = async () => {
-    setIsGenerating(true);
-    setShowInsight(true);
-    setAiInsight(null);
-    try {
-      const result = await forgeAIService.getCodeRefactorSuggestion(codeContent, activeFile);
-      setAiInsight(result);
-    } catch (error) {
-      setAiInsight("Unable to generate insight. Please check your connection and API key.");
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const handleAddComment = (text: string, line: number, parentId?: string) => {
-    const profile = profileService.getProfile();
-    const newComment = {
-      id: `ec-${Date.now()}`,
-      author: {
-        name: profile.name,
-        username: profile.username,
-        avatar: profile.avatar
-      },
-      text,
-      timestamp: 'Just now',
-      replies: []
-    };
-
-    setCommentsByLine(prev => {
-      const lineComments = [...(prev[line] || [])];
-      
-      if (!parentId) {
-        return { ...prev, [line]: [...lineComments, newComment] };
-      }
-
-      const recursiveAdd = (comments: any[]): any[] => {
-        return comments.map(c => {
-          if (c.id === parentId) {
-            return { ...c, replies: [...(c.replies || []), newComment] };
-          }
-          if (c.replies && c.replies.length > 0) {
-            return { ...c, replies: recursiveAdd(c.replies) };
-          }
-          return c;
-        });
-      };
-
-      return { ...prev, [line]: recursiveAdd(lineComments) };
+  const handleSuggest = async (lineIdx: number) => {
+    const suggestion = await getCompletion({
+      fileName: activeFile,
+      code: codeContent,
+      cursorLine: lineIdx
     });
-  };
-
-  const explorerData = useMemo(() => [
-    { id: 'src', name: 'src', type: 'folder', depth: 0, parentId: null },
-    { id: 'components', name: 'components', type: 'folder', depth: 1, parentId: 'src' },
-    { id: 'Button.tsx', name: 'Button.tsx', type: 'file', depth: 2, parentId: 'components', icon: 'javascript', iconColor: 'text-blue-400' },
-    { id: 'Card.tsx', name: 'Card.tsx', type: 'file', depth: 2, parentId: 'components', icon: 'javascript', iconColor: 'text-blue-400' },
-    { id: 'Input.tsx', name: 'Input.tsx', type: 'file', depth: 2, parentId: 'components', icon: 'javascript', iconColor: 'text-blue-400' },
-    { id: 'utils', name: 'utils', type: 'folder', depth: 1, parentId: 'src' },
-    { id: 'package.json', name: 'package.json', type: 'file', depth: 0, parentId: null, icon: 'description', iconColor: 'text-slate-500' },
-    { id: 'README.md', name: 'README.md', type: 'file', depth: 0, parentId: null, icon: 'info', iconColor: 'text-slate-500' },
-  ], []);
-
-  const toggleFolder = (folderId: string) => {
-    setOpenFolders(prev => {
-      const next = new Set(prev);
-      if (next.has(folderId)) {
-        next.delete(folderId);
-      } else {
-        next.add(folderId);
-      }
-      return next;
-    });
-  };
-
-  const collapseAll = () => {
-    setOpenFolders(new Set());
-  };
-
-  const expandAll = () => {
-    const allFolderIds = explorerData.filter(i => i.type === 'folder').map(i => i.id);
-    setOpenFolders(new Set(allFolderIds));
-  };
-
-  const isFolderOpen = (folderId: string) => openFolders.has(folderId);
-
-  const isItemVisible = (item: any) => {
-    if (searchQuery.trim()) return true;
-    let parentId = item.parentId;
-    while (parentId) {
-      if (!openFolders.has(parentId)) return false;
-      const parent = explorerData.find(i => i.id === parentId);
-      parentId = parent ? parent.parentId : null;
-    }
-    return true;
-  };
-
-  const filteredItems = useMemo(() => {
-    if (!searchQuery.trim()) return explorerData;
-    const query = searchQuery.toLowerCase();
-    const checkMatch = (item: any): boolean => {
-      if (item.name.toLowerCase().includes(query)) return true;
-      const children = explorerData.filter(child => child.parentId === item.id);
-      return children.some(child => checkMatch(child));
-    };
-    return explorerData.filter(item => checkMatch(item));
-  }, [searchQuery, explorerData]);
-
-  const handleGutterMouseEnter = (e: React.MouseEvent, index: number) => {
-    const blame = blameData[index];
-    if (blame) {
-      const rect = (e.target as HTMLElement).getBoundingClientRect();
-      setTooltipData({
-        blame,
-        pos: { top: rect.top, left: rect.right + 10 }
-      });
+    if (suggestion) {
+       console.log('AI Suggestion:', suggestion);
     }
   };
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden bg-[#0d1117] font-display">
-      {/* Blame Tooltip Portal Overlay */}
-      {tooltipData && <BlameTooltip blame={tooltipData.blame} position={tooltipData.pos} />}
-
-      {/* Tab bar / Breadcrumbs */}
-      <div className="h-10 border-b border-[#1e293b] flex items-center px-4 bg-[#0d1117] gap-3 shrink-0">
-         <div className="flex items-center gap-2 text-[12px] text-slate-400">
-            <span>track-codex</span>
-            <span className="text-[10px]">/</span>
-            <span>frontend</span>
-            <span className="text-[10px]">/</span>
-            <span>src</span>
-            <span className="text-[10px]">/</span>
-            <span>components</span>
-            <span className="text-[10px]">/</span>
-            <div className="flex items-center gap-1.5 text-white bg-white/5 px-2 py-0.5 rounded border border-white/5">
-               <span className="material-symbols-outlined !text-[14px] text-blue-400">javascript</span>
-               <span className="font-bold">Button.tsx</span>
-               <span className="text-[9px] font-black uppercase text-slate-500">TSX</span>
-            </div>
-         </div>
-      </div>
-
-      <div className="flex-1 flex overflow-hidden">
-        {/* Explorer Sidebar */}
-        <aside className="w-[240px] border-r border-[#1e293b] flex flex-col bg-[#0d1117] shrink-0">
-           <div className="p-4 flex items-center justify-between">
-              <span className="text-[11px] font-black uppercase tracking-widest text-slate-500">Explorer</span>
-              <div className="flex items-center gap-1">
-                <button 
-                  onClick={expandAll}
-                  className="size-6 flex items-center justify-center rounded hover:bg-white/5 text-slate-500 hover:text-white transition-colors"
-                  title="Expand All Folders"
-                >
-                  <span className="material-symbols-outlined !text-[18px]">expand_all</span>
-                </button>
-                <button 
-                  onClick={collapseAll}
-                  className="size-6 flex items-center justify-center rounded hover:bg-white/5 text-slate-500 hover:text-white transition-colors"
-                  title="Collapse All Folders"
-                >
-                  <span className="material-symbols-outlined !text-[18px]">collapse_all</span>
-                </button>
-                <span className="material-symbols-outlined !text-[18px] text-slate-500 cursor-pointer hover:text-white transition-colors">more_horiz</span>
-              </div>
+    <div className="flex-1 flex flex-col overflow-hidden bg-gh-bg font-display animate-in fade-in duration-500">
+      {/* Enhanced GitHub header */}
+      <header className="h-14 border-b border-gh-border bg-gh-bg flex items-center justify-between px-6 shrink-0 z-40 shadow-sm">
+        <div className="flex items-center gap-4">
+           <div className="flex items-center gap-2 text-gh-text font-semibold text-sm">
+              <span className="material-symbols-outlined !text-[20px] text-gh-text-secondary">account_tree</span>
+              <span className="text-primary hover:underline cursor-pointer font-bold">track-codex</span>
+              <span className="text-gh-text-secondary">/</span>
+              <span className="flex items-center gap-1.5 text-gh-text cursor-default">
+                <span className="material-symbols-outlined !text-[16px] text-slate-500">description</span>
+                {activeFile}
+              </span>
            </div>
-
-           <div className="px-4 pb-4">
-              <div className="relative group">
-                <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500 !text-[16px]">search</span>
-                <input 
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search files..."
-                  className="w-full bg-[#161b22] border border-[#30363d] rounded-md pl-8 pr-2 py-1.5 text-[12px] text-slate-200 placeholder:text-slate-600 focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all"
-                />
-              </div>
-           </div>
-           
-           <div className="flex-1 overflow-y-auto no-scrollbar py-2">
-              {filteredItems.map(item => {
-                if (!isItemVisible(item)) return null;
-                
-                const paddingLeft = `${(item.depth * 12) + 12}px`;
-                if (item.type === 'folder') {
-                  const isOpen = isFolderOpen(item.id) || !!searchQuery.trim();
-                  return (
-                    <div 
-                      key={item.id} 
-                      className="flex items-center gap-1.5 py-1 text-slate-400 cursor-pointer group hover:bg-white/5 transition-colors select-none" 
-                      style={{ paddingLeft }} 
-                      onClick={() => toggleFolder(item.id)}
-                    >
-                      <span className={`material-symbols-outlined !text-[18px] transition-transform duration-200 ${isOpen ? '' : '-rotate-90'}`}>
-                        expand_more
-                      </span>
-                      <span className={`material-symbols-outlined !text-[18px] ${isOpen ? 'text-amber-400' : 'text-slate-500'}`}>
-                        {isOpen ? 'folder_open' : 'folder'}
-                      </span>
-                      <span className="text-[13px] font-medium group-hover:text-white transition-colors">{item.name}</span>
-                    </div>
-                  );
-                }
-                return (
-                  <div 
-                    key={item.id} 
-                    onClick={() => setActiveFile(item.id)} 
-                    style={{ paddingLeft: `${(item.depth * 12) + 12 + 22}px` }} 
-                    className={`flex items-center gap-2 py-1 cursor-pointer group border-l-2 transition-all ${activeFile === item.id ? 'bg-primary/10 border-primary text-white' : 'border-transparent text-slate-400 hover:bg-white/5'}`}
-                  >
-                    <span className={`material-symbols-outlined !text-[16px] ${item.iconColor}`}>{item.icon}</span>
-                    <span className="text-[13px] font-medium">{item.name}</span>
-                  </div>
-                );
-              })}
-           </div>
-        </aside>
-
-        {/* Editor Area */}
-        <div className="flex-1 flex flex-col min-w-0 bg-[#0b0e14] relative">
-           {/* Code Toolbar */}
-           <div className="h-14 border-b border-[#1e293b] flex items-center justify-between px-6 bg-[#0d1117] shrink-0">
-              <div className="flex items-center gap-3">
-                 <img src="https://picsum.photos/seed/u1/64" className="size-6 rounded-full border border-border-dark" alt="User" />
-                 <p className="text-[13px] text-slate-400"><span className="font-bold text-white">jdoe</span> updated styling for primary variant • 2 hours ago</p>
-              </div>
-              <div className="flex items-center gap-2">
-                 <div className="flex items-center bg-[#161b22] border border-[#30363d] p-0.5 rounded-lg mr-2">
-                    <button 
-                      onClick={() => setViewMode('code')}
-                      className={`px-3 py-1 text-[11px] font-bold rounded shadow-sm transition-all ${viewMode === 'code' ? 'bg-[#2d333b] text-white' : 'text-slate-500 hover:text-slate-300'}`}
-                    >
-                      Code
-                    </button>
-                    <button 
-                      onClick={() => setViewMode('blame')}
-                      className={`px-3 py-1 text-[11px] font-bold rounded transition-all ${viewMode === 'blame' ? 'bg-[#2d333b] text-white' : 'text-slate-500 hover:text-slate-300'}`}
-                    >
-                      Blame
-                    </button>
-                    <button 
-                      onClick={() => setViewMode('history')}
-                      className={`px-3 py-1 text-[11px] font-bold rounded transition-all ${viewMode === 'history' ? 'bg-[#2d333b] text-white' : 'text-slate-500 hover:text-slate-300'}`}
-                    >
-                      History
-                    </button>
-                 </div>
-                 <button className="size-8 flex items-center justify-center bg-[#161b22] border border-[#30363d] rounded-lg text-slate-400 hover:text-white transition-colors">
-                    <span className="material-symbols-outlined !text-[18px]">content_copy</span>
-                 </button>
-                 <button className="flex items-center gap-2 px-4 py-1.5 bg-primary text-white text-[12px] font-bold rounded-lg shadow-lg shadow-primary/20 hover:bg-blue-600 transition-all">
-                    <span className="material-symbols-outlined !text-[18px]">open_in_new</span>
-                    Open in Workspace
-                 </button>
-              </div>
-           </div>
-
-           {/* Editor Content */}
-           <div className="flex-1 flex font-mono text-[14px] leading-relaxed relative bg-[#0d1117]">
-              <div className="absolute top-6 right-8 z-30">
-                 <button 
-                  onClick={handleAskAI}
-                  disabled={isGenerating}
-                  className="bg-gradient-to-r from-primary to-purple-600 hover:scale-105 transition-all text-white text-[11px] font-black uppercase tracking-widest px-5 py-2.5 rounded-full shadow-2xl flex items-center gap-2 border border-white/20 disabled:opacity-50 disabled:scale-100"
-                 >
-                    <span className={`material-symbols-outlined !text-[16px] filled ${isGenerating ? 'animate-spin' : 'animate-pulse'}`}>
-                      {isGenerating ? 'progress_activity' : 'auto_awesome'}
-                    </span>
-                    {isGenerating ? 'Analyzing...' : 'Ask AI to Explain'}
-                 </button>
-              </div>
-
-              {/* Line Content Wrapper */}
-              <div className="flex-1 flex overflow-hidden">
-                {/* Line Numbers and Comment Indicators */}
-                <div className="w-16 pt-6 flex flex-col items-center text-slate-700 bg-[#0d1117] select-none border-r border-[#1e293b] shrink-0">
-                  {lines.map((_, i) => {
-                    const n = i + 1;
-                    const hasComments = !!commentsByLine[n] && commentsByLine[n].length > 0;
-                    return (
-                      <div key={n} className="h-6 flex items-center justify-end w-full px-2 group/line relative">
-                        <span className={`text-[12px] tabular-nums mr-2 ${hasComments ? 'text-primary font-black' : ''}`}>{n}</span>
-                        <button 
-                          onClick={() => setActiveCommentLine(activeCommentLine === n ? null : n)}
-                          className={`size-4 flex items-center justify-center rounded transition-all ${
-                            hasComments ? 'text-primary bg-primary/10' : 'text-slate-700 hover:text-slate-400 opacity-0 group-hover/line:opacity-100'
-                          }`}
-                        >
-                          <span className={`material-symbols-outlined !text-[14px] ${hasComments ? 'filled' : ''}`}>
-                            {hasComments ? 'forum' : 'add_comment'}
-                          </span>
-                          {hasComments && (
-                            <span className="absolute -top-1 -right-1 size-2.5 bg-primary text-white text-[8px] font-bold rounded-full flex items-center justify-center border border-[#0d1117]">
-                              {commentsByLine[n].length}
-                            </span>
-                          )}
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Git Blame Gutter (Visible only in blame mode) */}
-                {viewMode === 'blame' && (
-                  <div className="w-[200px] pt-6 flex flex-col bg-[#0d1117] border-r border-[#1e293b] shrink-0 select-none animate-in slide-in-from-left duration-300">
-                    {lines.map((_, i) => {
-                      const blame = blameData[i] || { hash: '-------', author: 'Unknown', time: '--', color: '' };
-                      const isFirstInBlock = i === 0 || (blameData[i]?.hash !== blameData[i-1]?.hash);
-                      
-                      return (
-                        <div 
-                          key={i} 
-                          onMouseEnter={(e) => handleGutterMouseEnter(e, i)}
-                          onMouseLeave={() => setTooltipData(null)}
-                          className={`h-6 flex items-center px-3 text-[10px] gap-2 border-l-2 transition-colors hover:bg-white/10 cursor-help ${blame.color} ${isFirstInBlock ? 'border-primary/50' : 'border-transparent'}`}
-                        >
-                          {isFirstInBlock ? (
-                            <>
-                              <span className="font-mono text-slate-500 shrink-0">{blame.hash}</span>
-                              <span className="font-bold text-slate-300 truncate flex-1">{blame.author}</span>
-                              <span className="text-slate-600 shrink-0">{blame.time}</span>
-                            </>
-                          ) : (
-                            <div className="flex-1 border-l border-slate-800 ml-1 h-full opacity-30"></div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-
-                {/* Code Content */}
-                <div className="flex-1 pt-6 overflow-y-auto custom-scrollbar relative">
-                  <div className="min-w-full inline-block pb-20">
-                    {lines.map((line, i) => {
-                      const n = i + 1;
-                      const hasComments = !!commentsByLine[n] && commentsByLine[n].length > 0;
-                      const isOpen = activeCommentLine === n;
-                      const blame = blameData[i];
-
-                      return (
-                        <React.Fragment key={n}>
-                          <div 
-                            className={`h-6 px-8 relative group ${hasComments ? 'bg-primary/5' : 'hover:bg-white/[0.02]'}`}
-                            onMouseEnter={() => setHoveredLineIndex(i)}
-                            onMouseLeave={() => { setHoveredLineIndex(null); setTooltipData(null); }}
-                          >
-                            {hasComments && <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>}
-                            
-                            <div className="flex items-center">
-                              <pre className="text-slate-300 whitespace-pre">{line}</pre>
-                              
-                              {/* Git Blame Ghost Text (GitLens style) */}
-                              {hoveredLineIndex === i && blame && (
-                                <span 
-                                  onMouseEnter={(e) => handleGutterMouseEnter(e, i)}
-                                  className="ml-8 text-[11px] text-slate-500/60 font-medium italic cursor-help hover:text-primary transition-colors flex items-center gap-2 select-none shrink-0"
-                                >
-                                   <span className="size-1 rounded-full bg-slate-700"></span>
-                                   {blame.author}, {blame.time} • {blame.message?.slice(0, 40)}...
-                                </span>
-                              )}
-                            </div>
-                            
-                            {/* Hover Plus Button for New Comments */}
-                            {!hasComments && (
-                              <button 
-                                onClick={() => setActiveCommentLine(n)}
-                                className="absolute left-1 top-1/2 -translate-y-1/2 size-4 bg-primary rounded-full text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:scale-110 shadow-lg"
-                              >
-                                <span className="material-symbols-outlined !text-[12px] font-black">add</span>
-                              </button>
-                            )}
-                          </div>
-                          
-                          {(isOpen || (hasComments && !activeCommentLine)) && (
-                            <div className="animate-in slide-in-from-top-1 duration-200">
-                               <EditorCommentThread 
-                                 lineNumber={n}
-                                 comments={commentsByLine[n] || []}
-                                 onAddComment={(text, parentId) => handleAddComment(text, n, parentId)}
-                                 onClose={() => setActiveCommentLine(null)}
-                               />
-                            </div>
-                          )}
-                        </React.Fragment>
-                      );
-                    })}
-                  </div>
-
-                  {/* AI Insight Popup Overlay */}
-                  {showInsight && (
-                    <div className="absolute top-12 left-12 right-12 z-40 animate-in slide-in-from-top-4 duration-300">
-                      <div className="bg-[#161b22]/95 backdrop-blur-xl border border-primary/40 rounded-2xl p-6 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] ring-1 ring-white/10 max-w-2xl mx-auto">
-                        <div className="flex items-start gap-4">
-                          <div className="size-12 rounded-2xl bg-primary/20 flex items-center justify-center text-primary shrink-0 shadow-inner">
-                             <span className="material-symbols-outlined !text-[32px] filled animate-pulse">psychology</span>
-                          </div>
-                          <div className="flex-1">
-                             <div className="flex items-center justify-between mb-2">
-                               <h4 className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">TrackCodex ForgeAI Analysis</h4>
-                               <button onClick={() => setShowInsight(false)} className="text-slate-500 hover:text-white transition-colors">
-                                  <span className="material-symbols-outlined !text-[18px]">close</span>
-                                </button>
-                             </div>
-                             
-                             {isGenerating ? (
-                               <div className="space-y-3 pt-2">
-                                 <div className="h-4 bg-slate-800 rounded-md w-3/4 skeleton"></div>
-                                 <div className="h-4 bg-slate-800 rounded-md w-full skeleton"></div>
-                                 <div className="h-4 bg-slate-800 rounded-md w-1/2 skeleton"></div>
-                               </div>
-                             ) : (
-                               <div className="pt-2">
-                                 <p className="text-[14px] text-slate-200 leading-relaxed font-medium mb-4">
-                                    {aiInsight}
-                                 </p>
-                                 <div className="flex items-center gap-3">
-                                    <button className="px-4 py-2 bg-primary text-white text-[11px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-primary/20 hover:bg-blue-600 transition-all flex items-center gap-2">
-                                       <span className="material-symbols-outlined !text-[16px]">rocket_launch</span>
-                                       Apply Refactor
-                                    </button>
-                                    <button className="px-4 py-2 bg-transparent border border-[#30363d] text-slate-400 text-[11px] font-black uppercase tracking-widest rounded-xl hover:text-white hover:bg-white/5 transition-all">
-                                       Explain Complexity
-                                    </button>
-                                 </div>
-                               </div>
-                             )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
+           <div className="flex items-center gap-2 bg-gh-bg-secondary border border-gh-border rounded-md px-2 py-0.5 text-[11px] font-bold text-gh-text-secondary">
+              <span className="size-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              main
+              <span className="material-symbols-outlined !text-[14px]">expand_more</span>
            </div>
         </div>
-      </div>
 
-      {/* Footer / Status bar */}
-      <footer className="h-8 border-t border-[#1e293b] bg-[#0d1117] flex items-center justify-between px-4 text-[11px] text-slate-500 shrink-0">
-         <div className="flex items-center gap-4">
-            <div className="flex items-center gap-1.5">
-               <span className="material-symbols-outlined !text-[14px] text-emerald-500">check_circle</span>
-               <span>Build Passing</span>
+        <div className="flex items-center gap-3">
+           <div className="flex -space-x-2 mr-4">
+              {remoteCursors.map((c, i) => (
+                <div 
+                  key={c.id} 
+                  className="size-7 rounded-full border-2 border-gh-bg bg-primary flex items-center justify-center text-[10px] font-black text-white shadow-xl hover:translate-y-[-2px] transition-transform cursor-help" 
+                  title={`${c.name} (Collaborating)`}
+                  style={{ zIndex: 10 - i }}
+                >
+                   {c.name[0]}
+                </div>
+              ))}
+              <button className="size-7 rounded-full border-2 border-gh-border bg-gh-bg-secondary flex items-center justify-center text-slate-500 hover:text-white transition-colors">
+                <span className="material-symbols-outlined !text-[14px]">add</span>
+              </button>
+           </div>
+           <button 
+            onClick={() => setShowInsights(!showInsights)}
+            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg border transition-all text-[12px] font-black uppercase tracking-widest active:scale-95 ${
+              showInsights 
+                ? 'bg-primary/10 border-primary text-primary shadow-[0_0_15px_rgba(88,166,255,0.2)]' 
+                : 'border-gh-border text-gh-text-secondary hover:text-white hover:border-gh-text-secondary'
+            }`}
+           >
+             <span className={`material-symbols-outlined !text-[18px] ${showInsights ? 'filled' : ''}`}>analytics</span>
+             Insights
+           </button>
+        </div>
+      </header>
+
+      <div className="flex-1 flex overflow-hidden">
+        {/* Explorer Panel */}
+        <aside className="w-[280px] border-r border-gh-border bg-gh-bg flex flex-col shrink-0 animate-in slide-in-from-left duration-300">
+          <div className="h-12 px-4 flex items-center justify-between border-b border-gh-border bg-gh-bg-secondary/50">
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gh-text-secondary">Project Explorer</span>
+            <div className="flex items-center gap-1">
+              <button className="p-1 hover:bg-white/10 rounded text-gh-text-secondary"><span className="material-symbols-outlined !text-[16px]">create_new_folder</span></button>
+              <button className="p-1 hover:bg-white/10 rounded text-gh-text-secondary"><span className="material-symbols-outlined !text-[16px]">refresh</span></button>
             </div>
-            <div className="flex items-center gap-1.5">
-               <span className="material-symbols-outlined !text-[14px]">account_tree</span>
-               <span>main</span>
-            </div>
-            {Object.keys(commentsByLine).length > 0 && (
-              <div className="flex items-center gap-1.5 text-primary">
-                <span className="material-symbols-outlined !text-[14px] filled">forum</span>
-                <span>{Object.values(commentsByLine).flat().length} Code Comments</span>
+          </div>
+          <div className="flex-1 overflow-y-auto custom-scrollbar py-2">
+            {FILE_STRUCTURE.map(node => (
+              <FileEntry 
+                key={node.path} 
+                node={node} 
+                depth={0} 
+                expandedFolders={expandedFolders} 
+                onToggleFolder={toggleFolder} 
+                activeFile={activeFile} 
+                onSelectFile={setActiveFile} 
+              />
+            ))}
+          </div>
+        </aside>
+
+        {/* Editor Central Area */}
+        <div className="flex-1 flex flex-col overflow-hidden min-w-0 bg-gh-bg relative animate-in zoom-in-95 duration-500">
+          <div className="m-4 rounded-xl border border-gh-border overflow-hidden flex flex-col bg-gh-bg shadow-2xl ring-1 ring-white/[0.02]">
+            <div className="h-14 bg-gh-bg-secondary border-b border-gh-border flex items-center justify-between px-5">
+              <div className="flex items-center gap-4">
+                <img src="https://picsum.photos/seed/alex/64" className="size-7 rounded-full border border-gh-border shadow-sm" alt="Author" />
+                <div className="flex flex-col">
+                   <div className="flex items-center gap-1.5 text-[12px]">
+                      <span className="font-bold text-gh-text hover:text-primary cursor-pointer transition-colors">alex-coder</span>
+                      <span className="text-gh-text-secondary">optimized core performance path</span>
+                   </div>
+                   <span className="text-[10px] text-gh-text-secondary font-medium tracking-tight">15m ago • Committed via TrackCodex Enterprise</span>
+                </div>
               </div>
-            )}
-            {viewMode === 'blame' && (
-              <div className="flex items-center gap-1.5 text-emerald-400 font-bold uppercase tracking-tight">
-                <span className="material-symbols-outlined !text-[14px] filled">history</span>
-                <span>Blame Gutter Active</span>
+              <div className="flex items-center gap-5">
+                 <div className="flex items-center gap-2 bg-gh-bg border border-gh-border rounded-md px-3 py-1 text-[11px] font-mono text-gh-text-secondary shadow-inner">
+                    <span className="material-symbols-outlined !text-[14px]">commit</span>
+                    89c2a12
+                 </div>
+                 <div className="h-4 w-px bg-gh-border"></div>
+                 <button className="flex items-center gap-1 text-[11px] font-black uppercase text-primary hover:underline">
+                    122 commits
+                 </button>
               </div>
-            )}
-            <div className="flex items-center gap-1.5 text-slate-500">
-               <span className="material-symbols-outlined !text-[14px]">info</span>
-               <span>Hover line for Blame details</span>
             </div>
-         </div>
-         <div className="flex items-center gap-4">
-            <span>UTF-8</span>
-            <span>TypeScript JSX</span>
-            <span>v2.4.0</span>
-         </div>
-      </footer>
+
+            <div className="bg-gh-bg flex flex-col">
+               <div className="h-11 bg-gh-bg flex items-center border-b border-gh-border shrink-0 px-5">
+                  <div className="flex items-center gap-8 text-[12px] font-bold h-full">
+                     <span className="cursor-pointer border-b-2 border-primary h-full flex items-center px-1 text-gh-text">Code</span>
+                     <span className="text-gh-text-secondary hover:text-gh-text cursor-pointer h-full flex items-center px-1 transition-colors">Blame</span>
+                     <span className="text-gh-text-secondary hover:text-gh-text cursor-pointer h-full flex items-center px-1 transition-colors">History</span>
+                     <span className="text-gh-text-secondary hover:text-gh-text cursor-pointer h-full flex items-center px-1 transition-colors">Raw</span>
+                  </div>
+                  <div className="flex-1"></div>
+                  <div className="flex items-center gap-3">
+                     {aiProcessing && (
+                       <div className="flex items-center gap-2 animate-in fade-in zoom-in duration-300">
+                         <Spinner size="sm" className="text-primary" />
+                         <span className="text-[10px] font-black uppercase text-primary tracking-widest">ForgeAI Thinking</span>
+                       </div>
+                     )}
+                     <button className="p-1.5 hover:bg-white/10 rounded-md text-gh-text-secondary transition-all" title="Copy to clipboard"><span className="material-symbols-outlined !text-[20px]">content_copy</span></button>
+                     <button className="p-1.5 hover:bg-white/10 rounded-md text-gh-text-secondary transition-all" title="Download file"><span className="material-symbols-outlined !text-[20px]">download</span></button>
+                  </div>
+               </div>
+
+               <div className="overflow-y-auto custom-scrollbar font-mono text-[13px] leading-6 bg-[#010409]">
+                <div className="min-w-fit py-6">
+                  {lines.map((line, i) => (
+                    <div key={i} className="flex group relative hover:bg-primary/5 transition-colors">
+                      <div className="w-14 shrink-0 flex items-center justify-end pr-4 text-gh-text-secondary select-none border-r border-gh-border bg-gh-bg-secondary/20 h-6">
+                        <span className="text-[10px] font-bold opacity-40 group-hover:opacity-100 transition-opacity">{i + 1}</span>
+                      </div>
+                      <div className="flex-1 px-8 relative h-6 flex items-center">
+                        <pre className="text-gh-text leading-none whitespace-pre select-all">{line || ' '}</pre>
+                        <button 
+                          onClick={() => handleSuggest(i)} 
+                          className="absolute left-1 top-0 h-6 flex items-center opacity-0 group-hover:opacity-100 text-primary transition-all hover:scale-125 z-10"
+                          title="Ask ForgeAI to complete"
+                        >
+                          <span className="material-symbols-outlined !text-[16px] filled shadow-sm">auto_awesome</span>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Improved Insights Sidebar */}
+        {showInsights && (
+          <aside className="w-[400px] border-l border-gh-border bg-gh-bg flex flex-col shrink-0 animate-in slide-in-from-right duration-300 relative shadow-2xl z-20">
+            <div className="h-14 border-b border-gh-border flex items-center bg-gh-bg-secondary/50 px-6 justify-between">
+               <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-gh-text">Repository Pulse</h3>
+               <div className="flex items-center gap-1 text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                 <span className="material-symbols-outlined !text-[12px] filled">verified</span>
+                 HEALTHY
+               </div>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8">
+               {/* Multi-series activity graph */}
+               <section className="animate-in slide-in-from-bottom-2 duration-700">
+                  <div className="flex items-center justify-between mb-4 px-1">
+                    <h4 className="text-[10px] font-black uppercase text-gh-text-secondary tracking-widest">Commit Velocity</h4>
+                    <span className="text-[9px] font-black text-emerald-500 uppercase">+18% Efficiency boost</span>
+                  </div>
+                  <div className="h-56 w-full bg-gh-bg-secondary/30 border border-gh-border rounded-2xl p-4 shadow-inner">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={MOCK_GRAPH_DATA}>
+                        <defs>
+                          <linearGradient id="colorHuman" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#58a6ff" stopOpacity={0.4}/>
+                            <stop offset="95%" stopColor="#58a6ff" stopOpacity={0}/>
+                          </linearGradient>
+                          <linearGradient id="colorAI" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#8957e5" stopOpacity={0.4}/>
+                            <stop offset="95%" stopColor="#8957e5" stopOpacity={0}/>
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#30363d" vertical={false} opacity={0.5} />
+                        <XAxis dataKey="name" stroke="#484f58" fontSize={10} tickLine={false} axisLine={false} dy={5} />
+                        <YAxis hide />
+                        <RechartsTooltip 
+                          contentStyle={{ backgroundColor: '#161b22', border: '1px solid #30363d', borderRadius: '12px', fontSize: '11px', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.5)' }}
+                          itemStyle={{ padding: '2px 0' }}
+                        />
+                        <Legend iconType="circle" wrapperStyle={{ fontSize: '9px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em', paddingTop: '10px' }} />
+                        <Area type="monotone" name="Human Commits" dataKey="human" stroke="#58a6ff" strokeWidth={2} fillOpacity={1} fill="url(#colorHuman)" animationDuration={1500} />
+                        <Area type="monotone" name="AI Suggestions" dataKey="ai" stroke="#8957e5" strokeWidth={2} fillOpacity={1} fill="url(#colorAI)" animationDuration={2000} />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+               </section>
+
+               {/* AI Intelligence Metrics Section */}
+               <section className="p-6 bg-gradient-to-br from-primary/5 to-purple-500/5 border border-primary/20 rounded-2xl relative overflow-hidden group hover:border-primary/40 transition-all duration-500">
+                  <div className="absolute -top-4 -right-4 size-40 bg-primary/10 rounded-full blur-[60px] animate-pulse"></div>
+                  <div className="flex items-center gap-3 mb-4 relative z-10">
+                    <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-lg border border-primary/20">
+                      <span className="material-symbols-outlined !text-[22px] filled">auto_awesome</span>
+                    </div>
+                    <div>
+                      <h4 className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">ForgeAI Matrix</h4>
+                      <p className="text-[14px] font-black text-white">4 optimization paths</p>
+                    </div>
+                  </div>
+                  <p className="text-[12px] text-gh-text-secondary leading-relaxed font-medium relative z-10 mb-5">
+                     Gemini 3.0 analyzed current module patterns. Detected redundant memoization in <span className="text-white font-bold">Button.tsx</span>.
+                  </p>
+                  <button className="w-full py-2.5 bg-primary text-gh-bg rounded-xl text-[11px] font-black uppercase tracking-widest hover:brightness-110 transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-2 active:scale-[0.98]">
+                     Review Logic Diff
+                     <span className="material-symbols-outlined !text-[16px]">arrow_forward</span>
+                  </button>
+               </section>
+
+               {/* Collaborator Activity */}
+               <section>
+                  <h4 className="text-[10px] font-black uppercase text-gh-text-secondary tracking-widest mb-5 px-1 flex items-center gap-2">
+                    <span className="size-1.5 rounded-full bg-primary"></span>
+                    Recent Activity
+                  </h4>
+                  <div className="space-y-4">
+                     {[
+                       { name: 'Sarah Chen', action: 'added tests for Input.tsx', time: '2h ago', img: 'sarah' },
+                       { name: 'Marcus Thorne', action: 'merged pull request #42', time: '5h ago', img: 'marcus' },
+                       { name: 'ForgeAI', action: 'autofixed 3 security flags', time: '1d ago', img: 'ai', isAI: true }
+                     ].map((item, i) => (
+                       <div key={i} className="flex gap-3 group/item cursor-default">
+                          <img src={`https://picsum.photos/seed/${item.img}/64`} className="size-8 rounded-full border border-gh-border group-hover/item:border-primary transition-colors" />
+                          <div className="flex flex-col">
+                             <p className="text-[11px] text-gh-text">
+                                <span className={`font-bold hover:underline cursor-pointer ${item.isAI ? 'text-primary' : ''}`}>{item.name}</span> {item.action}
+                             </p>
+                             <span className="text-[9px] text-gh-text-secondary uppercase font-bold tracking-tight mt-0.5">{item.time}</span>
+                          </div>
+                       </div>
+                     ))}
+                  </div>
+               </section>
+
+               {/* Languages Breakdown */}
+               <section className="pt-4">
+                  <h4 className="text-[10px] font-black uppercase text-gh-text-secondary tracking-widest mb-4 px-1">Language Composition</h4>
+                  <div className="h-2 w-full rounded-full flex overflow-hidden mb-5 bg-gh-border shadow-inner">
+                    <div className="bg-[#3178c6] h-full transition-all duration-1000" style={{ width: '82.4%' }}></div>
+                    <div className="bg-[#f1e05a] h-full transition-all duration-1000 delay-200" style={{ width: '15.1%' }}></div>
+                    <div className="bg-white/10 h-full flex-1"></div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-y-3">
+                     <div className="flex items-center justify-between px-2">
+                        <div className="flex items-center gap-2">
+                          <div className="size-2 rounded-full bg-[#3178c6] shadow-[0_0_8px_rgba(49,120,198,0.5)]"></div>
+                          <span className="font-bold text-gh-text text-[11px]">TypeScript</span>
+                        </div>
+                        <span className="text-gh-text-secondary text-[10px] font-black tracking-widest">82.4%</span>
+                     </div>
+                     <div className="flex items-center justify-between px-2 border-l border-gh-border ml-2">
+                        <div className="flex items-center gap-2">
+                          <div className="size-2 rounded-full bg-[#f1e05a] shadow-[0_0_8px_rgba(241,224,90,0.5)]"></div>
+                          <span className="font-bold text-gh-text text-[11px]">JavaScript</span>
+                        </div>
+                        <span className="text-gh-text-secondary text-[10px] font-black tracking-widest">15.1%</span>
+                     </div>
+                  </div>
+               </section>
+            </div>
+            
+            <div className="h-14 border-t border-gh-border bg-gh-bg-secondary/50 flex items-center px-6 shadow-lg">
+               <button className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-gh-text-secondary hover:text-white transition-all hover:translate-x-1 group">
+                  <span className="material-symbols-outlined !text-[18px] opacity-70 group-hover:opacity-100">history</span>
+                  View Full Audit Log
+               </button>
+            </div>
+          </aside>
+        )}
+      </div>
     </div>
   );
 };

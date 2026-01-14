@@ -22,14 +22,17 @@ interface EditorCommentThreadProps {
   onClose: () => void;
 }
 
-const EditorCommentItem = ({ 
+interface EditorCommentItemProps {
+  comment: EditorComment;
+  onReply: (parentId: string, username: string) => void;
+  isReply?: boolean;
+}
+
+// Typed as React.FC to allow 'key' prop when mapped in lists
+const EditorCommentItem: React.FC<EditorCommentItemProps> = ({ 
   comment, 
   onReply, 
   isReply = false 
-}: { 
-  comment: EditorComment, 
-  onReply: (parentId: string, username: string) => void,
-  isReply?: boolean
 }) => {
   const navigate = useNavigate();
   return (

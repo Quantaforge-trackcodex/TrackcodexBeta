@@ -1,12 +1,12 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CommunityComment } from '../../types';
 import KarmaBadge from './KarmaBadge';
 import UserHoverCard from './UserHoverCard';
 
 interface CommentItemProps {
-  comment: CommunityComment;
+  comment: CommunityComment & { isNew?: boolean };
   onReply: (parentId: string, username: string) => void;
   depth?: number;
 }
@@ -16,6 +16,14 @@ const CommentItem: React.FC<CommentItemProps> = ({ comment, onReply, depth = 0 }
   const [upvotes, setUpvotes] = useState(comment.upvotes);
   const [isUpvoted, setIsUpvoted] = useState(false);
   const [showHoverCard, setShowHoverCard] = useState(false);
+  const [isHighlightVisible, setIsHighlightVisible] = useState(!!comment.isNew);
+
+  useEffect(() => {
+    if (comment.isNew) {
+      const timer = setTimeout(() => setIsHighlightVisible(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [comment.isNew]);
 
   const handleProfileClick = () => navigate('/profile');
 
@@ -47,7 +55,7 @@ const CommentItem: React.FC<CommentItemProps> = ({ comment, onReply, depth = 0 }
   };
 
   return (
-    <div className={`mt-4 ${depth > 0 ? 'ml-6 pl-4 border-l border-[#30363d]' : ''}`}>
+    <div className={`mt-4 transition-all duration-1000 ${depth > 0 ? 'ml-6 pl-4 border-l border-[#30363d]' : ''} ${isHighlightVisible ? 'bg-primary/5 -mx-2 px-2 rounded-lg ring-1 ring-primary/20' : ''}`}>
       <div className="flex gap-3 group">
         <div 
           className="relative shrink-0"
@@ -76,6 +84,9 @@ const CommentItem: React.FC<CommentItemProps> = ({ comment, onReply, depth = 0 }
             </span>
             <KarmaBadge karma={comment.author.karma} />
             <span className="text-[11px] text-slate-500 font-medium">{comment.timestamp}</span>
+            {isHighlightVisible && (
+              <span className="text-[9px] font-black text-primary uppercase tracking-widest animate-pulse">New</span>
+            )}
           </div>
           <p className="text-[13px] text-slate-300 leading-relaxed mb-2">
             {renderTextWithMentions(comment.text)}

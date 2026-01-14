@@ -30,39 +30,22 @@ export const jobOfferService = {
     const updatedJobs = [newJob, ...jobs];
     localStorage.setItem(JOB_STORAGE_KEY, JSON.stringify(updatedJobs));
     
-    this.sendOfferEmail(newJob);
+    // Trigger global notification with functional buttons
+    window.dispatchEvent(new CustomEvent('trackcodex-notification', {
+      detail: {
+        title: 'New Mission Offer',
+        message: `${currentUser.name} sent you a private mission offer: "${newJob.title}"`,
+        type: 'mission',
+        jobId: newJob.id,
+        hasActions: true
+      }
+    }));
+
     return newJob;
   },
 
   getOfferedJobs(): Job[] {
     const saved = localStorage.getItem(JOB_STORAGE_KEY);
     return saved ? JSON.parse(saved) : [];
-  },
-
-  sendOfferEmail(job: Job) {
-    // Simulated Email Log
-    console.log(`
-      [TrackCodex Email System]
-      To: ${job.targetUserId}@trackcodex.dev
-      Subject: New Job Offer from ${job.creator.name}
-      
-      Hi! ${job.creator.name} has offered you a new position: "${job.title}".
-      
-      Budget: ${job.budget}
-      Type: ${job.type}
-      
-      "${job.personalNote || 'No personal note provided.'}"
-      
-      View full details at: https://trackcodex.io/jobs/offer/${job.id}
-    `);
-    
-    // Dispatch event for UI notification
-    window.dispatchEvent(new CustomEvent('trackcodex-notification', {
-      detail: {
-        title: 'Job Offer Sent',
-        message: `Professional offer email sent to @${job.targetUserId}`,
-        type: 'success'
-      }
-    }));
   }
 };

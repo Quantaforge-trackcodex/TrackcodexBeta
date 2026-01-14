@@ -1,38 +1,51 @@
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const FreelanceCard = () => {
+  const navigate = useNavigate();
+
   return (
-    <div className="p-6 rounded-xl bg-[#161b22] border border-[#30363d] font-display">
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-2">
-          <span className="material-symbols-outlined text-amber-500 filled !text-xl">work</span>
-          <h3 className="text-[14px] font-black text-[#f0f6fc] tracking-tight uppercase">Freelance</h3>
-        </div>
-        <div className="flex items-center gap-1 text-amber-500 font-black">
-          <span className="material-symbols-outlined !text-[16px]">star</span>
-          <span className="text-[15px]">5.0</span>
-        </div>
+    <div className="bg-[#161b22] border border-[#30363d] rounded-3xl p-8 flex flex-col shadow-xl hover:border-amber-500/30 transition-all group">
+      <div className="flex items-center justify-between mb-10">
+         <div className="flex items-center gap-3">
+            <span className="material-symbols-outlined text-amber-500 filled !text-[22px]">work</span>
+            <h3 className="text-[15px] font-black text-white tracking-tight uppercase">Freelance Profile</h3>
+         </div>
+         <div className="flex items-center gap-1.5 text-amber-500 font-black">
+            <span className="material-symbols-outlined !text-[20px]">star</span>
+            <span className="text-xl tracking-tighter">5.0</span>
+         </div>
       </div>
 
-      <div className="space-y-4 mb-6">
-        <div className="flex items-center justify-between">
-          <span className="text-[13px] text-slate-500 font-medium">Jobs Completed</span>
-          <span className="text-[14px] font-black text-[#f0f6fc]">24</span>
-        </div>
-        <div className="flex items-center justify-between">
-          <span className="text-[13px] text-slate-500 font-medium">Top Category</span>
-          <span className="text-[14px] font-black text-[#f0f6fc]">Security Audits</span>
-        </div>
+      <div className="space-y-8 mb-10 flex-1">
+         <button 
+           onClick={() => navigate('/dashboard/jobs')}
+           className="flex items-center justify-between border-b border-white/5 pb-4 w-full group/stat hover:border-amber-500/50 transition-all"
+         >
+            <span className="text-[14px] font-bold text-slate-500 group-hover/stat:text-slate-300 transition-colors">Jobs Completed</span>
+            <span className="text-2xl font-black text-white">24</span>
+         </button>
+         <div className="flex items-start justify-between">
+            <div className="flex flex-col">
+               <span className="text-[13px] font-bold text-slate-500 leading-tight">Top Performance</span>
+               <span className="text-[13px] font-bold text-slate-500 leading-tight">Category</span>
+            </div>
+            <div className="text-right">
+               <span className="text-[16px] font-black text-white uppercase block leading-none tracking-tight">Security</span>
+               <span className="text-[16px] font-black text-white uppercase block leading-none mt-1.5 tracking-tight">Audits</span>
+            </div>
+         </div>
       </div>
 
-      <div className="space-y-2">
-        <div className="h-1.5 w-full bg-[#0d1117] rounded-full overflow-hidden">
-          <div className="h-full bg-amber-500 w-[88%] shadow-[0_0_8px_rgba(245,158,11,0.4)]"></div>
-        </div>
-        <div className="flex justify-between items-center">
-          <span className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">88% Repeat Hire Rate</span>
-        </div>
+      <div className="space-y-4 pt-6 border-t border-white/5">
+         <div className="flex items-center justify-between">
+            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">88% Repeat Hire Rate</span>
+            <span className="text-[10px] font-bold text-amber-500 uppercase">Excellent</span>
+         </div>
+         <div className="h-2.5 w-full bg-[#0d1117] rounded-full overflow-hidden shadow-inner relative group-hover:ring-1 group-hover:ring-amber-500/20 transition-all">
+            <div className="h-full bg-amber-500 w-[88%] shadow-[0_0_15px_rgba(245,158,11,0.6)] transition-all duration-1000 ease-out"></div>
+         </div>
       </div>
     </div>
   );

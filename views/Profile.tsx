@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import ProfileCard from '../components/profile/ProfileCard';
 import Highlights from '../components/profile/Highlights';
@@ -10,89 +9,71 @@ import PinnedRepos from '../components/profile/PinnedRepos';
 import ContributionHeatmap from '../components/profile/ContributionHeatmap';
 import ActivityFeed from '../components/profile/ActivityFeed';
 import { profileService, UserProfile } from '../services/profile';
-import KarmaBadge from '../components/community/KarmaBadge';
+import { MOCK_REPOS } from '../constants';
+import { useNavigate } from 'react-router-dom';
 
-const CommunitySubsection = ({ profile }: { profile: UserProfile }) => (
-  <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-       <div className="p-8 rounded-2xl bg-[#161b22] border border-[#30363d] relative overflow-hidden group">
-          <div className="absolute -top-10 -right-10 size-40 bg-primary/5 rounded-full blur-3xl group-hover:scale-150 transition-transform"></div>
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-3">
-              <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                 <span className="material-symbols-outlined !text-2xl">hub</span>
+const ProfileRepositories = () => {
+  const navigate = useNavigate();
+  return (
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+      <div className="flex items-center justify-between px-1">
+        <h3 className="text-lg font-semibold text-white tracking-tight">Repositories</h3>
+        <div className="flex items-center gap-4">
+          <div className="relative group">
+            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gh-text-secondary text-sm">search</span>
+            <input className="bg-gh-bg border border-gh-border rounded-md pl-9 pr-4 py-1.5 text-xs text-gh-text focus:ring-1 focus:ring-primary w-64 outline-none transition-all placeholder:text-gh-text-secondary" placeholder="Search profile repositories..." />
+          </div>
+          <button onClick={() => navigate('/repositories')} className="text-[11px] font-bold uppercase text-primary tracking-widest hover:underline flex items-center gap-1">
+            Global View <span className="material-symbols-outlined !text-[16px]">open_in_new</span>
+          </button>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-1 gap-3">
+        {MOCK_REPOS.map(repo => (
+          <div 
+            key={repo.id} 
+            onClick={() => navigate(`/repo/${repo.id}`)}
+            className="group bg-gh-bg-secondary border border-gh-border p-5 rounded-lg hover:border-gh-text-secondary transition-all cursor-pointer flex items-center justify-between"
+          >
+            <div className="flex items-center gap-4">
+              <div className="size-10 rounded-md bg-gh-bg border border-gh-border flex items-center justify-center text-gh-text-secondary group-hover:text-primary transition-all">
+                <span className="material-symbols-outlined">account_tree</span>
               </div>
-              <h3 className="text-lg font-black text-white tracking-tight uppercase">Community Reputation</h3>
+              <div>
+                <h4 className="text-[14px] font-bold text-gh-text group-hover:text-primary transition-colors">{repo.name}</h4>
+                <div className="flex items-center gap-3 mt-1">
+                  <span className="text-[10px] text-gh-text-secondary font-bold uppercase tracking-widest">{repo.visibility}</span>
+                  <div className="flex items-center gap-1.5 text-[10px] text-gh-text-secondary font-medium">
+                    <div className="size-2 rounded-full" style={{ backgroundColor: repo.techColor }}></div>
+                    {repo.techStack}
+                  </div>
+                </div>
+              </div>
             </div>
-            <KarmaBadge karma={profile.communityKarma} />
+            
+            <div className="flex items-center gap-8">
+              <div className="hidden md:flex flex-col items-center">
+                 <span className="text-[9px] font-bold text-gh-text-secondary uppercase tracking-widest">Health</span>
+                 <span className={`text-xs font-bold ${repo.aiHealth.startsWith('A') ? 'text-emerald-500' : 'text-amber-500'}`}>{repo.aiHealth}</span>
+              </div>
+              <div className="hidden sm:flex flex-col items-end">
+                 <span className="text-[9px] font-bold text-gh-text-secondary uppercase tracking-widest">Updated</span>
+                 <span className="text-xs text-gh-text-secondary font-medium">{repo.lastUpdated}</span>
+              </div>
+              <span className="material-symbols-outlined text-gh-text-secondary group-hover:text-white transition-all group-hover:translate-x-1">chevron_right</span>
+            </div>
           </div>
-          
-          <div className="grid grid-cols-2 gap-6">
-             <div className="p-5 rounded-2xl bg-[#0d1117] border border-[#30363d]">
-                <p className="text-[42px] font-black text-primary leading-none mb-1">{profile.communityKarma}</p>
-                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Total Karma Points</p>
-             </div>
-             <div className="p-5 rounded-2xl bg-[#0d1117] border border-[#30363d]">
-                <p className="text-[42px] font-black text-white leading-none mb-1">{profile.postsCount}</p>
-                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Discussion Posts</p>
-             </div>
-          </div>
-
-          <div className="mt-8 pt-8 border-t border-[#30363d]">
-             <div className="flex items-center justify-between text-xs font-bold text-slate-500 mb-2">
-                <span>Next Level: Expert</span>
-                <span>{profile.communityKarma}/500</span>
-             </div>
-             <div className="h-1.5 w-full bg-[#0d1117] rounded-full overflow-hidden">
-                <div className="h-full bg-primary transition-all duration-1000" style={{ width: `${(profile.communityKarma / 500) * 100}%` }}></div>
-             </div>
-          </div>
-       </div>
-
-       <div className="p-8 rounded-2xl bg-[#161b22] border border-[#30363d] flex flex-col justify-center gap-6">
-          <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Karma Earning Guide</h3>
-          <div className="space-y-4">
-             <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                   <div className="size-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500">
-                      <span className="material-symbols-outlined !text-[18px]">add_circle</span>
-                   </div>
-                   <span className="text-sm font-bold text-slate-300">Creating a Post</span>
-                </div>
-                <span className="text-sm font-black text-emerald-500">+2 Karma</span>
-             </div>
-             <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                   <div className="size-8 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-500">
-                      <span className="material-symbols-outlined !text-[18px]">favorite</span>
-                   </div>
-                   <span className="text-sm font-bold text-slate-300">Receiving a Like</span>
-                </div>
-                <span className="text-sm font-black text-amber-500">+1 Karma</span>
-             </div>
-             <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                   <div className="size-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500">
-                      <span className="material-symbols-outlined !text-[18px]">forum</span>
-                   </div>
-                   <span className="text-sm font-bold text-slate-300">Receiving a Comment</span>
-                </div>
-                <span className="text-sm font-black text-blue-500">+2 Karma</span>
-             </div>
-          </div>
-       </div>
+        ))}
+      </div>
     </div>
-    
-    <div className="p-8 rounded-2xl border border-dashed border-[#30363d] bg-white/[0.01] text-center">
-       <h4 className="text-sm font-bold text-white mb-2">Detailed Community History</h4>
-       <p className="text-xs text-slate-500 max-w-sm mx-auto">This section tracks your impact on the TrackCodex community through technical discussions and peer support.</p>
-    </div>
-  </div>
-);
+  );
+};
 
 const ProfileView = () => {
   const [profile, setProfile] = useState<UserProfile>(profileService.getProfile());
   const [activeTab, setActiveTab] = useState('Overview');
+  const navigate = useNavigate();
 
   useEffect(() => {
     return profileService.subscribe(updated => setProfile(updated));
@@ -100,97 +81,120 @@ const ProfileView = () => {
 
   const tabs = [
     { label: 'Overview', icon: 'dashboard' },
-    { label: 'Repositories', icon: 'account_tree', badge: '42' },
+    { label: 'Code & Repos', icon: 'account_tree', badge: '42' },
+    { label: 'Security', icon: 'verified_user', badge: 'Top 5%' },
+    { label: 'AI & ForgeAI', icon: 'auto_awesome' },
     { label: 'Community', icon: 'hub' },
-    { label: 'Security', icon: 'verified_user' },
+    { label: 'Jobs', icon: 'work' },
     { label: 'Activity', icon: 'history' }
   ];
 
-  return (
-    <div className="flex-1 overflow-y-auto custom-scrollbar bg-[#0d1117] font-display">
-      <div className="max-w-[1600px] mx-auto px-6 lg:px-10 py-10 flex flex-col lg:flex-row gap-10 lg:gap-12">
-        
-        {/* Column 1: Profile Card (Left Identity) */}
-        <ProfileCard />
+  const handleTabClick = (label: string) => {
+    setActiveTab(label);
+  };
 
-        {/* Content Area (Center & Right) */}
+  return (
+    <div className="font-display p-10">
+      <div className="max-w-[1440px] mx-auto flex flex-col lg:flex-row gap-12">
+        
+        {/* Profile Identity Sidebar */}
+        <div className="w-full lg:w-[300px] shrink-0 animate-in fade-in slide-in-from-left duration-500">
+          <ProfileCard />
+        </div>
+
+        {/* Dynamic Content Dashboard */}
         <div className="flex-1 min-w-0">
-          {/* Main Navigation Tabs */}
-          <div className="flex items-center gap-8 border-b border-[#30363d] mb-8 overflow-x-auto no-scrollbar">
+          {/* Navigation Tabs */}
+          <div className="flex items-center gap-6 border-b border-gh-border mb-10 overflow-x-auto no-scrollbar">
             {tabs.map((tab) => (
               <button 
                 key={tab.label} 
-                onClick={() => setActiveTab(tab.label)}
-                className={`flex items-center gap-2 pb-4 text-[14px] font-medium transition-all relative shrink-0 ${activeTab === tab.label ? 'text-[#f0f6fc]' : 'text-slate-500 hover:text-slate-300'}`}
+                onClick={() => handleTabClick(tab.label)}
+                className={`flex items-center gap-2 pb-4 text-[14px] font-medium transition-all relative shrink-0 ${activeTab === tab.label ? 'text-white' : 'text-gh-text-secondary hover:text-gh-text'}`}
               >
-                <span className="material-symbols-outlined !text-[20px]">{tab.icon}</span>
+                <span className="material-symbols-outlined !text-[20px] opacity-70">{tab.icon}</span>
                 {tab.label}
-                {tab.badge && <span className="px-1.5 py-0.5 rounded-full bg-slate-800 text-[10px] font-bold text-slate-500">{tab.badge}</span>}
-                {activeTab === tab.label && <div className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-[#f78166] rounded-t-full"></div>}
+                {tab.badge && (
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                    tab.label === 'Security' 
+                      ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' 
+                      : 'bg-gh-bg-secondary text-gh-text-secondary border border-gh-border'
+                  }`}>
+                    {tab.badge}
+                  </span>
+                )}
+                {activeTab === tab.label && (
+                  <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#f78166] rounded-t-full"></div>
+                )}
               </button>
             ))}
           </div>
 
-          {activeTab === 'Community' ? (
-            <CommunitySubsection profile={profile} />
-          ) : (
-            <div className="flex flex-col xl:flex-row gap-10">
-              {/* Center: Developer Stats and Projects */}
-              <div className="flex-1 flex flex-col gap-10 min-w-0">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                   <div className="p-6 rounded-xl bg-[#161b22] border border-[#30363d] font-display relative overflow-hidden group">
-                      <div className="absolute -top-10 -right-10 size-32 bg-primary/5 rounded-full blur-3xl group-hover:scale-150 transition-transform"></div>
-                      <div className="flex items-center justify-between mb-8">
-                        <div className="flex items-center gap-2">
-                          <span className="material-symbols-outlined text-primary !text-xl">hub</span>
-                          <h3 className="text-[14px] font-black text-[#f0f6fc] tracking-tight uppercase">Community Reputation</h3>
-                        </div>
-                        <KarmaBadge karma={profile.communityKarma} />
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                         <div className="p-4 rounded-xl bg-[#0d1117] border border-[#30363d]">
-                            <p className="text-[32px] font-black text-primary leading-none mb-1">{profile.communityKarma}</p>
-                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Total Karma</p>
-                         </div>
-                         <div className="p-4 rounded-xl bg-[#0d1117] border border-[#30363d]">
-                            <p className="text-[32px] font-black text-white leading-none mb-1">{profile.postsCount}</p>
-                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Post History</p>
-                         </div>
-                      </div>
-                   </div>
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+            {activeTab === 'Overview' && (
+              <div className="space-y-12">
+                {/* Highlights Section */}
+                <Highlights />
+
+                {/* Dashboard Grid */}
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                   <CodingSnapshot />
+                   <SecurityImpact />
+                   <ForgeAIUsage />
                    <FreelanceCard />
                 </div>
 
-                <Highlights />
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <CodingSnapshot />
-                  <SecurityImpact />
+                {/* Secondary Row */}
+                <div className="grid grid-cols-1 xl:grid-cols-3 gap-10">
+                   <div className="xl:col-span-2 space-y-12">
+                      <PinnedRepos />
+                      <ContributionHeatmap />
+                   </div>
+
+                   {/* Right Side Activity Hub */}
+                   <div className="space-y-12">
+                      <ActivityFeed />
+                      <div className="p-6 bg-gh-bg-secondary border border-gh-border rounded-xl relative overflow-hidden group">
+                         <div className="flex items-center gap-2 mb-4 text-primary">
+                            <span className="material-symbols-outlined filled !text-xl">verified</span>
+                            <h3 className="text-[10px] font-black uppercase tracking-widest">ForgeAI Audited</h3>
+                         </div>
+                         <p className="text-[13px] text-gh-text-secondary leading-relaxed font-medium">
+                            Professional history and community contributions are verified by ForgeAI protocols to maintain network-wide trust levels.
+                         </p>
+                      </div>
+                   </div>
                 </div>
-
-                <ForgeAIUsage />
-                <PinnedRepos />
-                <ContributionHeatmap />
               </div>
+            )}
 
-              {/* Right Sidebar: Activity Feed */}
-              <aside className="w-full xl:w-[320px] shrink-0">
-                 <div className="sticky top-4">
-                    <ActivityFeed />
-                    
-                    <div className="mt-8 p-4 rounded-xl bg-primary/5 border border-primary/20">
-                       <div className="flex items-center gap-2 mb-2">
-                          <span className="material-symbols-outlined text-primary !text-[18px]">verified</span>
-                          <span className="text-[11px] font-black uppercase tracking-widest text-primary">ForgeAI Audited</span>
-                       </div>
-                       <p className="text-[11px] text-slate-500 leading-relaxed font-medium">
-                          Professional history and community contributions are verified by ForgeAI to maintain enterprise-grade trust levels.
-                       </p>
-                    </div>
+            {activeTab === 'Code & Repos' && <ProfileRepositories />}
+            
+            {activeTab === 'Activity' && (
+              <div className="max-w-3xl">
+                <ActivityFeed />
+              </div>
+            )}
+
+            {['Security', 'AI & ForgeAI', 'Community', 'Jobs'].includes(activeTab) && (
+              <div className="flex flex-col items-center justify-center py-20 bg-gh-bg-secondary border border-gh-border border-dashed rounded-xl">
+                 <div className="size-14 rounded-full bg-primary/5 flex items-center justify-center text-primary mb-4">
+                    <span className="material-symbols-outlined !text-[28px]">construction</span>
                  </div>
-              </aside>
-            </div>
-          )}
+                 <h3 className="text-lg font-bold text-white mb-2 uppercase tracking-tight">{activeTab} Details</h3>
+                 <p className="text-gh-text-secondary text-sm mb-6">Launching dedicated platform module for expanded view.</p>
+                 <button 
+                  onClick={() => {
+                    const pathMap: any = { 'Security': '/activity', 'AI & ForgeAI': '/forge-ai', 'Community': '/community', 'Jobs': '/dashboard/jobs' };
+                    navigate(pathMap[activeTab]);
+                  }}
+                  className="px-6 py-2 bg-gh-bg border border-gh-border hover:border-gh-text-secondary text-white rounded-md font-bold text-xs shadow-sm transition-all active:scale-95"
+                 >
+                   Open {activeTab}
+                 </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

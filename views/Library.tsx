@@ -4,7 +4,19 @@ import { MOCK_LIBRARY_RESOURCES, MOCK_LIBRARY_CATEGORIES } from '../constants';
 import { LibraryResource } from '../types';
 import { forgeAIService } from '../services/gemini';
 
-const LibraryCard = ({ resource, onClick }: { resource: LibraryResource, onClick: () => void }) => {
+// Typed as React.FC to resolve TypeScript error regarding missing 'key' property in prop definition
+const LibraryCard: React.FC<{ resource: LibraryResource, onClick: () => void }> = ({ resource, onClick }) => {
+  const handleInsert = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    window.dispatchEvent(new CustomEvent('trackcodex-notification', {
+      detail: {
+        title: 'Resource Added',
+        message: `${resource.name} has been staged for your active workspace.`,
+        type: 'success'
+      }
+    }));
+  };
+
   return (
     <div 
       onClick={onClick}
@@ -63,7 +75,10 @@ const LibraryCard = ({ resource, onClick }: { resource: LibraryResource, onClick
             </span>
           ))}
         </div>
-        <button className="flex items-center gap-2 text-white/50 hover:text-white text-[10px] font-black uppercase tracking-widest transition-all">
+        <button 
+          onClick={handleInsert}
+          className="flex items-center gap-2 text-white/50 hover:text-white text-[10px] font-black uppercase tracking-widest transition-all"
+        >
           <span className="material-symbols-outlined !text-[16px]">add</span>
           Insert into Workspace
         </button>
@@ -76,6 +91,16 @@ const LibraryDetail = ({ resource, onBack }: { resource: LibraryResource, onBack
   const [activeTab, setActiveTab] = useState('Overview');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [aiInsight, setAiInsight] = useState<string | null>(null);
+
+  const handleAddToWorkspace = () => {
+    window.dispatchEvent(new CustomEvent('trackcodex-notification', {
+      detail: {
+        title: 'Component Integrated',
+        message: `${resource.name} is being cloned into your current development environment.`,
+        type: 'success'
+      }
+    }));
+  };
 
   const handleForgeAIPreview = async () => {
     setIsAnalyzing(true);
@@ -134,13 +159,16 @@ const LibraryDetail = ({ resource, onBack }: { resource: LibraryResource, onBack
                 <span className="material-symbols-outlined !text-[18px]">star</span>
                 Star
              </button>
-             <button className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-primary/20">
+             <button 
+                onClick={handleAddToWorkspace}
+                className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-primary/20 hover:brightness-110 active:scale-95"
+             >
                 <span className="material-symbols-outlined !text-[18px]">add</span>
                 Add to Workspace
              </button>
              <button 
                 onClick={handleForgeAIPreview}
-                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-600 to-primary text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-purple-500/20"
+                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-600 to-primary text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-purple-500/20 hover:brightness-110 active:scale-95"
              >
                 <span className="material-symbols-outlined !text-[18px] filled">auto_awesome</span>
                 Use with ForgeAI

@@ -149,7 +149,7 @@ export interface Job {
   longDescription?: string;
   budget: string;
   type: 'Contract' | 'Gig' | 'Full-time';
-  status: 'Open' | 'In Progress' | 'Completed' | 'Pending';
+  status: 'Open' | 'In Progress' | 'Completed' | 'Pending' | 'Pending Review';
   techStack: string[];
   repoId: string;
   creator: {

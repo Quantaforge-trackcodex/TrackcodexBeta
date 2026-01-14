@@ -1,10 +1,9 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
 export const forgeAIService = {
   async getCodeRefactorSuggestion(code: string, fileName: string) {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
       contents: `Analyze the following code from ${fileName} and suggest a specific optimization or refactor using modern patterns. Provide the explanation and a diff-like snippet.\n\nCODE:\n${code}`,
@@ -15,7 +14,68 @@ export const forgeAIService = {
     return response.text;
   },
 
+  async getAICompletion(prefix: string, suffix: string, fileName: string) {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: `You are an AI code completion engine. Complete the code for file "${fileName}". 
+      
+      CODE BEFORE CURSOR:
+      ${prefix}
+
+      CODE AFTER CURSOR:
+      ${suffix}
+
+      Only provide the code snippet that should be inserted between the prefix and suffix. Do not include triple backticks unless they are part of the code.`,
+    });
+    return response.text;
+  },
+
+  async getTechnicalAnswer(question: string, codeContext: string, fileName: string) {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-pro-preview',
+      contents: `You are ForgeAI, an expert technical co-pilot. 
+      File Context (${fileName}):
+      \`\`\`
+      ${codeContext}
+      \`\`\`
+
+      User Question: ${question}
+
+      Provide a deep, technical, and helpful response. Use markdown formatting.`,
+      config: {
+        thinkingConfig: { thinkingBudget: 2048 }
+      }
+    });
+    return response.text;
+  },
+
+  async getCodeReview(code: string, fileName: string) {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-pro-preview',
+      contents: `Perform a comprehensive technical code review for the file "${fileName}".
+      
+      CODE:
+      ${code}
+
+      Focus on:
+      1. Logic bugs or edge cases.
+      2. Security vulnerabilities.
+      3. Performance bottlenecks.
+      4. Code style and modern patterns.
+
+      Respond in a structured markdown format with clear headings.`,
+      config: {
+        thinkingConfig: { thinkingBudget: 4096 }
+      }
+    });
+    return response.text;
+  },
+
   async getSecurityFix(vulnerability: string, codeSnippet: string) {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
       contents: `As a security expert, fix this vulnerability: ${vulnerability}.\n\nSnippet:\n${codeSnippet}\n\nProvide the explanation and the corrected code.`,
@@ -27,6 +87,7 @@ export const forgeAIService = {
   },
 
   async summarizeRepoActivity(commits: string[]) {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: `Summarize the following repository activities in a brief, professional paragraph for a dashboard:\n\n${commits.join('\n')}`,
@@ -35,6 +96,7 @@ export const forgeAIService = {
   },
 
   async checkContentSafety(title: string, content: string): Promise<{ status: 'SAFE' | 'WARNING' | 'FLAGGED'; reason?: string }> {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: `Analyze this community post for safety, professionalism, and spam.
@@ -67,6 +129,7 @@ export const forgeAIService = {
   },
 
   async getLiveChatResponse(message: string, history: { sender: string; text: string }[], sessionContext: string, participants: string[]) {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const historyString = history.map(m => `${m.sender}: ${m.text}`).join('\n');
     
     const response = await ai.models.generateContent({
@@ -92,7 +155,8 @@ export const forgeAIService = {
       - Since this is a live session, if you detect a potential issue in the mentioned context, point it out politely.`,
       config: {
         temperature: 0.75,
-        maxOutputTokens: 1000,
+        // Fix: Removed maxOutputTokens as it was set smaller than thinkingBudget, which causes empty responses.
+        // Guidelines recommend avoiding maxOutputTokens unless necessary.
         thinkingConfig: { thinkingBudget: 4096 }
       }
     });

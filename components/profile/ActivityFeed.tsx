@@ -11,59 +11,52 @@ const ActivityFeed = () => {
 
   return (
     <div className="font-display">
-      <div className="flex items-center gap-2 mb-6">
-        <span className="material-symbols-outlined text-slate-500 !text-xl">history</span>
-        <h3 className="text-[16px] font-bold text-[#f0f6fc]">Latest Activity</h3>
+      <div className="flex items-center gap-3 mb-8">
+         <span className="material-symbols-outlined text-slate-500 !text-[20px]">history</span>
+         <h3 className="text-[16px] font-black uppercase tracking-tight text-white">Latest Activity</h3>
       </div>
       
-      <div className="space-y-0">
-        <p className="text-[10px] font-black uppercase text-slate-600 tracking-widest mb-4">March 2024</p>
-        <div className="space-y-0 relative">
-          <div className="absolute left-[11px] top-2 bottom-4 w-0.5 bg-[#30363d]"></div>
-          
+      <div className="relative pl-8">
+        <div className="absolute left-[3px] top-2 bottom-8 w-[1px] bg-[#30363d]"></div>
+        <p className="text-[11px] font-black uppercase text-slate-700 tracking-[0.3em] mb-8">March 2024</p>
+        
+        <div className="space-y-12">
           {events.map((event, i) => (
-            <div key={i} className="flex gap-4 mb-6 relative z-10">
-              <div className="size-6 rounded-full bg-[#161b22] border border-[#30363d] flex items-center justify-center shrink-0 shadow-sm">
-                <span className={`material-symbols-outlined !text-[12px] ${
-                  event.type === 'push' ? 'text-primary' : 
-                  event.type === 'pr' ? 'text-purple-400' : 'text-emerald-400'
-                }`}>
-                  {event.type === 'push' ? 'commit' : event.type === 'pr' ? 'fork_right' : 'add'}
-                </span>
-              </div>
-              
-              <div className="flex-1 min-w-0">
-                <div className="flex flex-col">
-                  <p className="text-[13px] text-[#c9d1d9] leading-snug">
-                    <span className="font-bold text-white">
-                      {event.type === 'push' ? `Pushed ${event.commits} commits` : 
-                       event.type === 'pr' ? 'Opened pull request' : 'Created repository'}
-                    </span>
-                    {" "}to{" "}
-                    <span className="text-primary hover:underline cursor-pointer font-bold">{event.repo}</span>
+            <div key={i} className="relative group cursor-pointer">
+               <div className="absolute left-[-32px] top-1 size-5 rounded-full bg-[#161b22] border-2 border-[#30363d] flex items-center justify-center z-10 group-hover:border-primary transition-colors">
+                  <div className={`size-1.5 rounded-full ${event.type === 'push' ? 'bg-primary' : event.type === 'pr' ? 'bg-purple-500' : 'bg-emerald-500'}`}></div>
+               </div>
+               
+               <div className="min-w-0">
+                  <p className="text-[14px] text-slate-300 leading-snug">
+                     <span className="font-black text-white group-hover:text-primary transition-colors">
+                        {event.type === 'push' ? `Pushed ${event.commits} commits` : 
+                         event.type === 'pr' ? 'Opened pull request' : 'Created repository'}
+                     </span>
+                     {" "}to{" "}
+                     <span className="text-primary font-bold hover:underline">{event.repo}</span>
                   </p>
                   
                   {event.description && (
-                    <p className="text-[11px] text-slate-500 mt-1 line-clamp-1 italic">
-                      "{event.description}"
+                    <p className="text-[12px] text-slate-500 mt-2 font-medium italic">
+                       "{event.description}"
                     </p>
                   )}
                   
                   {event.title && (
-                    <p className="text-[11px] text-slate-500 mt-1 font-medium bg-white/5 px-2 py-0.5 rounded border border-white/5 inline-block w-fit">
-                      {event.title}
-                    </p>
+                    <div className="mt-3 px-3 py-1.5 bg-[#1e1e1e] border border-white/5 rounded-lg text-[11px] text-slate-400 font-bold uppercase tracking-tight inline-block">
+                       {event.title}
+                    </div>
                   )}
                   
-                  <p className="text-[10px] text-slate-600 mt-2 font-bold uppercase tracking-tighter">{event.date}</p>
-                </div>
-              </div>
+                  <p className="text-[10px] text-slate-600 mt-4 font-black uppercase tracking-widest">{event.date}</p>
+               </div>
             </div>
           ))}
         </div>
       </div>
       
-      <button className="w-full mt-4 py-2 bg-transparent hover:bg-white/5 border border-[#30363d] text-slate-500 hover:text-white rounded-xl font-bold text-xs transition-all">
+      <button className="w-full mt-12 py-3 bg-[#161b22] border border-[#30363d] text-slate-400 hover:text-white rounded-xl text-[11px] font-black uppercase tracking-[0.2em] transition-all shadow-sm hover:border-primary/40 active:scale-[0.98]">
         View full activity
       </button>
     </div>
