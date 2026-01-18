@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Repository } from '../../types';
 
 interface CreateRepoModalProps {
@@ -15,13 +15,27 @@ const CreateRepoModal: React.FC<CreateRepoModalProps> = ({ isOpen, onClose, onSu
     techStack: 'TypeScript',
     visibility: 'PUBLIC' as 'PUBLIC' | 'PRIVATE'
   });
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!isOpen) return null;
+
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit({
       ...formData,
+      logo: logoPreview,
       id: formData.name.toLowerCase().replace(/\s+/g, '-'),
       stars: 0,
       forks: 0,
@@ -34,11 +48,12 @@ const CreateRepoModal: React.FC<CreateRepoModalProps> = ({ isOpen, onClose, onSu
                  formData.techStack === 'Rust' ? '#f97316' : '#888'
     });
     setFormData({ name: '', description: '', techStack: 'TypeScript', visibility: 'PUBLIC' });
+    setLogoPreview(null);
   };
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-8 bg-black/90 backdrop-blur-xl animate-in fade-in duration-300">
-      <div className="bg-[#161b22] border border-primary/30 w-full max-w-xl rounded-3xl overflow-hidden shadow-2xl flex flex-col font-display">
+      <div className="bg-[#161b22] border border-primary/30 w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl flex flex-col font-display">
         <div className="p-6 border-b border-[#30363d] bg-primary/5 flex items-center justify-between">
            <div>
               <h3 className="text-xl font-black text-white tracking-tight uppercase">Initialize Repository</h3>
@@ -50,16 +65,44 @@ const CreateRepoModal: React.FC<CreateRepoModalProps> = ({ isOpen, onClose, onSu
         </div>
 
         <form onSubmit={handleSubmit} className="p-8 space-y-6">
-           <div className="space-y-4">
-              <div>
-                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2 px-1">Repository Name</label>
-                 <input 
-                   required
-                   value={formData.name}
-                   onChange={e => setFormData({...formData, name: e.target.value})}
-                   placeholder="my-awesome-project"
-                   className="w-full bg-[#0d1117] border border-[#30363d] rounded-xl px-4 py-3 text-white focus:ring-1 focus:ring-primary outline-none transition-all"
-                 />
+           <div className="space-y-6">
+              <div className="flex items-start gap-6">
+                <div>
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2 px-1">Logo</label>
+                  <div className="relative group/avatar">
+                    <div className="size-24 rounded-2xl bg-[#0d1117] border border-[#30363d] flex items-center justify-center overflow-hidden">
+                      {logoPreview ? (
+                        <img src={logoPreview} className="size-full object-cover" alt="Repo logo preview" />
+                      ) : (
+                        <span className="material-symbols-outlined text-slate-600 !text-4xl">add_photo_alternate</span>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity rounded-2xl"
+                    >
+                      <span className="material-symbols-outlined text-white">edit</span>
+                    </button>
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleLogoChange}
+                      className="hidden"
+                      accept="image/*"
+                    />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2 px-1">Repository Name</label>
+                  <input 
+                    required
+                    value={formData.name}
+                    onChange={e => setFormData({...formData, name: e.target.value})}
+                    placeholder="my-awesome-project"
+                    className="w-full bg-[#0d1117] border border-[#30363d] rounded-xl px-4 py-3 text-white focus:ring-1 focus:ring-primary outline-none transition-all"
+                  />
+                </div>
               </div>
 
               <div>

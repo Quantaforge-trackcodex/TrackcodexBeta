@@ -75,6 +75,7 @@ export interface Repository {
   securityStatus: string;
   lastUpdated: string;
   visibility: 'PRIVATE' | 'PUBLIC';
+  logo?: string;
   readme?: string;
   languages?: LanguageDist[];
   refactors?: RepoRefactor[];
@@ -238,4 +239,45 @@ export interface SystemMetrics {
   jobsCreatedToday: number;
   communityHealthScore: number;
   pendingFlags: number;
+}
+
+// --- Organization Types ---
+
+export interface OrgMember {
+  username: string;
+  name: string;
+  avatar: string;
+  role: 'Owner' | 'Admin' | 'Member';
+  lastActive: string;
+}
+
+export interface Team {
+  id: string;
+  name: string;
+  description: string;
+  memberCount: number;
+  repoCount: number;
+}
+
+export interface Organization {
+  id: string;
+  name: string;
+  avatar: string;
+  description: string;
+  website?: string;
+  location?: string;
+  members: OrgMember[];
+  teams: Team[];
+  repositories: Repository[];
+}
+
+// --- Settings Types ---
+
+export interface PersonalAccessToken {
+  id: string;
+  name: string;
+  tokenPreview: string; // e.g., 'tcx_live_a83k...'
+  scopes: string[];
+  expiresAt: number | null; // timestamp or null for no expiry
+  createdAt: number;
 }

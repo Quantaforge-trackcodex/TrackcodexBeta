@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const AccountSettings = () => {
   const [isExporting, setIsExporting] = useState(false);
+  const navigate = useNavigate();
 
   const handleExport = () => {
     setIsExporting(true);
@@ -17,19 +19,10 @@ const AccountSettings = () => {
       <header className="border-b border-gh-border pb-6">
         <h1 className="text-2xl font-black text-white tracking-tight">Account settings</h1>
       </header>
-
-      <section className="space-y-4">
-        <div className="flex flex-col gap-1">
-           <p className="text-xs text-gh-text-secondary">
-             Changing your username can have <span className="text-rose-500 font-bold hover:underline cursor-help">unintended side effects</span>.
-           </p>
-        </div>
-        <button className="px-4 py-2 bg-[#21262d] border border-gh-border text-gh-text hover:border-rose-500/50 hover:text-rose-400 rounded-lg text-xs font-bold transition-all shadow-sm">
-          Change username
-        </button>
-        <p className="text-[11px] text-gh-text-secondary flex items-center gap-1.5">
-           <span className="material-symbols-outlined !text-[14px]">help</span>
-           Looking to manage account security settings? You can find them in the <span className="text-primary hover:underline cursor-pointer">Password and authentication</span> page.
+      
+      <section>
+        <p className="text-sm text-gh-text-secondary">
+          Manage your account settings and preferences. For public profile information, including your username, please visit the <span onClick={() => navigate('/settings/profile')} className="text-primary font-medium hover:underline cursor-pointer">Public Profile</span> page.
         </p>
       </section>
 

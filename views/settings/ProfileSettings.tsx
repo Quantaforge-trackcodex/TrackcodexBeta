@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { profileService, UserProfile } from '../../services/profile';
 
 // Reusable component for settings sections
-const SettingsSection = ({ title, description, children }: { title: string, description: string, children: React.ReactNode }) => (
+// Fix: Changed component props to use React.PropsWithChildren to correctly type a component that accepts children. This resolves the TypeScript errors on lines 62, 81, and 106.
+const SettingsSection = ({ title, description, children }: React.PropsWithChildren<{ title: string, description: string }>) => (
   <section className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-8 border-t border-gh-border first:pt-0 first:border-0">
     <div className="md:col-span-1">
       <h3 className="text-lg font-bold text-white">{title}</h3>
@@ -90,6 +91,18 @@ const ProfileSettings = () => {
             onChange={handleChange}
             className="mt-1 w-full bg-gh-bg border border-gh-border rounded-lg px-3 py-2 text-sm text-white focus:ring-1 focus:ring-primary outline-none"
           />
+        </div>
+        <div>
+          <label className="text-xs font-bold text-gh-text-secondary">Username</label>
+          <input
+            name="username"
+            value={profile.username}
+            onChange={handleChange}
+            className="mt-1 w-full bg-gh-bg border border-gh-border rounded-lg px-3 py-2 text-sm text-white focus:ring-1 focus:ring-primary outline-none"
+          />
+           <p className="mt-2 text-xs text-gh-text-secondary">
+             Changing your username can have <span className="text-rose-500 font-medium">unintended side effects</span>.
+           </p>
         </div>
         <div>
           <label className="text-xs font-bold text-gh-text-secondary">Bio</label>

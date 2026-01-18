@@ -77,7 +77,14 @@
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #58a6ff; }
 
         /* Utilitarian Transitions */
-        * { transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease; }
+        html:not(.reduce-motion) * { transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease; }
+        
+        .reduce-motion * {
+            transition-duration: 0.001ms !important;
+            animation-duration: 0.001ms !important;
+            animation-iteration-count: 1 !important;
+            scroll-behavior: auto !important;
+        }
 
         pre { font-family: 'JetBrains Mono', monospace; }
 
@@ -102,7 +109,8 @@
     "@fastify/websocket": "https://esm.sh/@fastify/websocket@^11.2.0",
     "@fastify/cors": "https://esm.sh/@fastify/cors@^11.2.0",
     "process": "https://esm.sh/process@^0.11.10",
-    "react-resizable-panels": "https://esm.sh/react-resizable-panels@^2.0.19"
+    "react-resizable-panels": "https://esm.sh/react-resizable-panels@^2.0.19",
+    "monaco-editor/": "https://esm.sh/monaco-editor@^0.55.1/"
   }
 }
 </script>

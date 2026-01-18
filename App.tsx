@@ -35,15 +35,25 @@ import PlatformMatrix from './views/PlatformMatrix';
 import ActivityView from './views/ActivityView';
 import RoleGuard from './auth/RoleGuard';
 
+// New Organization Views
+import OrganizationIndexView from './views/organizations/OrganizationIndexView';
+import OrganizationDetailView from './views/organizations/OrganizationDetailView';
+
 // Settings Sub-views
 import AppearanceSettings from './views/settings/AppearanceSettings';
 import EmailSettings from './views/settings/EmailSettings';
 import SecuritySettings from './views/settings/SecuritySettings';
 import AccountSettings from './views/settings/AccountSettings';
 import ProfileSettings from './views/settings/ProfileSettings';
+import BillingSettings from './views/settings/BillingSettings';
+import ForgeAIUsageSettings from './views/settings/ForgeAIUsageSettings';
+import AccessibilitySettings from './views/settings/AccessibilitySettings';
+import NotificationsSettings from './views/settings/NotificationsSettings';
+import PersonalAccessTokensSettings from './views/settings/PersonalAccessTokensSettings';
 
 const ProtectedApp = () => {
   const [notification, setNotification] = useState<any>(null);
+  const [isFocusMode, setIsFocusMode] = useState(false);
   const mainScrollRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
 
@@ -54,6 +64,7 @@ const ProtectedApp = () => {
     }
   }, [location.pathname]);
 
+  // Global notification handler
   useEffect(() => {
     const handleNotify = (e: any) => {
       setNotification(e.detail);
@@ -68,6 +79,34 @@ const ProtectedApp = () => {
       window.removeEventListener('trackcodex-notification', handleNotify);
     };
   }, []);
+
+  // Focus Mode keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsFocusMode(prev => {
+          const nextState = !prev;
+          window.dispatchEvent(new CustomEvent('trackcodex-notification', {
+            detail: {
+              title: nextState ? 'Focus Mode Enabled' : 'Focus Mode Disabled',
+              message: nextState ? 'All UI is hidden. Press Ctrl+K or Esc to exit.' : 'Editor UI restored.',
+              type: 'info'
+            }
+          }));
+          return nextState;
+        });
+      }
+      if (e.key === 'Escape' && isFocusMode) {
+        e.preventDefault();
+        setIsFocusMode(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isFocusMode]);
+
 
   const handleAction = (action: 'accept' | 'reject') => {
     const title = action === 'accept' ? 'Offer Accepted' : 'Offer Declined';
@@ -91,7 +130,7 @@ const ProtectedApp = () => {
       {notification && (
         <div className="fixed top-12 right-12 z-[500] bg-[#161b22] border border-primary/30 rounded-2xl p-6 shadow-2xl animate-in slide-in-from-right duration-300 flex flex-col gap-6 max-w-sm ring-2 ring-black/50 ring-inset">
            <div className="flex items-start gap-4">
-              <div className={`size-12 rounded-xl flex items-center justify-center shrink-0 ${notification.type === 'mission' ? 'bg-amber-500/10 text-amber-500' : 'bg-primary/10 text-primary'}`}>
+              <div className={`size-12 rounded-xl flex items-center justify-center shrink-0 ${notification.type === 'mission' ? 'bg-amber-500/10 text-amber-500' : notification.type === 'success' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-primary/10 text-primary'}`}>
                 <span className="material-symbols-outlined !text-3xl filled">{notification.type === 'mission' ? 'work' : 'verified'}</span>
               </div>
               <div className="min-w-0">
@@ -123,11 +162,11 @@ const ProtectedApp = () => {
       )}
 
       <div className="flex-1 flex min-h-0">
-        <Sidebar />
+        {!isFocusMode && <Sidebar />}
         
         <main 
           ref={mainScrollRef}
-          className={`flex-1 min-w-0 flex flex-col bg-gh-bg relative ${isIdeView ? 'overflow-hidden' : 'overflow-y-auto custom-scrollbar'}`}
+          className={`flex-1 min-w-0 flex flex-col bg-gh-bg relative ${isIdeView || isFocusMode ? 'overflow-hidden' : 'overflow-y-auto custom-scrollbar'}`}
         >
           <Routes>
             <Route path="/" element={<Navigate to="/dashboard/home" />} />
@@ -143,19 +182,27 @@ const ProtectedApp = () => {
             <Route path="/dashboard/library" element={<LibraryView />} />
             <Route path="/dashboard/jobs" element={<JobsView />} />
             <Route path="/jobs/:id" element={<JobDetailView />} />
-            <Route path="/editor" element={<EditorView />} />
+            <Route path="/editor" element={<EditorView isFocusMode={isFocusMode} />} />
             <Route path="/profile" element={<ProfileView />} />
             <Route path="/activity" element={<ActivityView />} />
             
+            <Route path="/organizations" element={<OrganizationIndexView />} />
+            <Route path="/org/:orgId/*" element={<OrganizationDetailView />} />
+
             <Route path="/settings/*" element={
               <SettingsLayout>
                 <Routes>
                   <Route index element={<Navigate to="profile" replace />} />
                   <Route path="profile" element={<ProfileSettings />} />
-                  <Route path="appearance" element={<AppearanceSettings />} />
-                  <Route path="emails" element={<EmailSettings />} />
-                  <Route path="security" element={<SecuritySettings />} />
                   <Route path="account" element={<AccountSettings />} />
+                  <Route path="appearance" element={<AppearanceSettings />} />
+                  <Route path="accessibility" element={<AccessibilitySettings />} />
+                  <Route path="notifications" element={<NotificationsSettings />} />
+                  <Route path="security" element={<SecuritySettings />} />
+                  <Route path="emails" element={<EmailSettings />} />
+                  <Route path="billing" element={<BillingSettings />} />
+                  <Route path="forge-ai-usage" element={<ForgeAIUsageSettings />} />
+                  <Route path="tokens" element={<PersonalAccessTokensSettings />} />
                   <Route path="*" element={<Navigate to="profile" replace />} />
                 </Routes>
               </SettingsLayout>
@@ -176,8 +223,8 @@ const ProtectedApp = () => {
         </main>
       </div>
 
-      <StatusBar />
-      <MessagingPanel />
+      {!isFocusMode && <StatusBar />}
+      {!isFocusMode && <MessagingPanel />}
     </div>
   );
 };

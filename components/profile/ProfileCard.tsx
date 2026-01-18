@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { profileService, UserProfile, TechStatus } from '../../services/profile';
 import { directMessageBus } from '../../services/directMessageBus';
 import OfferJobModal from '../jobs/offer/OfferJobModal';
+import { useAuth } from '../../context/AuthContext';
+import { MOCK_ORGANIZATIONS } from '../../constants';
+import { useNavigate } from 'react-router-dom';
 
 const PRESET_STATUSES = [
   { emoji: '🚀', text: 'Scaling core-api shards' },
@@ -118,13 +121,19 @@ const TechStatusEditor = ({ current, onSave, onCancel }: { current?: TechStatus,
 };
 
 const ProfileCard = () => {
+  const { logout } = useAuth();
   const [profile, setProfile] = useState<UserProfile>(profileService.getProfile());
   const [isOfferModalOpen, setIsOfferModalOpen] = useState(false);
   const [isEditingStatus, setIsEditingStatus] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
   
   const [isFollowing, setIsFollowing] = useState(false);
   const [followerCount, setFollowerCount] = useState(profile.followers);
+
+  const userOrgs = MOCK_ORGANIZATIONS.filter(org => 
+    org.members.some(member => member.username === profile.username)
+  );
 
   useEffect(() => {
     const unsubscribe = profileService.subscribe(updatedProfile => {
@@ -261,6 +270,13 @@ const ProfileCard = () => {
           <button onClick={() => setIsOfferModalOpen(true)} className="py-3 bg-[#161b22] border border-[#30363d] rounded-xl text-[11px] font-black uppercase tracking-widest text-slate-200 hover:bg-[#21262d] transition-all flex items-center justify-center gap-2 shadow-sm">
             <span className="material-symbols-outlined !text-[18px]">work</span>Offer Job</button>
         </div>
+        <button
+          onClick={logout}
+          className="w-full mt-4 py-3 bg-rose-500/5 border border-rose-500/20 rounded-xl text-[11px] font-black uppercase tracking-widest text-rose-400 hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center gap-2 shadow-sm"
+        >
+          <span className="material-symbols-outlined !text-[18px]">logout</span>
+          Sign Out
+        </button>
       </div>
 
       <div className="space-y-4 text-xs text-slate-400 px-1">
@@ -279,6 +295,33 @@ const ProfileCard = () => {
         <div className="flex items-center gap-3 pt-2">
           <span className="material-symbols-outlined !text-[18px] text-amber-500 filled">star</span>
           <span className="font-black text-slate-200 text-sm">{profile.rating} / 5.0 <span className="font-medium text-slate-600 ml-1">(Freelance Rating)</span></span>
+        </div>
+      </div>
+
+      <div className="h-px bg-[#30363d] w-full my-8"></div>
+
+      <div className="px-1">
+        <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-3">
+          <span className="material-symbols-outlined !text-[20px] text-slate-500">corporate_fare</span>
+          Organizations
+        </h3>
+        <div className="space-y-4">
+          {userOrgs.map(org => (
+            <div 
+              key={org.id} 
+              onClick={() => navigate(`/org/${org.id}`)}
+              className="flex items-center gap-3 cursor-pointer group/org"
+            >
+              <img 
+                src={org.avatar} 
+                className="size-9 rounded-md border border-gh-border p-0.5 object-cover" 
+                alt={org.name}
+              />
+              <span className="text-[14px] font-bold text-slate-300 group-hover/org:text-primary transition-colors">
+                {org.name}
+              </span>
+            </div>
+          ))}
         </div>
       </div>
 

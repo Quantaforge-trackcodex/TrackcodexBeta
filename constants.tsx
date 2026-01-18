@@ -1,5 +1,5 @@
 
-import { Workspace, AITask, SecurityAlert, Repository, LiveSession, ProfileData, LibraryResource, LibraryCategory, Job } from './types';
+import { Workspace, AITask, SecurityAlert, Repository, LiveSession, ProfileData, LibraryResource, LibraryCategory, Job, Organization } from './types';
 
 export const MOCK_REPOS: Repository[] = [
   {
@@ -344,5 +344,41 @@ export const MOCK_JOBS: Job[] = [
     postedDate: '1 week ago',
     rating: 5,
     feedback: 'Excellent work! The latency is incredibly low and the implementation is clean.'
+  }
+];
+
+export const MOCK_ORGANIZATIONS: Organization[] = [
+  {
+    id: 'quantaforge',
+    name: 'Quantaforge',
+    avatar: 'https://picsum.photos/seed/quantaforge/200',
+    description: 'Building the next generation of developer tools with a focus on security, performance, and AI-driven insights.',
+    website: 'quantaforge.io',
+    location: 'San Francisco, CA',
+    repositories: MOCK_REPOS.slice(0, 3),
+    members: [
+      { username: 'alexcoder', name: 'Alex Chen', avatar: 'https://picsum.photos/seed/alexprofile/64', role: 'Owner', lastActive: '2 hours ago' },
+      { username: 'sarah_backend', name: 'Sarah Chen', avatar: 'https://picsum.photos/seed/sarah/64', role: 'Admin', lastActive: '15 minutes ago' },
+      { username: 'm_thorne', name: 'Marcus Thorne', avatar: 'https://picsum.photos/seed/marcus/64', role: 'Member', lastActive: 'Yesterday' },
+      { username: 'david_kim', name: 'David Kim', avatar: 'https://picsum.photos/seed/david/64', role: 'Member', lastActive: '3 days ago' },
+    ],
+    teams: [
+      { id: 't1', name: 'Core Infrastructure', description: 'Manages the core backend services and platform infrastructure.', memberCount: 8, repoCount: 2 },
+      { id: 't2', name: 'Frontend Guild', description: 'Maintains all user-facing applications and design systems.', memberCount: 12, repoCount: 4 },
+      { id: 't3', name: 'ForgeAI Research', description: 'R&D for the ForgeAI engine and related services.', memberCount: 5, repoCount: 1 },
+    ],
+  },
+  {
+    id: 'opensource-collective',
+    name: 'Open Source Collective',
+    avatar: 'https://picsum.photos/seed/opensource/200',
+    description: 'A collective of open-source contributors focused on building public goods for the developer community.',
+    website: 'opensource.dev',
+    location: 'Remote',
+    repositories: MOCK_REPOS.slice(3),
+    members: [
+      { username: 'alexcoder', name: 'Alex Chen', avatar: 'https://picsum.photos/seed/alexprofile/64', role: 'Member', lastActive: '1 day ago' },
+    ],
+    teams: [],
   }
 ];

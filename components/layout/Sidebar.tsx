@@ -1,8 +1,64 @@
-
 import React, { useEffect, useState } from 'react';
 import { useSidebarState } from '../../hooks/useSidebarState';
 import { profileService, UserProfile } from '../../services/profile';
 import SidebarItem from './SidebarItem';
+import { MOCK_ORGANIZATIONS } from '../../constants';
+
+const OrgSwitcher = ({ isExpanded, profile }: { isExpanded: boolean, profile: UserProfile }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [currentContext, setCurrentContext] = useState({ 
+    name: profile.name, 
+    avatar: profile.avatar, 
+    type: 'user'
+  });
+
+  const handleSelect = (context: any) => {
+    setCurrentContext(context);
+    setIsOpen(false);
+  };
+
+  return (
+    <div className="relative">
+      <div 
+        onClick={() => setIsOpen(!isOpen)}
+        className={`flex items-center gap-3 p-2 rounded-xl transition-all group cursor-pointer ${isExpanded ? 'bg-[#161b22] border border-[#30363d] hover:bg-[#21262d]' : ''}`}
+      >
+        <div className="relative shrink-0">
+          <img 
+            src={currentContext.avatar} 
+            className={`size-8 rounded-lg border border-white/10 group-hover:border-primary/50 transition-all object-cover ${currentContext.type === 'org' ? 'p-1 bg-white/10' : ''}`}
+          />
+        </div>
+        {isExpanded && (
+          <div className="flex flex-col min-w-0 flex-1 animate-in fade-in duration-300">
+            <span className="text-[12px] font-bold text-white truncate leading-none mb-1">{currentContext.name}</span>
+            <span className="text-[9px] text-slate-500 font-black uppercase tracking-widest">{currentContext.type === 'user' ? 'Personal Account' : 'Organization'}</span>
+          </div>
+        )}
+        {isExpanded && (
+           <span className={`material-symbols-outlined !text-[16px] text-slate-500 transition-transform ${isOpen ? 'rotate-180' : ''}`}>expand_more</span>
+        )}
+      </div>
+
+      {isOpen && (
+        <div className="absolute top-full left-0 right-0 mt-2 bg-[#161b22] border border-[#30363d] rounded-xl shadow-2xl z-[100] p-2 animate-in fade-in zoom-in-95 duration-200">
+          <div onClick={() => handleSelect({ name: profile.name, avatar: profile.avatar, type: 'user' })} className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 cursor-pointer">
+             <img src={profile.avatar} className="size-8 rounded-lg border border-white/10 object-cover" />
+             <span className="text-xs font-bold text-white">{profile.name}</span>
+          </div>
+          <div className="h-px bg-white/5 my-2"></div>
+          <p className="px-2 text-[9px] font-black text-slate-600 uppercase tracking-widest mb-1">Organizations</p>
+          {MOCK_ORGANIZATIONS.map(org => (
+            <div key={org.id} onClick={() => handleSelect({ name: org.name, avatar: org.avatar, type: 'org' })} className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 cursor-pointer">
+              <img src={org.avatar} className="size-8 rounded-lg border border-white/10 object-cover p-1 bg-white/10" />
+              <span className="text-xs font-bold text-white">{org.name}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 const Sidebar = () => {
   const { isExpanded, toggleSidebar } = useSidebarState();
@@ -23,14 +79,9 @@ const Sidebar = () => {
       `}
     >
       {/* Platform Branding & Toggle */}
-      <div className={`h-14 flex items-center px-4 shrink-0 border-b border-white/5 relative group ${!isExpanded ? 'justify-center' : 'justify-between'}`}>
+      <div className={`h-14 flex items-center shrink-0 border-b border-white/5 relative group ${isExpanded ? 'p-2' : 'justify-center'}`}>
         {isExpanded ? (
-          <div className="flex items-center gap-2 animate-in fade-in duration-500">
-            <div className="size-6 bg-primary rounded flex items-center justify-center shadow-[0_0_10px_rgba(19,91,236,0.3)]">
-              <span className="material-symbols-outlined !text-[14px] text-white filled">hub</span>
-            </div>
-            <span className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-200">TrackCodex</span>
-          </div>
+          <OrgSwitcher isExpanded={isExpanded} profile={profile} />
         ) : (
           <span className="material-symbols-outlined text-slate-500">menu</span>
         )}
@@ -53,7 +104,7 @@ const Sidebar = () => {
         {/* Unified Platform Intelligence Hub */}
         <SidebarItem to="/platform-matrix" icon="insights" label="Platform Matrix" isExpanded={isExpanded} />
         
-        <SidebarItem to="/repositories" icon="account_tree" label="Repositories" isExpanded={isExpanded} />
+        <SidebarItem to="/repositories" icon="account_tree" label="Dashboard" isExpanded={isExpanded} />
         <SidebarItem to="/workspaces" icon="terminal" label="Workspaces" isExpanded={isExpanded} />
         
         <SidebarItem to="/dashboard/library" icon="auto_stories" label="Library" isExpanded={isExpanded} />

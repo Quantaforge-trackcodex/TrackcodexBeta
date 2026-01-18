@@ -24,26 +24,36 @@ const SettingsLayout: React.FC<{ children: React.ReactNode }> = ({ children }) =
         {/* Settings Navigation */}
         <aside className="w-full lg:w-[260px] shrink-0 space-y-8 overflow-y-auto no-scrollbar pb-8">
           <section>
-            <h3 className="px-3 text-[11px] font-black uppercase text-slate-500 tracking-widest mb-3">User Settings</h3>
+            <h3 className="px-3 text-[11px] font-black uppercase text-slate-500 tracking-widest mb-3">Personal Settings</h3>
             <nav className="flex flex-col gap-0.5">
               <SettingsSidebarItem to="/settings/profile" label="Public Profile" icon="person" />
               <SettingsSidebarItem to="/settings/account" label="Account" icon="manage_accounts" />
               <SettingsSidebarItem to="/settings/appearance" label="Appearance" icon="palette" />
+              <SettingsSidebarItem to="/settings/notifications" label="Notifications" icon="notifications" />
+              <SettingsSidebarItem to="/settings/accessibility" label="Accessibility" icon="accessibility" />
+            </nav>
+          </section>
+          
+          <section>
+            <h3 className="px-3 text-[11px] font-black uppercase text-slate-500 tracking-widest mb-3">Access</h3>
+            <nav className="flex flex-col gap-0.5">
+              <SettingsSidebarItem to="/settings/security" label="Security" icon="shield" />
+              <SettingsSidebarItem to="/settings/billing" label="Billing and plans" icon="credit_card" />
+              <SettingsSidebarItem to="/settings/emails" label="Emails" icon="mail" />
             </nav>
           </section>
 
           <section>
-            <h3 className="px-3 text-[11px] font-black uppercase text-slate-500 tracking-widest mb-3">Access</h3>
+            <h3 className="px-3 text-[11px] font-black uppercase text-slate-500 tracking-widest mb-3">Team Settings</h3>
             <nav className="flex flex-col gap-0.5">
-              <SettingsSidebarItem to="/settings/security" label="Password and Authentication" icon="shield" />
-              <SettingsSidebarItem to="/settings/emails" label="Emails" icon="mail" />
+              <SettingsSidebarItem to="/settings/forge-ai-usage" label="ForgeAI Usage" icon="auto_awesome" />
             </nav>
           </section>
 
           <section>
             <h3 className="px-3 text-[11px] font-black uppercase text-slate-500 tracking-widest mb-3">Developer Settings</h3>
             <nav className="flex flex-col gap-0.5">
-              <SettingsSidebarItem to="/settings/api" label="API Tokens" icon="key" />
+              <SettingsSidebarItem to="/settings/tokens" label="Personal access tokens" icon="key" />
               <SettingsSidebarItem to="/settings/integrations" label="Integrations" icon="extension" />
             </nav>
           </section>

@@ -8,6 +8,8 @@ interface ThemeContextType {
   resolvedTheme: 'light' | 'dark';
   isHighContrast: boolean;
   setIsHighContrast: (isHigh: boolean) => void;
+  isMotionReduced: boolean;
+  setIsMotionReduced: (isReduced: boolean) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -23,11 +25,21 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return saved ? JSON.parse(saved) : false;
   });
 
+  const [isMotionReduced, setIsMotionReducedInternal] = useState<boolean>(() => {
+    const saved = localStorage.getItem('trackcodex_reduce_motion');
+    return saved ? JSON.parse(saved) : false;
+  });
+
   const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('dark');
 
   const setIsHighContrast = (isHigh: boolean) => {
     localStorage.setItem('trackcodex_high_contrast', JSON.stringify(isHigh));
     setIsHighContrastInternal(isHigh);
+  };
+  
+  const setIsMotionReduced = (isReduced: boolean) => {
+    localStorage.setItem('trackcodex_reduce_motion', JSON.stringify(isReduced));
+    setIsMotionReducedInternal(isReduced);
   };
 
   useEffect(() => {
@@ -58,16 +70,22 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       root.classList.remove('high-contrast');
     }
 
+    if (isMotionReduced) {
+      root.classList.add('reduce-motion');
+    } else {
+      root.classList.remove('reduce-motion');
+    }
+
     if (mode === 'system') {
       const mediaQuery = window.matchMedia('(prefers-color-scheme: light)');
       const listener = () => updateTheme();
       mediaQuery.addEventListener('change', listener);
       return () => mediaQuery.removeEventListener('change', listener);
     }
-  }, [mode, isHighContrast]);
+  }, [mode, isHighContrast, isMotionReduced]);
 
   return (
-    <ThemeContext.Provider value={{ mode, setMode, resolvedTheme, isHighContrast, setIsHighContrast }}>
+    <ThemeContext.Provider value={{ mode, setMode, resolvedTheme, isHighContrast, setIsHighContrast, isMotionReduced, setIsMotionReduced }}>
       {children}
     </ThemeContext.Provider>
   );

@@ -1,10 +1,13 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { Editor } from '@monaco-editor/react';
+import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
 import { 
   PanelGroup, 
   Panel, 
   PanelResizeHandle 
 } from 'react-resizable-panels';
+import { forgeAIService } from '../services/gemini';
+import Spinner from '../components/ui/Spinner';
 
 // --- MOCK DATA ---
 
@@ -41,6 +44,165 @@ const FILE_CONTENTS: Record<string, string> = {
   'App.tsx': `import React from 'react';\nimport Button from './components/Button';\n\nconst App = () => (\n  <div>\n    <h1>Welcome to TrackCodex</h1>\n    <Button />\n  </div>\n);\n\nexport default App;`,
   'package.json': JSON.stringify({ name: 'trackcodex-app', version: '1.0.0' }, null, 2),
 };
+
+// --- AI ASSISTANT PANEL ---
+interface ForgeAIAssistantPanelProps {
+  editorRef: React.MutableRefObject<monaco.editor.IStandaloneCodeEditor | null>;
+  activeFile: string;
+}
+
+interface Message {
+  type: 'user' | 'ai' | 'system';
+  text: string;
+}
+
+const ForgeAIAssistantPanel: React.FC<ForgeAIAssistantPanelProps> = ({ editorRef, activeFile }) => {
+  const [conversation, setConversation] = useState<Message[]>([
+    { type: 'system', text: 'ForgeAI assistant ready. Select code and choose an action, or ask a question.' }
+  ]);
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const conversationEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    conversationEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [conversation, isLoading]);
+
+  const handleAction = useCallback(async (action: 'review' | 'explain' | 'refactor') => {
+    const editor = editorRef.current;
+    if (!editor) return;
+
+    const selection = editor.getSelection();
+    const selectedText = selection && !selection.isEmpty() ? editor.getModel()?.getValueInRange(selection) : editor.getValue();
+
+    if (!selectedText) {
+      setConversation(prev => [...prev, { type: 'system', text: 'Please select some code in the editor first.' }]);
+      return;
+    }
+
+    let prompt = '';
+    let serviceCall: Promise<string | undefined>;
+
+    if (action === 'review') {
+      prompt = `Reviewing selected code from ${activeFile}:`;
+      serviceCall = forgeAIService.getCodeReview(selectedText, activeFile);
+    } else if (action === 'explain') {
+      prompt = `Explaining selected code from ${activeFile}:`;
+      serviceCall = forgeAIService.getTechnicalAnswer(`Explain this code snippet`, selectedText, activeFile);
+    } else { // refactor
+      prompt = `Refactoring selected code from ${activeFile}:`;
+      serviceCall = forgeAIService.getCodeRefactorSuggestion(selectedText, activeFile);
+    }
+    
+    setConversation(prev => [...prev, { type: 'user', text: prompt }]);
+    setIsLoading(true);
+
+    try {
+      const response = await serviceCall;
+      setConversation(prev => [...prev, { type: 'ai', text: response || "I couldn't generate a response." }]);
+    } catch (e: any) {
+      setConversation(prev => [...prev, { type: 'system', text: `An error occurred: ${e.message}` }]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [editorRef, activeFile]);
+  
+  const handleAskQuestion = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim()) return;
+    
+    const editor = editorRef.current;
+    const fullCode = editor ? editor.getValue() : '';
+
+    const question = input;
+    setInput('');
+    setConversation(prev => [...prev, { type: 'user', text: question }]);
+    setIsLoading(true);
+
+    try {
+      const response = await forgeAIService.getTechnicalAnswer(question, fullCode, activeFile);
+      setConversation(prev => [...prev, { type: 'ai', text: response || "I couldn't generate a response." }]);
+    } catch (e: any) {
+      setConversation(prev => [...prev, { type: 'system', text: `An error occurred: ${e.message}` }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  useEffect(() => {
+    const editor = editorRef.current;
+    if (!editor) return;
+    
+    const actions = [
+      editor.addAction({ id: 'forgeai-explain', label: 'ForgeAI: Explain Selection', contextMenuGroupId: '9_cutcopypaste', contextMenuOrder: 3.1, run: () => handleAction('explain') }),
+      editor.addAction({ id: 'forgeai-review', label: 'ForgeAI: Review Selection', contextMenuGroupId: '9_cutcopypaste', contextMenuOrder: 3.2, run: () => handleAction('review') }),
+      editor.addAction({ id: 'forgeai-refactor', label: 'ForgeAI: Refactor Selection', contextMenuGroupId: '9_cutcopypaste', contextMenuOrder: 3.3, run: () => handleAction('refactor') }),
+    ];
+
+    return () => {
+      actions.forEach(action => action.dispose());
+    };
+  }, [editorRef, handleAction]);
+
+
+  return (
+    <div className="h-full bg-vscode-sidebar flex flex-col text-sm">
+      <div className="h-10 flex items-center px-4 border-b border-vscode-border">
+        <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 flex items-center gap-2">
+          <span className="material-symbols-outlined text-purple-400 !text-base filled">auto_awesome</span>
+          ForgeAI Assistant
+        </h2>
+      </div>
+      
+      <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-4">
+        {conversation.map((msg, i) => (
+          <div key={i} className={`flex flex-col gap-2 ${msg.type === 'user' ? 'items-end' : ''}`}>
+             {msg.type === 'ai' && <div className="text-[10px] font-bold text-purple-400 uppercase tracking-widest">ForgeAI</div>}
+             <div className={`p-3 rounded-lg max-w-[90%] prose prose-invert prose-sm leading-relaxed ${
+                msg.type === 'user' ? 'bg-primary text-white' : 
+                msg.type === 'ai' ? 'bg-[#2a2d2e] border border-vscode-border' : 
+                'text-center text-xs text-slate-500 w-full'
+             }`}>
+                {msg.text.split(/```(\w*)\n([\s\S]*?)```/g).map((part, index) => {
+                   if (index % 3 === 2) {
+                     return <pre key={index} className="bg-black/50 p-3 rounded-md overflow-x-auto my-2"><code className="font-mono">{part}</code></pre>
+                   }
+                   if (index % 3 === 0) {
+                     return <div key={index}>{part}</div>
+                   }
+                   return null;
+                })}
+             </div>
+          </div>
+        ))}
+        {isLoading && (
+            <div className="flex items-center gap-2 text-purple-400 animate-pulse p-3">
+                <Spinner size="sm" />
+                <span className="text-xs font-bold uppercase">ForgeAI is thinking...</span>
+            </div>
+        )}
+        <div ref={conversationEndRef} />
+      </div>
+
+      <div className="p-4 border-t border-vscode-border space-y-3">
+        <div className="grid grid-cols-3 gap-2">
+            <button onClick={() => handleAction('review')} className="px-2 py-1.5 bg-[#2a2d2e] text-slate-300 text-[10px] font-bold rounded hover:bg-white/10 transition-colors">Review</button>
+            <button onClick={() => handleAction('refactor')} className="px-2 py-1.5 bg-[#2a2d2e] text-slate-300 text-[10px] font-bold rounded hover:bg-white/10 transition-colors">Refactor</button>
+            <button onClick={() => handleAction('explain')} className="px-2 py-1.5 bg-[#2a2d2e] text-slate-300 text-[10px] font-bold rounded hover:bg-white/10 transition-colors">Explain</button>
+        </div>
+        <form onSubmit={handleAskQuestion}>
+          <input 
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Ask a follow-up question..."
+            className="w-full bg-vscode-editor border border-vscode-border rounded-md px-3 py-2 text-xs text-white focus:ring-1 focus:ring-primary outline-none"
+          />
+        </form>
+      </div>
+    </div>
+  );
+};
+
 
 // --- SUBCOMPONENTS ---
 
@@ -94,12 +256,13 @@ const FileEntry = ({ node, depth = 0, onSelect, activeFile, expandedFolders, onT
   );
 };
 
-const EditorView = () => {
+const EditorView = ({ isFocusMode = false }: { isFocusMode?: boolean }) => {
   const [openFiles, setOpenFiles] = useState<string[]>(['src/App.tsx']);
   const [activeFile, setActiveFile] = useState<string>('src/App.tsx');
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set(['src', 'src/components', 'src/styles']));
   const [line, setLine] = useState(1);
   const [col, setCol] = useState(1);
+  const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
 
   const handleFileSelect = useCallback((path: string) => {
     if (!openFiles.includes(path)) {
@@ -154,22 +317,22 @@ const EditorView = () => {
 
   return (
     <div className="flex h-full font-display bg-[#1e1e1e]">
-      {/* Activity Bar */}
-      <div className="w-12 bg-[#333333] flex flex-col items-center py-2 shrink-0 z-20">
-        <ActivityBarItem icon="description" label="Explorer" active />
-        <ActivityBarItem icon="search" label="Search" />
-        <ActivityBarItem icon="hub" label="Source Control" />
-        <ActivityBarItem icon="play_circle" label="Run and Debug" />
-        <ActivityBarItem icon="extension" label="Extensions" />
-        <div className="mt-auto">
-          <ActivityBarItem icon="account_circle" label="Account" />
-          <ActivityBarItem icon="settings" label="Settings" />
+      {!isFocusMode && (
+        <div className="w-12 bg-[#333333] flex flex-col items-center py-2 shrink-0 z-20">
+          <ActivityBarItem icon="description" label="Explorer" active />
+          <ActivityBarItem icon="search" label="Search" />
+          <ActivityBarItem icon="hub" label="Source Control" />
+          <ActivityBarItem icon="play_circle" label="Run and Debug" />
+          <ActivityBarItem icon="extension" label="Extensions" />
+          <div className="mt-auto">
+            <ActivityBarItem icon="account_circle" label="Account" />
+            <ActivityBarItem icon="settings" label="Settings" />
+          </div>
         </div>
-      </div>
+      )}
 
       <PanelGroup direction="horizontal">
-        <Panel defaultSize={20} minSize={15}>
-          {/* File Explorer Panel */}
+        <Panel defaultSize={20} minSize={15} collapsible collapsed={isFocusMode}>
           <div className="h-full bg-vscode-sidebar flex flex-col">
             <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 px-4 py-2">Explorer</h2>
             <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
@@ -177,10 +340,9 @@ const EditorView = () => {
             </div>
           </div>
         </Panel>
-        <PanelResizeHandle className="w-1 bg-vscode-activity-bar hover:bg-primary transition-colors" />
+        <PanelResizeHandle className={isFocusMode ? "hidden" : "w-1 bg-vscode-activity-bar hover:bg-primary transition-colors"} />
         <Panel>
           <div className="flex flex-col h-full bg-vscode-editor">
-            {/* Tabs Bar */}
             <div className="flex bg-[#252526] shrink-0 overflow-x-auto no-scrollbar">
               {openFiles.map(path => (
                 <div 
@@ -196,23 +358,22 @@ const EditorView = () => {
                 </div>
               ))}
             </div>
-
-            {/* Monaco Editor */}
             <div className="flex-1 overflow-hidden">
               <Editor
                 height="100%"
                 path={activeFile}
-                defaultValue={FILE_CONTENTS[activeFile] || ''}
                 value={FILE_CONTENTS[activeFile] || ''}
                 language={language}
                 theme="vs-dark"
                 options={{ 
-                  minimap: { enabled: false },
+                  minimap: { enabled: isFocusMode ? false : true },
                   fontSize: 14,
                   fontFamily: 'JetBrains Mono, monospace',
                   scrollBeyondLastLine: false,
+                  contextmenu: true,
                 }}
                 onMount={(editor) => {
+                  editorRef.current = editor;
                   editor.onDidChangeCursorPosition(e => {
                      setLine(e.position.lineNumber);
                      setCol(e.position.column);
@@ -222,25 +383,30 @@ const EditorView = () => {
             </div>
           </div>
         </Panel>
+        <PanelResizeHandle className={isFocusMode ? "hidden" : "w-1 bg-vscode-activity-bar hover:bg-primary transition-colors"} />
+        <Panel defaultSize={30} minSize={25} collapsible collapsed={isFocusMode}>
+            <ForgeAIAssistantPanel editorRef={editorRef} activeFile={activeFile} />
+        </Panel>
       </PanelGroup>
 
-      {/* Status Bar */}
-      <footer className="h-6 bg-[#007acc] text-white flex items-center justify-between px-3 text-[11px] font-medium shrink-0 z-50">
-        <div className="flex items-center gap-4 h-full">
-          <div className="flex items-center gap-1.5 hover:bg-white/10 px-2 h-full cursor-pointer">
-            <span className="material-symbols-outlined !text-[14px]">account_tree</span>
-            <span className="font-bold">main</span>
+      {!isFocusMode && (
+        <footer className="h-6 bg-[#007acc] text-white flex items-center justify-between px-3 text-[11px] font-medium shrink-0 z-50">
+          <div className="flex items-center gap-4 h-full">
+            <div className="flex items-center gap-1.5 hover:bg-white/10 px-2 h-full cursor-pointer">
+              <span className="material-symbols-outlined !text-[14px]">account_tree</span>
+              <span className="font-bold">main</span>
+            </div>
           </div>
-        </div>
-        <div className="flex items-center gap-4 h-full">
-          <div className="hover:bg-white/10 px-2 h-full flex items-center cursor-pointer">
-            Ln {line}, Col {col}
+          <div className="flex items-center gap-4 h-full">
+            <div className="hover:bg-white/10 px-2 h-full flex items-center cursor-pointer">
+              Ln {line}, Col {col}
+            </div>
+            <div className="hover:bg-white/10 px-2 h-full flex items-center cursor-pointer">Spaces: 2</div>
+            <div className="hover:bg-white/10 px-2 h-full flex items-center cursor-pointer">UTF-8</div>
+            <div className="hover:bg-white/10 px-2 h-full flex items-center cursor-pointer uppercase">{language}</div>
           </div>
-          <div className="hover:bg-white/10 px-2 h-full flex items-center cursor-pointer">Spaces: 2</div>
-          <div className="hover:bg-white/10 px-2 h-full flex items-center cursor-pointer">UTF-8</div>
-          <div className="hover:bg-white/10 px-2 h-full flex items-center cursor-pointer uppercase">{language}</div>
-        </div>
-      </footer>
+        </footer>
+      )}
     </div>
   );
 };

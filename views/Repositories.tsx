@@ -81,9 +81,9 @@ const Repositories = () => {
       <div className="max-w-[1400px] mx-auto">
         <div className="flex items-start justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-black text-white mb-2 uppercase tracking-tight">Repositories</h1>
+            <h1 className="text-3xl font-black text-white mb-2 uppercase tracking-tight">Dashboard</h1>
             <p className="text-slate-400 text-sm max-w-2xl leading-relaxed">
-              Global repository registry. Track AI-driven health scores, compliance metrics, and deployment readiness.
+              Your dashboard for all repositories. Track AI-driven health scores, compliance metrics, and deployment readiness.
             </p>
           </div>
           <button 
@@ -144,8 +144,12 @@ const Repositories = () => {
             >
               <div className="flex items-start justify-between mb-5">
                 <div className="flex items-center gap-4">
-                  <div className="size-12 rounded-2xl bg-[#0d1117] flex items-center justify-center text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-all border border-[#30363d]">
-                    <span className="material-symbols-outlined !text-[28px]">source</span>
+                  <div className="size-12 rounded-2xl bg-[#0d1117] flex items-center justify-center text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-all border border-[#30363d] overflow-hidden">
+                    {repo.logo ? (
+                      <img src={repo.logo} alt={`${repo.name} logo`} className="size-full object-cover" />
+                    ) : (
+                      <span className="material-symbols-outlined !text-[28px]">source</span>
+                    )}
                   </div>
                   <div>
                     <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate(`/repo/${repo.id}`)}>

@@ -16,11 +16,12 @@ const Login = () => {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-[#0d1117] text-[#c9d1d9] font-display p-4">
       <div className="w-full max-w-sm mx-auto">
-        <div className="text-center mb-6">
+        <div className="flex justify-center mb-4">
           <AuthLogo size={48} />
         </div>
-        
-        <h1 className="text-2xl text-center mb-4 text-[#e6edf3]">Sign in to TrackCodex</h1>
+        <h1 className="text-2xl text-center mb-6 text-[#e6edf3]">
+          Sign in to TrackCodex
+        </h1>
         
         <div className="bg-[#161b22] border border-[#30363d] rounded-lg p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
