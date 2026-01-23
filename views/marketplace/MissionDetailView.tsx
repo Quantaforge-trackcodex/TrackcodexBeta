@@ -13,7 +13,16 @@ const MissionDetailView = () => {
   const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
 
   useEffect(() => {
-    const allJobs = [...MOCK_JOBS, ...(JSON.parse(localStorage.getItem('trackcodex_offered_jobs') || '[]'))];
+    let offeredJobs: Job[] = [];
+    try {
+        const saved = localStorage.getItem('trackcodex_offered_jobs');
+        if (saved) {
+            offeredJobs = JSON.parse(saved);
+        }
+    } catch (e) {
+        console.error("Failed to parse offered jobs from localStorage", e);
+    }
+    const allJobs = [...MOCK_JOBS, ...offeredJobs];
     const found = allJobs.find(j => j.id === id);
     if (found) setLocalJob(found);
   }, [id]);

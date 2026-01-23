@@ -1,12 +1,5 @@
 import React from 'react';
-import { NavLink, Routes, Route, Navigate } from 'react-router-dom';
-import CandidateDiscoveryView from './CandidateDiscoveryView';
-import CandidateScorecardView from './CandidateScorecardView';
-import CandidateComparisonView from './CandidateComparisonView';
-import OfferEditorView from './OfferEditorView';
-import SessionSchedulerView from './SessionSchedulerView';
-import InterviewerFeedbackView from './InterviewerFeedbackView';
-import AssessmentsView from './AssessmentsView';
+import { NavLink, Outlet } from 'react-router-dom';
 
 const HiringNavItem = ({ to, icon, label }: { to: string, icon: string, label: string }) => (
     <NavLink
@@ -24,7 +17,7 @@ const HiringNavItem = ({ to, icon, label }: { to: string, icon: string, label: s
 );
 
 const HiringLayout = () => {
-    const basePath = '/hiring';
+    const basePath = '/marketplace/hiring';
 
     return (
         <div className="flex-1 flex bg-[#0d1117] font-display">
@@ -44,17 +37,7 @@ const HiringLayout = () => {
                 </div>
             </aside>
             <main className="flex-1 overflow-y-auto custom-scrollbar p-8">
-                <Routes>
-                    <Route index element={<Navigate to="discovery" replace />} />
-                    <Route path="discovery" element={<CandidateDiscoveryView />} />
-                    <Route path="candidate/:id" element={<CandidateScorecardView />} />
-                    <Route path="compare" element={<CandidateComparisonView />} />
-                    <Route path="offer/:id" element={<OfferEditorView />} />
-                    <Route path="schedule/:id" element={<SessionSchedulerView />} />
-                    <Route path="feedback/:id" element={<InterviewerFeedbackView />} />
-                    <Route path="assessments" element={<AssessmentsView />} />
-                    <Route path="*" element={<Navigate to="discovery" replace />} />
-                </Routes>
+                <Outlet />
             </main>
         </div>
     );

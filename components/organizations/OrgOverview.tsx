@@ -1,8 +1,10 @@
+
 import React from 'react';
 import { Organization, PinnedRepo } from '../../types';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 
-const PinnedRepoCard = ({ repo }: { repo: PinnedRepo }) => (
+// FIX: Changed component to React.FC to correctly handle the 'key' prop when used in a list.
+const PinnedRepoCard: React.FC<{ repo: PinnedRepo }> = ({ repo }) => (
     <div className="p-4 bg-[#0d1117] border border-[#30363d] rounded-lg group hover:border-[#8b949e] transition-all cursor-pointer flex flex-col">
         <div className="flex items-center justify-between mb-3">
             <h4 className="text-sm font-bold text-primary group-hover:underline truncate">{repo.name}</h4>

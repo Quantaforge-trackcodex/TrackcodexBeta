@@ -46,8 +46,13 @@ const Repositories = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   
   const [repos, setRepos] = useState<Repository[]>(() => {
-    const saved = localStorage.getItem('trackcodex_local_repos');
-    return saved ? JSON.parse(saved) : MOCK_REPOS;
+    try {
+      const saved = localStorage.getItem('trackcodex_local_repos');
+      return saved ? JSON.parse(saved) : MOCK_REPOS;
+    } catch (e) {
+      console.error("Failed to parse local repos from localStorage", e);
+      return MOCK_REPOS;
+    }
   });
 
   const renderMarkdown = (text: string) => {

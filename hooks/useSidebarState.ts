@@ -1,12 +1,15 @@
-
 import { useState, useEffect, useCallback } from 'react';
 
 const SIDEBAR_STORAGE_KEY = 'tc_sidebar_expanded_v2';
 
 export const useSidebarState = () => {
   const [isExpanded, setIsExpanded] = useState<boolean>(() => {
-    const saved = localStorage.getItem(SIDEBAR_STORAGE_KEY);
-    return saved !== null ? JSON.parse(saved) : true;
+    try {
+      const saved = localStorage.getItem(SIDEBAR_STORAGE_KEY);
+      return saved !== null ? JSON.parse(saved) : true;
+    } catch {
+      return true;
+    }
   });
 
   const toggleSidebar = useCallback(() => {

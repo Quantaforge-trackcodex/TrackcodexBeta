@@ -22,7 +22,7 @@ import ProfileView from './views/Profile';
 import Overview from './views/Overview';
 import WorkspacesView from './views/Workspaces';
 import CreateWorkspaceView from './views/CreateWorkspace';
-import WorkspaceDetailView from './views/WorkspaceDetail';
+import WorkspaceDetailView from './views/WorkspaceDetailView';
 import HomeView from './views/Home';
 import LibraryView from './views/Library';
 import ForgeAIView from './views/ForgeAI';
@@ -31,7 +31,6 @@ import AdminRoomView from './views/Admin';
 import PlatformMatrix from './views/PlatformMatrix';
 import ActivityView from './views/ActivityView';
 import RoleGuard from './auth/RoleGuard';
-// FIX: Import CommunityView to resolve 'Cannot find name' error.
 import CommunityView from './views/Community';
 
 // Organization Views
@@ -74,6 +73,7 @@ import MissionDetailView from './views/marketplace/MissionDetailView';
 import TrialRepositoriesView from './views/marketplace/TrialRepositoriesView';
 
 // --- Hiring Sub-views ---
+import HiringLayout from './views/hiring/HiringLayout';
 import CandidateDiscoveryView from './views/hiring/CandidateDiscoveryView';
 import CandidateScorecardView from './views/hiring/CandidateScorecardView';
 import CandidateComparisonView from './views/hiring/CandidateComparisonView';
@@ -83,6 +83,7 @@ import InterviewerFeedbackView from './views/hiring/InterviewerFeedbackView';
 import AssessmentsView from './views/hiring/AssessmentsView';
 
 // --- Growth Sub-views ---
+import GrowthLayout from './views/growth/GrowthLayout';
 import SkillDashboardView from './views/growth/SkillDashboardView';
 import DeveloperProfileView from './views/growth/DeveloperProfileView';
 
@@ -198,17 +199,26 @@ const ProtectedApp = () => {
                 <Route path="missions" element={<MissionsView />} />
                 <Route path="missions/:id" element={<MissionDetailView />} />
                 <Route path="trials" element={<TrialRepositoriesView />} />
-                <Route path="hiring" element={<Navigate to="discovery" replace />} />
-                <Route path="hiring/discovery" element={<CandidateDiscoveryView />} />
-                <Route path="hiring/candidate/:id" element={<CandidateScorecardView />} />
-                <Route path="hiring/compare" element={<CandidateComparisonView />} />
-                <Route path="hiring/offer/:id" element={<OfferEditorView />} />
-                <Route path="hiring/schedule/:id" element={<SessionSchedulerView />} />
-                <Route path="hiring/feedback/:id" element={<InterviewerFeedbackView />} />
-                <Route path="hiring/assessments" element={<AssessmentsView />} />
-                <Route path="growth" element={<Navigate to="dashboard" replace />} />
-                <Route path="growth/dashboard" element={<SkillDashboardView />} />
-                <Route path="growth/profile/:id" element={<DeveloperProfileView />} />
+                
+                <Route path="hiring" element={<HiringLayout />}>
+                    <Route index element={<Navigate to="discovery" replace />} />
+                    <Route path="discovery" element={<CandidateDiscoveryView />} />
+                    <Route path="candidate/:id" element={<CandidateScorecardView />} />
+                    <Route path="compare" element={<CandidateComparisonView />} />
+                    <Route path="offer/:id" element={<OfferEditorView />} />
+                    <Route path="schedule/:id" element={<SessionSchedulerView />} />
+                    <Route path="feedback/:id" element={<InterviewerFeedbackView />} />
+                    <Route path="assessments" element={<AssessmentsView />} />
+                    <Route path="*" element={<Navigate to="discovery" replace />} />
+                </Route>
+
+                <Route path="growth" element={<GrowthLayout />}>
+                    <Route index element={<Navigate to="dashboard" replace />} />
+                    <Route path="dashboard" element={<SkillDashboardView />} />
+                    <Route path="profile/:id" element={<DeveloperProfileView />} />
+                    <Route path="*" element={<Navigate to="dashboard" replace />} />
+                </Route>
+
                 <Route path="*" element={<Navigate to="missions" replace />} />
             </Route>
             <Route path="/dashboard/jobs" element={<Navigate to="/marketplace/missions" replace />} />
@@ -296,12 +306,18 @@ const AppContent = () => {
   );
 };
 
+// This new component ensures that AuthProvider and AppContent are rendered *inside* the router's context,
+// preventing the `useNavigate` hook in AuthProvider from being called before the context is available.
+const AppWithProviders = () => (
+  <AuthProvider>
+    <AppContent />
+  </AuthProvider>
+);
+
 const App = () => (
   <ThemeProvider>
     <BrowserRouter>
-      <AuthProvider>
-        <AppContent />
-      </AuthProvider>
+      <AppWithProviders />
     </BrowserRouter>
   </ThemeProvider>
 );

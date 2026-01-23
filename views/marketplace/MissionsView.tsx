@@ -8,8 +8,13 @@ import PostJobModal from '../../components/jobs/PostJobModal';
 const MissionsView = () => {
   const navigate = useNavigate();
   const [localJobs, setLocalJobs] = useState<Job[]>(() => {
-    const saved = localStorage.getItem('trackcodex_offered_jobs');
-    const offeredJobs = saved ? JSON.parse(saved) : [];
+    let offeredJobs: Job[] = [];
+    try {
+        const saved = localStorage.getItem('trackcodex_offered_jobs');
+        offeredJobs = saved ? JSON.parse(saved) : [];
+    } catch (e) {
+        console.error("Failed to parse offered jobs from localStorage", e);
+    }
     return [...MOCK_JOBS, ...offeredJobs];
   });
   

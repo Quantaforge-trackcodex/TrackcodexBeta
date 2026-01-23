@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { MOCK_TRIAL_REPOS } from '../../constants';
 import { TrialRepo } from '../../types';
@@ -18,7 +19,8 @@ const getMaxSalary = (salaryRange: string): number => {
     return value;
 };
 
-const TrialCard = ({ trial }: { trial: TrialRepo }) => {
+// FIX: Changed component to React.FC to correctly handle the 'key' prop when used in a list.
+const TrialCard: React.FC<{ trial: TrialRepo }> = ({ trial }) => {
     const isStripe = trial.company === 'Stripe';
 
     return (

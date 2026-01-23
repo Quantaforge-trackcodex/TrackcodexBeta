@@ -32,8 +32,13 @@ const defaultSettings = {
 
 const NotificationsSettings = () => {
   const [settings, setSettings] = useState(() => {
-    const saved = localStorage.getItem('trackcodex_notifications');
-    return saved ? JSON.parse(saved) : defaultSettings;
+    try {
+      const saved = localStorage.getItem('trackcodex_notifications');
+      return saved ? JSON.parse(saved) : defaultSettings;
+    } catch (e) {
+      console.error("Failed to parse notification settings from localStorage", e);
+      return defaultSettings;
+    }
   });
 
   const [initialSettings, setInitialSettings] = useState(settings);

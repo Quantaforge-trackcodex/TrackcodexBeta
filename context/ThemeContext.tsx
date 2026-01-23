@@ -21,13 +21,21 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   });
 
   const [isHighContrast, setIsHighContrastInternal] = useState<boolean>(() => {
-    const saved = localStorage.getItem('trackcodex_high_contrast');
-    return saved ? JSON.parse(saved) : false;
+    try {
+      const saved = localStorage.getItem('trackcodex_high_contrast');
+      return saved ? JSON.parse(saved) : false;
+    } catch {
+      return false;
+    }
   });
 
   const [isMotionReduced, setIsMotionReducedInternal] = useState<boolean>(() => {
-    const saved = localStorage.getItem('trackcodex_reduce_motion');
-    return saved ? JSON.parse(saved) : false;
+    try {
+      const saved = localStorage.getItem('trackcodex_reduce_motion');
+      return saved ? JSON.parse(saved) : false;
+    } catch {
+      return false;
+    }
   });
 
   const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('dark');

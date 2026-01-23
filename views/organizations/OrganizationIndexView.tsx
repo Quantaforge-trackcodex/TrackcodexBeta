@@ -1,9 +1,11 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MOCK_ORGANIZATIONS } from '../../constants';
 import { Organization } from '../../types';
 
-const OrganizationCard = ({ org }: { org: Organization }) => {
+// FIX: Changed component to React.FC to correctly handle the 'key' prop when used in a list.
+const OrganizationCard: React.FC<{ org: Organization }> = ({ org }) => {
     const navigate = useNavigate();
     return (
         <div 

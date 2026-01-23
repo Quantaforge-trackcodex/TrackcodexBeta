@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { PersonalAccessToken } from '../../types';
 
@@ -83,15 +84,20 @@ const PersonalAccessTokensSettings = () => {
     const [formData, setFormData] = useState({ name: '', expiration: '30', scopes: new Set<string>() });
 
     useEffect(() => {
-        const savedTokens = localStorage.getItem(TOKEN_STORAGE_KEY);
-        if (savedTokens) {
-            setTokens(JSON.parse(savedTokens));
+        try {
+            const savedTokens = localStorage.getItem(TOKEN_STORAGE_KEY);
+            if (savedTokens) {
+                setTokens(JSON.parse(savedTokens));
+            }
+        } catch (e) {
+            console.error("Failed to parse tokens from localStorage", e);
         }
     }, []);
 
     const handleGenerate = () => {
         const tokenString = generateTokenString();
-        const selectedScopes = Array.from(formData.scopes);
+        // FIX: Use spread syntax to ensure correct type inference from Set<string> to string[].
+        const selectedScopes = [...formData.scopes];
         const expirationDays = parseInt(formData.expiration, 10);
         const expiresAt = isNaN(expirationDays) ? null : Date.now() + expirationDays * 24 * 60 * 60 * 1000;
 

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useParams, NavLink, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { MOCK_ORGANIZATIONS } from '../../constants';
@@ -12,7 +13,8 @@ import OrgEnvironments from '../organizations/settings/OrgEnvironments';
 import OrgPermissions from '../organizations/settings/OrgPermissions';
 import OrgWebhooks from '../organizations/settings/OrgWebhooks';
 
-const OrgTab = ({ to, icon, label, badge, end }: { to: string, icon: string, label: string, badge?: number, end?: boolean }) => (
+// FIX: Changed component to React.FC to correctly handle the 'key' prop when used in a list.
+const OrgTab: React.FC<{ to: string, icon: string, label: string, badge?: number, end?: boolean }> = ({ to, icon, label, badge, end }) => (
     <NavLink
         to={to}
         end={end}

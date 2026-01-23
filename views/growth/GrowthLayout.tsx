@@ -1,7 +1,5 @@
 import React from 'react';
-import { NavLink, Routes, Route, Navigate } from 'react-router-dom';
-import SkillDashboardView from './SkillDashboardView';
-import DeveloperProfileView from './DeveloperProfileView';
+import { NavLink, Outlet } from 'react-router-dom';
 
 const GrowthNavItem = ({ to, icon, label }: { to: string, icon: string, label: string }) => (
     <NavLink
@@ -19,7 +17,7 @@ const GrowthNavItem = ({ to, icon, label }: { to: string, icon: string, label: s
 );
 
 const GrowthLayout = () => {
-    const basePath = '/growth';
+    const basePath = '/marketplace/growth';
 
     return (
         <div className="flex-1 flex bg-[#0d1117] font-display">
@@ -39,12 +37,7 @@ const GrowthLayout = () => {
                 </div>
             </aside>
             <main className="flex-1 overflow-y-auto custom-scrollbar p-8 bg-gh-bg">
-                <Routes>
-                    <Route index element={<Navigate to="dashboard" replace />} />
-                    <Route path="dashboard" element={<SkillDashboardView />} />
-                    <Route path="profile/:id" element={<DeveloperProfileView />} />
-                    <Route path="*" element={<Navigate to="dashboard" replace />} />
-                </Routes>
+                <Outlet />
             </main>
         </div>
     );

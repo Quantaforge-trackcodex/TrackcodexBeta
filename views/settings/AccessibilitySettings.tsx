@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -28,7 +29,8 @@ const PreferenceRow = ({ title, description, enabled, onChange }: { title: strin
     </div>
 );
 
-const ShortcutKey = ({ children }: { children: React.ReactNode }) => (
+// FIX: Changed component to React.FC to correctly handle the 'key' prop when used in a list.
+const ShortcutKey: React.FC<{ children: React.ReactNode }> = ({ children }) => (
     <kbd className="px-2 py-1 text-xs font-mono font-semibold text-gh-text-secondary bg-gh-bg border border-gh-border rounded-md shadow-sm">
         {children}
     </kbd>
