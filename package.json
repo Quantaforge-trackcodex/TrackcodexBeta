@@ -103,6 +103,9 @@
     "directories": {
       "output": "release"
     },
+    "npmArgs": [
+      "--no-optional"
+    ],
     "win": {
       "target": "nsis"
     },
