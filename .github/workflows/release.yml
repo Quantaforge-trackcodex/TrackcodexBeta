@@ -11,7 +11,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
+        os: [windows-latest, ubuntu-22.04, macos-latest]
 
     steps:
       - name: Check out Git repository
@@ -28,7 +28,7 @@ jobs:
 
       # On Linux, install build dependencies for native modules (if needed)
       - name: Install Linux Deps
-        if: matrix.os == 'ubuntu-latest'
+        if: matrix.os == 'ubuntu-22.04'
         run: |
           sudo apt-get update
           sudo apt-get install -y icnsutils graphicsmagick
