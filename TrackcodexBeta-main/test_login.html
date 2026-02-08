@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>API Test</title>
+  </head>
+  <body>
+    <h1>Login API Test</h1>
+    <button onclick="testLogin()">Test Login</button>
+    <pre id="result"></pre>
+
+    <script>
+      async function testLogin() {
+        const resultEl = document.getElementById("result");
+        resultEl.textContent = "Testing...";
+
+        try {
+          const response = await fetch(
+            "http://localhost:4000/api/v1/auth/login",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              credentials: "include",
+              body: JSON.stringify({
+                email: "test@example.com",
+                password: "test123",
+              }),
+            },
+          );
+
+          const data = await response.json();
+          resultEl.textContent = `Status: ${response.status}\n\nResponse:\n${JSON.stringify(data, null, 2)}`;
+        } catch (error) {
+          resultEl.textContent = `Error: ${error.message}\n\nStack:\n${error.stack}`;
+        }
+      }
+    </script>
+  </body>
+</html>

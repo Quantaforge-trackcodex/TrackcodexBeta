@@ -1,0 +1,3 @@
+.usageProgressBar {
+  width: var(--progress-width, 0%);
+}

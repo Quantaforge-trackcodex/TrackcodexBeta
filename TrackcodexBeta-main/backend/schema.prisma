@@ -1,0 +1,984 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- Auth & Security ---
+
+model User {
+  id               String    @id @default(uuid())
+  email            String    @unique
+  username         String?   @unique
+  password         String?
+  name             String?
+  avatar           String?
+  role             String    @default("user") // 'user', 'admin', 'super_admin'
+  profileCompleted Boolean   @default(false)
+  emailVerified    Boolean   @default(false)
+  emailVerifiedAt  DateTime?
+  twoFactorEnabled Boolean   @default(false)
+  accountLocked    Boolean   @default(false)
+  tokenVersion     Int       @default(1)
+
+  deletedAt          DateTime?
+  deleteScheduledFor DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Profile & Metadata (GitHub Parity)
+  bio      String? @db.Text
+  company  String?
+  location String?
+  website  String?
+  twitter  String?
+  linkedin String?
+  github   String?
+
+  // Relations
+  oauthAccounts     OAuthAccount[]
+  sessions          Session[]
+  loginAttempts     LoginAttempt[]
+  workspaces        Workspace[] // Owned workspaces
+  jobsCreated       Job[]              @relation("JobCreator")
+  orgMemberships    OrgMember[]
+  wallet            Wallet?
+  freelancerProfile FreelancerProfile?
+  activityLogs      ActivityLog[]
+  enterpriseMembers EnterpriseMember[]
+  teamMembers       TeamMember[]
+  jobApplications   JobApplication[]
+
+  // Collaboration Additions
+  authoredIssues Issue[]       @relation("IssueAuthor")
+  authoredPRs    PullRequest[] @relation("PRAuthor")
+  comments       Comment[]
+
+  customProfile        Profile?
+  sshKeys              SSHKey[]
+  gpgKeys              GPGKey[]
+  following            Follow[]              @relation("Following")
+  followers            Follow[]              @relation("Followers")
+  activities           Activity[]
+  environmentReviewers EnvironmentReviewer[]
+  deploymentApprovals  DeploymentApproval[]
+}
+
+model Profile {
+  id     String @id @default(uuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
+
+  bio            String? @db.Text
+  location       String?
+  website        String?
+  company        String?
+  followersCount Int     @default(0)
+  followingCount Int     @default(0)
+
+  socialLinks SocialLink[]
+}
+
+model SocialLink {
+  id        String  @id @default(uuid())
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id])
+  platform  String // 'github', 'twitter', 'linkedin', etc.
+  url       String
+}
+
+model SSHKey {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  title     String
+  key       String   @db.Text
+  createdAt DateTime @default(now())
+}
+
+model GPGKey {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  keyId     String   @unique
+  publicKey String   @db.Text
+  createdAt DateTime @default(now())
+}
+
+model Follow {
+  followerId  String
+  follower    User     @relation("Following", fields: [followerId], references: [id])
+  followingId String
+  following   User     @relation("Followers", fields: [followingId], references: [id])
+  createdAt   DateTime @default(now())
+
+  @@id([followerId, followingId])
+}
+
+model OAuthAccount {
+  id                String  @id @default(uuid())
+  provider          String
+  providerAccountId String
+  accessToken       String? @db.Text
+  refreshToken      String? @db.Text
+  tokenType         String?
+  idToken           String? @db.Text
+  scope             String?
+  userId            String
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model OAuthProvider {
+  id          String   @id @default(uuid())
+  name        String   @unique // e.g., 'google', 'github'
+  displayName String
+  enabled     Boolean  @default(true)
+  icon        String? // URL or icon name
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Session {
+  id             String    @id @default(uuid())
+  sessionId      String    @unique
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organizationId String?
+  workspaceId    String?
+  ipAddress      String?
+  userAgent      String?
+  csrfToken      String?
+  tokenVersion   Int       @default(1)
+  expiresAt      DateTime
+  revokedAt      DateTime?
+  lastActivityAt DateTime  @default(now())
+  createdAt      DateTime  @default(now())
+}
+
+model LoginAttempt {
+  id            String   @id @default(uuid())
+  email         String
+  ipAddress     String?
+  userAgent     String?
+  success       Boolean
+  failureReason String?
+  userId        String?
+  user          User?    @relation(fields: [userId], references: [id])
+  createdAt     DateTime @default(now())
+}
+
+model VerificationToken {
+  id         String   @id @default(uuid())
+  identifier String
+  token      String   @unique
+  expires    DateTime
+  createdAt  DateTime @default(now())
+
+  @@unique([identifier, token])
+}
+
+model Permission {
+  id        String    @id @default(uuid())
+  role      String
+  resource  String
+  action    String
+  userId    String
+  expiresAt DateTime?
+}
+
+model FeatureFlag {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  enabled     Boolean  @default(true)
+  description String?
+  updatedAt   DateTime @updatedAt
+}
+
+// --- Core Application ---
+
+model Organization {
+  id        String       @id @default(uuid())
+  name      String
+  createdAt DateTime     @default(now())
+  members   OrgMember[]
+  jobs      Job[]
+  repos     Repository[]
+
+  enterpriseId String?
+  enterprise   Enterprise? @relation(fields: [enterpriseId], references: [id])
+  teams        Team[]
+  webhooks     Webhook[]
+  activities   Activity[]
+}
+
+model OrgMember {
+  id       String       @id @default(uuid())
+  orgId    String
+  org      Organization @relation(fields: [orgId], references: [id])
+  userId   String
+  user     User         @relation(fields: [userId], references: [id])
+  role     String       @default("MEMBER") // OWNER, ADMIN, MEMBER
+  joinedAt DateTime     @default(now())
+
+  @@unique([orgId, userId])
+}
+
+model Repository {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  isPublic    Boolean  @default(false)
+  language    String?
+  stars       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  settings    Json?    @default("{}")
+
+  // Visibility (Integravity Expansion)
+  visibility String @default("PUBLIC") // PUBLIC, PRIVATE, INTERNAL
+
+  // Relations
+  branchProtections BranchProtection[]
+  statusChecks      StatusCheck[]
+
+  // Organizations & Context
+  orgId        String?
+  org          Organization? @relation(fields: [orgId], references: [id])
+  enterpriseId String? // Denormalized for RLS
+
+  // Forking Logic
+  forkedFromId String?
+  parent       Repository?  @relation("RepoForks", fields: [forkedFromId], references: [id])
+  forks        Repository[] @relation("RepoForks")
+  forksCount   Int          @default(0)
+
+  // UI & Metadata
+  aiHealth        Int       @default(100)
+  aiHealthLabel   String    @default("Optimal")
+  techStack       String?
+  techColor       String?
+  license         Json? // Stores license object { key, name, spdx_id, url, node_id }
+  openIssuesCount Int       @default(0)
+  lastSyncAt      DateTime?
+
+  securityAlerts  SecurityAlert[]
+  aiTasks         AITask[]
+  jobs            Job[]
+  teamPermissions RepoPermission[]
+
+  // Collaboration (Integravity Phase 4)
+  issues       Issue[]
+  pullRequests PullRequest[]
+  labels       Label[]
+  milestones   Milestone[]
+
+  // CI/CD (Integravity Phase 5)
+  workflowRuns WorkflowRun[]
+
+  // External Integrations (Integravity Phase 7)
+  webhooks Webhook[]
+
+  // Activity Feed (Integravity Phase 8)
+  activities Activity[]
+
+  // Environments (Elite Governance Additions)
+  environments Environment[]
+  codeSymbols  CodeSymbol[]
+}
+
+model Issue {
+  id     String  @id @default(uuid())
+  number Int // Repo-relative incrementing number
+  title  String
+  body   String? @db.Text
+  status String  @default("OPEN") // OPEN, CLOSED
+
+  authorId String
+  author   User   @relation("IssueAuthor", fields: [authorId], references: [id])
+
+  repoId String
+  repo   Repository @relation(fields: [repoId], references: [id])
+
+  milestoneId String?
+  milestone   Milestone? @relation(fields: [milestoneId], references: [id])
+
+  labels   Label[]
+  comments Comment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([repoId, number])
+}
+
+model PullRequest {
+  id     String  @id @default(uuid())
+  number Int // Repo-relative
+  title  String
+  body   String? @db.Text
+  status String  @default("OPEN") // OPEN, CLOSED, MERGED
+  draft  Boolean @default(false)
+
+  base String // e.g. "main"
+  head String // e.g. "feature/xyz"
+
+  authorId String
+  author   User   @relation("PRAuthor", fields: [authorId], references: [id])
+
+  repoId String
+  repo   Repository @relation(fields: [repoId], references: [id])
+
+  labels   Label[]
+  comments Comment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([repoId, number])
+}
+
+model Comment {
+  id   String @id @default(uuid())
+  body String @db.Text
+
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+
+  issueId String?
+  issue   Issue?  @relation(fields: [issueId], references: [id])
+
+  pullRequestId String?
+  pullRequest   PullRequest? @relation(fields: [pullRequestId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Label {
+  id          String  @id @default(uuid())
+  name        String
+  color       String  @default("#cccccc")
+  description String?
+
+  repoId String
+  repo   Repository @relation(fields: [repoId], references: [id])
+
+  issues       Issue[]
+  pullRequests PullRequest[]
+
+  @@unique([repoId, name])
+}
+
+model Milestone {
+  id          String    @id @default(uuid())
+  title       String
+  description String?
+  state       String    @default("OPEN") // OPEN, CLOSED
+  dueDate     DateTime?
+
+  repoId String
+  repo   Repository @relation(fields: [repoId], references: [id])
+
+  issues Issue[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([repoId, title])
+}
+
+model BranchProtection {
+  id      String     @id @default(uuid())
+  repoId  String
+  repo    Repository @relation(fields: [repoId], references: [id])
+  pattern String // e.g. "main", "release/*"
+
+  requiredReviews      Int     @default(0)
+  requireSignedCommits Boolean @default(false)
+  requireStatusChecks  Boolean @default(false)
+  dismissStaleReviews  Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([repoId, pattern])
+}
+
+model StatusCheck {
+  id     String     @id @default(uuid())
+  repoId String
+  repo   Repository @relation(fields: [repoId], references: [id])
+
+  context     String // e.g. "ci/circleci", "lint"
+  state       String // PENDING, SUCCESS, FAILURE, ERROR
+  targetUrl   String?
+  description String?
+
+  commitSha String // The SHA this check applies to
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([repoId, commitSha, context])
+}
+
+model SecurityAlert {
+  id     String     @id @default(uuid())
+  repoId String
+  repo   Repository @relation(fields: [repoId], references: [id])
+
+  type        String // SCA, SAST, SECRET
+  severity    String // LOW, MEDIUM, HIGH, CRITICAL
+  description String
+  resource    String? // e.g. "package.json", "src/auth.ts"
+  status      String  @default("OPEN") // OPEN, DISMISSED, FIXED
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AITask {
+  id        String     @id @default(uuid())
+  repoId    String
+  repo      Repository @relation(fields: [repoId], references: [id])
+  taskName  String
+  model     String
+  status    String // Pending, Processing, Completed, Failed
+  result    String? // JSON string or text result
+  createdAt DateTime   @default(now())
+}
+
+model Workspace {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  status      String   @default("Active")
+  ownerId     String
+  owner       User     @relation(fields: [ownerId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// --- Jobs & Marketplace ---
+
+model Job {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  budget      String?
+  type        String // Fixed, Hourly
+  techStack   String[] // Array of strings in Postgres
+  status      String   @default("Open") // Open, InProgress, Completed
+
+  creatorId String
+  creator   User   @relation("JobCreator", fields: [creatorId], references: [id])
+
+  orgId String?
+  org   Organization? @relation(fields: [orgId], references: [id])
+
+  repositoryId String?
+  repository   Repository? @relation(fields: [repositoryId], references: [id])
+
+  applications JobApplication[]
+  contract     EscrowContract?
+  reviews      JobReview[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model JobApplication {
+  id          String @id @default(uuid())
+  jobId       String
+  job         Job    @relation(fields: [jobId], references: [id])
+  applicantId String
+  applicant   User   @relation(fields: [applicantId], references: [id])
+
+  status String @default("Pending") // Screening, Shortlisted, Hired, Rejected
+  stage  String @default("Applied") // Applied, Phone Screen, Interview, Offer, Hired, Rejected
+
+  coverLetter String? @db.Text
+  resumeUrl   String?
+  score       Float   @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([jobId, applicantId])
+}
+
+model JobReview {
+  id    String @id @default(uuid())
+  jobId String
+  job   Job    @relation(fields: [jobId], references: [id])
+
+  freelancerId String
+  freelancer   FreelancerProfile @relation(fields: [freelancerId], references: [id])
+
+  reviewerId String // User ID of employer
+
+  rating    Float
+  comment   String?
+  createdAt DateTime @default(now())
+}
+
+model FreelancerProfile {
+  id     String @id @default(uuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
+
+  jobsCompleted Int         @default(0)
+  rating        Float       @default(0.0)
+  isPublic      Boolean     @default(true)
+  reviews       JobReview[]
+}
+
+// --- Finance ---
+
+model Wallet {
+  id           String        @id @default(uuid())
+  userId       String        @unique
+  user         User          @relation(fields: [userId], references: [id])
+  balance      Float         @default(0.0)
+  transactions Transaction[]
+  updatedAt    DateTime      @updatedAt
+}
+
+model Transaction {
+  id          String   @id @default(uuid())
+  walletId    String
+  wallet      Wallet   @relation(fields: [walletId], references: [id])
+  amount      Float
+  type        String // DEPOSIT, WITHDRAW, ESCROW_HOLD, RELEASE
+  description String?
+  referenceId String? // ID of job or external ref
+  createdAt   DateTime @default(now())
+}
+
+model EscrowContract {
+  id           String   @id @default(uuid())
+  jobId        String   @unique
+  job          Job      @relation(fields: [jobId], references: [id])
+  amountLocked Float
+  status       String // HELD, RELEASED, DISPUTED, REFUNDED
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model ActivityLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  action    String
+  details   Json?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+}
+
+// --- ENTERPRISE FEATURES ---
+
+model Enterprise {
+  id     String  @id @default(uuid())
+  slug   String  @unique
+  name   String
+  domain String? // Auto-join users from this domain
+  plan   String  @default("ENTERPRISE") // FREE, BUSINESS, ENTERPRISE
+  status String  @default("ACTIVE") // ACTIVE, SUSPENDED
+
+  // Settings
+  ssoRequired       Boolean  @default(false)
+  twoFactorRequired Boolean  @default(false)
+  ipAllowlist       String[] // Array of CIDRs
+  region            String   @default("us-east-1") // Data residency control
+
+  // Relations
+  members       EnterpriseMember[]
+  organizations Organization[] // "Workspaces"
+  policies      Policy[]
+  auditLogs     AuditLog[]
+  ssoConfig     SSOConfig?
+  subscription  Subscription?
+  usage         EnterpriseUsage[]
+  runnerGroups  RunnerGroup[]
+  devices       TrustedDevice[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model EnterpriseMember {
+  id           String     @id @default(uuid())
+  enterpriseId String
+  enterprise   Enterprise @relation(fields: [enterpriseId], references: [id])
+  userId       String
+  user         User       @relation(fields: [userId], references: [id])
+
+  role     String   @default("MEMBER") // OWNER, ADMIN, SECURITY_ADMIN, BILLING_ADMIN
+  joinedAt DateTime @default(now())
+
+  @@unique([enterpriseId, userId])
+}
+
+model SSOConfig {
+  id           String     @id @default(uuid())
+  enterpriseId String     @unique
+  enterprise   Enterprise @relation(fields: [enterpriseId], references: [id])
+
+  provider    String // SAML, OIDC
+  entryPoint  String // IdP Login URL
+  issuer      String // IdP Entity ID
+  cert        String? // Public Key (PEM)
+  scimEnabled Boolean @default(false)
+  scimToken   String? // Secret token for SCIM
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Policy {
+  id           String     @id @default(uuid())
+  enterpriseId String
+  enterprise   Enterprise @relation(fields: [enterpriseId], references: [id])
+
+  // Types: REPO_VISIBILITY, LICENSE_CHECK, SECRET_SCANNING, 
+  //        OFFLINE_MODE, DEVICE_TRUST, RUNNER_CONSTRAINT, CLIPBOARD_SCANNING
+  type     String
+  name     String
+  config   Json // e.g. { "allowed_licenses": ["MIT"], "block_offline_exec": true }
+  enforced Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AuditLog {
+  id           String     @id @default(uuid())
+  enterpriseId String
+  enterprise   Enterprise @relation(fields: [enterpriseId], references: [id])
+
+  actorId   String
+  action    String // AUTH_LOGIN, REPO_DELETE, POLICY_CHANGE, EXECUTION_START
+  resource  String
+  details   Json?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+}
+
+// --- Execution & Runners ---
+
+model RunnerGroup {
+  id           String     @id @default(uuid())
+  enterpriseId String
+  enterprise   Enterprise @relation(fields: [enterpriseId], references: [id])
+
+  name         String
+  allowsPublic Boolean  @default(false)
+  runners      Runner[]
+
+  createdAt DateTime @default(now())
+}
+
+model Runner {
+  id            String      @id @default(uuid())
+  runnerGroupId String
+  group         RunnerGroup @relation(fields: [runnerGroupId], references: [id])
+
+  name       String
+  status     String // ONLINE, OFFLINE, BUSY
+  os         String
+  arch       String // x64, arm64
+  labels     String[] // ["gpu", "high-mem"]
+  version    String
+  lastSeenAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  jobs WorkflowJob[]
+}
+
+model WorkflowRun {
+  id     String     @id @default(uuid())
+  repoId String
+  repo   Repository @relation(fields: [repoId], references: [id])
+
+  workflowName String // e.g. "CI", "Deploy"
+  commitSha    String
+  event        String // push, pull_request, workflow_dispatch
+  status       String  @default("QUEUED") // QUEUED, IN_PROGRESS, COMPLETED, CANCELLED
+  conclusion   String? // SUCCESS, FAILURE, NEUTRAL, CANCELLED, TIMED_OUT, ACTION_REQUIRED
+
+  jobs WorkflowJob[]
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  deployments Deployment[]
+}
+
+model WorkflowJob {
+  id            String      @id @default(uuid())
+  workflowRunId String
+  workflowRun   WorkflowRun @relation(fields: [workflowRunId], references: [id])
+
+  name        String
+  status      String    @default("QUEUED")
+  conclusion  String?
+  startedAt   DateTime?
+  completedAt DateTime?
+
+  runnerId String?
+  runner   Runner? @relation(fields: [runnerId], references: [id])
+
+  steps Json? // Detailed steps execution state
+  logs  String? @db.Text
+
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  environment   Environment? @relation(fields: [environmentId], references: [id])
+  environmentId String?
+}
+
+// --- Billing & Usage ---
+
+model Subscription {
+  id           String     @id @default(uuid())
+  enterpriseId String     @unique
+  enterprise   Enterprise @relation(fields: [enterpriseId], references: [id])
+
+  planId       String
+  seats        Int
+  status       String // ACTIVE, PAST_DUE, CANCELED
+  billingEmail String?
+
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+
+  invoices  Invoice[]
+  updatedAt DateTime  @updatedAt
+}
+
+model EnterpriseUsage {
+  id           String     @id @default(uuid())
+  enterpriseId String
+  enterprise   Enterprise @relation(fields: [enterpriseId], references: [id])
+
+  month          String // "2023-10"
+  seatsUsed      Int    @default(0)
+  computeMinutes Int    @default(0)
+  storageBytes   BigInt @default(0)
+  aiTokens       Int    @default(0)
+
+  updatedAt DateTime @updatedAt
+
+  @@unique([enterpriseId, month])
+}
+
+model Invoice {
+  id             String       @id @default(uuid())
+  subscriptionId String
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id])
+
+  amount   Float
+  currency String   @default("USD")
+  status   String // PAID, OPEN, VOID
+  url      String? // PDF link
+  issuedAt DateTime @default(now())
+}
+
+// --- Desktop Security ---
+
+model TrustedDevice {
+  id           String     @id @default(uuid())
+  enterpriseId String
+  enterprise   Enterprise @relation(fields: [enterpriseId], references: [id])
+
+  hostname    String
+  os          String
+  fingerprint String // Hardware hash
+  status      String // PENDING, APPROVED, REVOKED
+  lastSeenAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+}
+
+// --- Teams ---
+
+model Team {
+  id             String       @id @default(uuid())
+  name           String
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  description String?
+  members     TeamMember[]
+  permissions RepoPermission[]
+
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  environmentReviewers EnvironmentReviewer[]
+}
+
+model TeamMember {
+  id     String @id @default(uuid())
+  teamId String
+  team   Team   @relation(fields: [teamId], references: [id])
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+  role   String @default("MEMBER") // MAINTAINER, MEMBER
+
+  @@unique([teamId, userId])
+}
+
+model RepoPermission {
+  id     String     @id @default(uuid())
+  teamId String
+  team   Team       @relation(fields: [teamId], references: [id])
+  repoId String
+  repo   Repository @relation(fields: [repoId], references: [id])
+  level  String // READ, WRITE, ADMIN
+
+  @@unique([teamId, repoId])
+}
+
+// --- Integrations & Webhooks (Integravity Phase 7) ---
+
+model Webhook {
+  id     String  @id @default(uuid())
+  url    String
+  secret String? // Used for HMAC signing
+
+  // Context
+  orgId  String?
+  org    Organization? @relation(fields: [orgId], references: [id])
+  repoId String?
+  repo   Repository?   @relation(fields: [repoId], references: [id])
+
+  // Config
+  events      String[] // e.g. ["push", "pull_request"]
+  active      Boolean  @default(true)
+  contentType String   @default("application/json") // json, form
+
+  deliveries WebhookDelivery[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model WebhookDelivery {
+  id        String  @id @default(uuid())
+  webhookId String
+  webhook   Webhook @relation(fields: [webhookId], references: [id])
+
+  event        String
+  guid         String // Unique ID for this delivery attempt
+  requestBody  Json
+  responseBody String? @db.Text
+  responseCode Int?
+  duration     Int? // ms
+  status       String // SUCCESS, FAILURE, PENDING
+
+  createdAt DateTime @default(now())
+}
+
+// --- Activity Feed (Integravity Phase 8) ---
+
+model Activity {
+  id      String @id @default(uuid())
+  type    String // ISSUE_OPENED, PR_MERGED, REPO_CREATED, etc.
+  actorId String
+  actor   User   @relation(fields: [actorId], references: [id])
+
+  // Context
+  orgId  String?
+  org    Organization? @relation(fields: [orgId], references: [id])
+  repoId String?
+  repo   Repository?   @relation(fields: [repoId], references: [id])
+
+  details Json? // Metadata e.g. { issueNumber: 5, prTitle: "Fix bug" }
+
+  createdAt DateTime @default(now())
+}
+
+// --- Elite Governance: Environments & Deployment Gates ---
+
+model Environment {
+  id     String     @id @default(uuid())
+  repoId String
+  repo   Repository @relation(fields: [repoId], references: [id], onDelete: Cascade)
+  name   String // e.g. "production", "staging"
+
+  // Settings
+  waitDuration Int? // Minutes to wait before failing if no approval
+
+  // Protection Rules
+  reviewers EnvironmentReviewer[]
+
+  deployments  Deployment[]
+  workflowJobs WorkflowJob[] // Jobs targeting this environment
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([repoId, name])
+}
+
+model EnvironmentReviewer {
+  id            String      @id @default(uuid())
+  environmentId String
+  environment   Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  userId        String?
+  user          User?       @relation(fields: [userId], references: [id])
+  teamId        String?
+  team          Team?       @relation(fields: [teamId], references: [id])
+
+  @@unique([environmentId, userId])
+  @@unique([environmentId, teamId])
+}
+
+model Deployment {
+  id            String      @id @default(uuid())
+  environmentId String
+  environment   Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  workflowRunId String
+  workflowRun   WorkflowRun @relation(fields: [workflowRunId], references: [id], onDelete: Cascade)
+
+  status    String               @default("WAITING") // WAITING, APPROVED, REJECTED, IN_PROGRESS, COMPLETED
+  approvals DeploymentApproval[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model DeploymentApproval {
+  id           String     @id @default(uuid())
+  deploymentId String
+  deployment   Deployment @relation(fields: [deploymentId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User       @relation(fields: [userId], references: [id])
+
+  status  String // APPROVED, REJECTED
+  comment String? @db.Text
+
+  createdAt DateTime @default(now())
+}
+
+model CodeSymbol {
+  id     String     @id @default(uuid())
+  repoId String
+  repo   Repository @relation(fields: [repoId], references: [id], onDelete: Cascade)
+
+  name      String
+  type      String // CLASS, FUNCTION, INTERFACE, CONSTANT
+  path      String
+  line      Int
+  signature String? @db.Text
+
+  createdAt DateTime @default(now())
+
+  @@index([repoId])
+  @@index([name])
+}

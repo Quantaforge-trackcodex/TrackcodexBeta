@@ -1,0 +1,16 @@
+﻿  ΓÇó electron-builder  version=26.4.0 os=10.0.26200
+  ΓÇó loaded configuration  file=package.json ("build" field)
+  ΓÇó skipped dependencies rebuild  reason=npmRebuild is set to false
+  ΓÇó packaging       platform=win32 arch=x64 electron=40.0.0 appOutDir=release\win-unpacked
+  ΓÇó updating asar integrity executable resource  executablePath=release\win-unpacked\TrackCodex.exe
+  Γ¿» Application entry file "index.js" in the "C:\Users\HP\TrackcodexBeta\meeting_1\release\win-unpacked\resources\app.asar" is corrupted: Error: "index.js" was not found in this archive  failedTask=build stackTrace=Error: Application entry file "index.js" in the "C:\Users\HP\TrackcodexBeta\meeting_1\release\win-unpacked\resources\app.asar" is corrupted: Error: "index.js" was not found in this archive
+    at error (C:\Users\HP\TrackcodexBeta\meeting_1\node_modules\app-builder-lib\src\asar\asarFileChecker.ts:6:12)
+    at checkFileInArchive (C:\Users\HP\TrackcodexBeta\meeting_1\node_modules\app-builder-lib\src\asar\asarFileChecker.ts:15:11)
+    at WinPackager.checkFileInPackage (C:\Users\HP\TrackcodexBeta\meeting_1\node_modules\app-builder-lib\src\platformPackager.ts:635:25)
+    at WinPackager.sanityCheckPackage (C:\Users\HP\TrackcodexBeta\meeting_1\node_modules\app-builder-lib\src\platformPackager.ts:683:16)
+    at WinPackager.doPack (C:\Users\HP\TrackcodexBeta\meeting_1\node_modules\app-builder-lib\src\platformPackager.ts:351:5)
+    at WinPackager.pack (C:\Users\HP\TrackcodexBeta\meeting_1\node_modules\app-builder-lib\src\platformPackager.ts:161:5)
+    at Packager.doBuild (C:\Users\HP\TrackcodexBeta\meeting_1\node_modules\app-builder-lib\src\packager.ts:538:11)
+    at executeFinally (C:\Users\HP\TrackcodexBeta\meeting_1\node_modules\builder-util\src\promise.ts:12:14)
+    at Packager.build (C:\Users\HP\TrackcodexBeta\meeting_1\node_modules\app-builder-lib\src\packager.ts:458:31)
+    at executeFinally (C:\Users\HP\TrackcodexBeta\meeting_1\node_modules\builder-util\src\promise.ts:12:14)

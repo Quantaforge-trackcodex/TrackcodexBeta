@@ -1,0 +1,3 @@
+.animatedSection {
+  animation-delay: var(--animation-delay, 0s);
+}

@@ -1,0 +1,16 @@
+.statusGrid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.statusOperational {
+  color: #2da44e;
+}
+
+.statusNote {
+  margin-top: 2rem;
+  font-size: 0.9rem;
+  color: #6e7681;
+}

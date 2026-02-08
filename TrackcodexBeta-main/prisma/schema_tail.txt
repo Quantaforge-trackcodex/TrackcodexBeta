@@ -1,0 +1,28 @@
+﻿  repo   Repository @relation(fields: [repoId], references: [id])
+
+  @@unique([teamId, repoId])
+}
+
+// Portfolio Items Model
+model PortfolioItem {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  title         String
+  description   String   @db.Text
+  imageUrl      String?
+  demoUrl       String?  // Live demo/deployed site
+  sourceUrl     String?  // GitHub, GitLab, TrackCodex repo, etc.
+  technologies  String[] // ["React", "TypeScript", "AWS"]
+  
+  featured      Boolean  @default(false) // Pinned to profile
+  order         Int      @default(0)     // Display order
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@index([userId])
+  @@index([userId, featured])
+  @@index([userId, order])
+}

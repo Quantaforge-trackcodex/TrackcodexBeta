@@ -1,0 +1,8 @@
+{
+  "name": "TrackCodex ",
+  "description": "A high-performance enterprise IDE platform with integrated AI-driven insights, security monitoring, and live collaborative sessions.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}

@@ -1,0 +1,43 @@
+backend/routes/auth.ts(548,22): error TS2339: Property 'verificationToken' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
+backend/routes/auth.ts(577,46): error TS2339: Property 'verificationToken' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
+backend/routes/auth.ts(605,20): error TS2339: Property 'verificationToken' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
+backend/routes/jobs.ts(226,66): error TS2322: Type 'string | string[]' is not assignable to type 'string'.
+  Type 'string[]' is not assignable to type 'string'.
+backend/routes/profile.ts(21,17): error TS2353: Object literal may only specify known properties, and 'relations' does not exist in type 'UserInclude<DefaultArgs>'.
+backend/services/auditLogger.ts(31,17): error TS2353: Object literal may only specify known properties, and 'details' does not exist in type '(Without<ActivityLogCreateInput, ActivityLogUncheckedCreateInput> & ActivityLogUncheckedCreateInput) | (Without<...> & ActivityLogCreateInput)'.
+backend/services/chat.ts(1,10): error TS2305: Module '"@fastify/websocket"' has no exported member 'SocketStream'.
+backend/services/featureFlags.ts(23,35): error TS2339: Property 'featureFlag' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
+backend/services/featureFlags.ts(47,19): error TS2339: Property 'featureFlag' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
+backend/services/jwt.ts(16,16): error TS2769: No overload matches this call.
+  Overload 1 of 5, '(payload: string | object | Buffer<ArrayBufferLike>, secretOrPrivateKey: null, options?: SignOptions & { algorithm: "none"; }): string', gave the following error.
+    Argument of type 'string' is not assignable to parameter of type 'null'.
+  Overload 2 of 5, '(payload: string | object | Buffer<ArrayBufferLike>, secretOrPrivateKey: Buffer<ArrayBufferLike> | Secret | PrivateKeyInput | JsonWebKeyInput, options?: SignOptions): string', gave the following error.
+    Type 'string' is not assignable to type 'number | StringValue'.
+  Overload 3 of 5, '(payload: string | object | Buffer<ArrayBufferLike>, secretOrPrivateKey: Buffer<ArrayBufferLike> | Secret | PrivateKeyInput | JsonWebKeyInput, callback: SignCallback): void', gave the following error.
+    Object literal may only specify known properties, and 'expiresIn' does not exist in type 'SignCallback'.
+components/applications/KanbanBoard.tsx(81,25): error TS2322: Type '{ key: string; id: string; title: string; applications: any; }' is not assignable to type '{ id: string; title: string; applications: any[]; }'.
+  Property 'key' does not exist on type '{ id: string; title: string; applications: any[]; }'.
+components/applications/KanbanColumn.tsx(20,36): error TS2322: Type '{ key: any; application: any; }' is not assignable to type '{ application: any; onClick?: () => void; }'.
+  Property 'key' does not exist on type '{ application: any; onClick?: () => void; }'.
+components/jobs/JobDetail.tsx(12,81): error TS2339: Property 'feedback' does not exist on type 'Job'.
+components/jobs/JobDetail.tsx(13,77): error TS2339: Property 'rating' does not exist on type 'Job'.
+components/layout/CommandPalette.tsx(150,26): error TS2339: Property 'map' does not exist on type 'unknown'.
+components/profile/ProfileCard.tsx(7,8): error TS2300: Duplicate identifier 'EditIdentityModal'.
+components/profile/ProfileCard.tsx(8,8): error TS2300: Duplicate identifier 'EditIdentityModal'.
+components/profile/ProfileCard.tsx(25,10): error TS2451: Cannot redeclare block-scoped variable 'isEditIdentityOpen'.
+components/profile/ProfileCard.tsx(25,30): error TS2451: Cannot redeclare block-scoped variable 'setIsEditIdentityOpen'.
+components/profile/ProfileCard.tsx(26,10): error TS2451: Cannot redeclare block-scoped variable 'isEditIdentityOpen'.
+components/profile/ProfileCard.tsx(26,30): error TS2451: Cannot redeclare block-scoped variable 'setIsEditIdentityOpen'.
+index.tsx(24,10): error TS2339: Property 'state' does not exist on type 'ErrorBoundary'.
+index.tsx(36,14): error TS2339: Property 'state' does not exist on type 'ErrorBoundary'.
+index.tsx(47,57): error TS2339: Property 'state' does not exist on type 'ErrorBoundary'.
+index.tsx(48,66): error TS2339: Property 'state' does not exist on type 'ErrorBoundary'.
+index.tsx(53,17): error TS2339: Property 'props' does not exist on type 'ErrorBoundary'.
+scripts/seed_real_jobs.ts(48,17): error TS2561: Object literal may only specify known properties, but 'passwordHash' does not exist in type '(Without<UserCreateInput, UserUncheckedCreateInput> & UserUncheckedCreateInput) | (Without<...> & UserCreateInput)'. Did you mean to write 'password'?
+views/auth/Login.tsx(58,7): error TS2552: Cannot find name 'navigate'. Did you mean 'navigator'?
+views/Editor.tsx(3,25): error TS2307: Cannot find module 'monaco-editor/esm/vs/editor/editor.api' or its corresponding type declarations.
+views/Editor.tsx(262,40): error TS2353: Object literal may only specify known properties, and 'trigger' does not exist in type 'MenuItem'.
+views/Editor.tsx(263,34): error TS2353: Object literal may only specify known properties, and 'trigger' does not exist in type 'MenuItem'.
+views/ForgeAI.tsx(92,42): error TS2339: Property 'VITE_API_KEY' does not exist on type 'ImportMetaEnv'.
+views/ForgeAI.tsx(97,39): error TS2345: Argument of type 'string' is not assignable to parameter of type 'GetModelParameters'.
+views/ForgeAI.tsx(98,40): error TS2339: Property 'generateContent' does not exist on type 'Promise<Model>'.

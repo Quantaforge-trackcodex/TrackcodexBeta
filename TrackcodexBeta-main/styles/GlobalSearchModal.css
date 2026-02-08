@@ -1,0 +1,382 @@
+/* Global Search Modal - GitHub Style */
+
+.search-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 9998;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.search-modal {
+  position: fixed;
+  top: 15%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 600px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 16px 70px rgba(0, 0, 0, 0.4);
+  z-index: 9999;
+  animation: slideDown 0.2s ease-out;
+  overflow: hidden;
+}
+
+.dark-mode .search-modal {
+  background: #22272e;
+  border: 1px solid #444c56;
+}
+
+/* Header */
+.search-header {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid #e1e4e8;
+  gap: 12px;
+}
+
+.dark-mode .search-header {
+  border-bottom-color: #444c56;
+}
+
+.search-icon {
+  color: #6e7781;
+  font-size: 20px;
+}
+
+.search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 16px;
+  color: #24292f;
+  background: transparent;
+}
+
+.search-input::placeholder {
+  color: #6e7781;
+}
+
+.dark-mode .search-input {
+  color: #adbac7;
+}
+
+.search-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #e1e4e8;
+  border-top-color: #0969da;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+/* Body */
+.search-body {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.search-section {
+  padding: 8px 0;
+}
+
+.search-section-header {
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6e7781;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.search-result-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
+  gap: 12px;
+  cursor: pointer;
+  transition: background 0.1s ease;
+}
+
+.search-result-item:hover,
+.search-result-item.selected {
+  background: #f6f8fa;
+}
+
+.dark-mode .search-result-item:hover,
+.dark-mode .search-result-item.selected {
+  background: #2d333b;
+}
+
+.result-icon {
+  color: #6e7781;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.result-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.result-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #24292f;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dark-mode .result-label {
+  color: #adbac7;
+}
+
+.result-sublabel {
+  font-size: 12px;
+  color: #6e7781;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+
+.jump-to-btn {
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #0969da;
+  background: transparent;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  white-space: nowrap;
+}
+
+.jump-to-btn:hover {
+  background: #f6f8fa;
+  border-color: #0969da;
+}
+
+.dark-mode .jump-to-btn {
+  color: #539bf5;
+  border-color: #444c56;
+}
+
+.dark-mode .jump-to-btn:hover {
+  background: #2d333b;
+  border-color: #539bf5;
+}
+
+/* Copilot item */
+.copilot-item {
+  background: linear-gradient(135deg, #f6f8fa 0%, #fff 100%);
+  border-top: 1px solid #e1e4e8;
+  border-bottom: 1px solid #e1e4e8;
+}
+
+.dark-mode .copilot-item {
+  background: linear-gradient(135deg, #2d333b 0%, #22272e 100%);
+  border-color: #444c56;
+}
+
+.copilot-cta {
+  font-size: 12px;
+  color: #6e7781;
+  white-space: nowrap;
+}
+
+/* Footer */
+.search-footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-top: 1px solid #e1e4e8;
+  background: #f6f8fa;
+}
+
+.dark-mode .search-footer {
+  background: #2d333b;
+  border-top-color: #444c56;
+}
+
+.footer-link {
+  font-size: 12px;
+  color: #0969da;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background 0.1s ease;
+}
+
+.footer-link:hover {
+  background: #e1e4e8;
+  text-decoration: underline;
+}
+
+.dark-mode .footer-link {
+  color: #539bf5;
+}
+
+.dark-mode .footer-link:hover {
+  background: #444c56;
+}
+
+/* No results */
+.no-results {
+  padding: 40px 16px;
+  text-align: center;
+  color: #6e7781;
+  font-size: 14px;
+}
+
+/* Tips Modal */
+.tips-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tips-modal {
+  background: #fff;
+  border-radius: 8px;
+  padding: 24px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode .tips-modal {
+  background: #22272e;
+  border: 1px solid #444c56;
+}
+
+.tips-modal h3 {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  color: #24292f;
+}
+
+.dark-mode .tips-modal h3 {
+  color: #adbac7;
+}
+
+.tips-modal ul {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 16px 0;
+}
+
+.tips-modal li {
+  padding: 8px 0;
+  font-size: 14px;
+  color: #24292f;
+}
+
+.dark-mode .tips-modal li {
+  color: #adbac7;
+}
+
+.tips-modal code {
+  background: #f6f8fa;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: monospace;
+  font-size: 13px;
+  color: #0969da;
+}
+
+.dark-mode .tips-modal code {
+  background: #2d333b;
+  color: #539bf5;
+}
+
+.tips-modal button {
+  padding: 8px 16px;
+  background: #0969da;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.tips-modal button:hover {
+  background: #0550ae;
+}
+
+.tips-modal textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 14px;
+  resize: vertical;
+}
+
+.dark-mode .tips-modal textarea {
+  background: #2d333b;
+  border-color: #444c56;
+  color: #adbac7;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -20px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .search-modal {
+    top: 10%;
+    width: 95%;
+    max-width: none;
+  }
+
+  .jump-to-btn {
+    display: none;
+  }
+
+  .search-body {
+    max-height: 60vh;
+  }
+}

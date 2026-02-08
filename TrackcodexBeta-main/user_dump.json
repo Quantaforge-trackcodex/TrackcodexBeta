@@ -1,0 +1,17 @@
+[
+  {
+    "id": "bcedabef-4ea4-4c37-b038-223782e0512b",
+    "email": "dev@trackcodex.dev",
+    "role": "admin"
+  },
+  {
+    "id": "1769ac3f-4679-41fe-8f71-c25206389a90",
+    "email": "test@example.com",
+    "role": "user"
+  },
+  {
+    "id": "f3487784-2f8e-448b-b47b-127ab4084600",
+    "email": "somraj@example.com",
+    "role": "user"
+  }
+]

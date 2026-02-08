@@ -1,0 +1,112 @@
+ts-jest[config] (WARN) [94mmessage[0m[90m TS151001: [0mIf you have issues related to imports, you should consider setting `esModuleInterop` to `true` in your TypeScript configuration file (usually `tsconfig.json`). See https://blogs.msdn.microsoft.com/typescript/2018/01/31/announcing-typescript-2-7/#easier-ecmascript-module-interoperability for more information.
+FAIL backend/__tests__/escrow.test.ts (18.436 s)
+  Escrow & Wallet System
+    × should successfully fund a job escrow (5017 ms)
+    × should fail to fund if balance is insufficient (5053 ms)
+    × should successfully release payment to freelancer (5047 ms)
+
+  ● Escrow & Wallet System › should successfully fund a job escrow
+
+    thrown: "Exceeded timeout of 5000 ms for a test.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+    [0m [90m 11 |[39m describe([32m'Escrow & Wallet System'[39m[33m,[39m () [33m=>[39m {
+     [90m 12 |[39m
+    [31m[1m>[22m[39m[90m 13 |[39m     it([32m'should successfully fund a job escrow'[39m[33m,[39m [36masync[39m () [33m=>[39m {
+     [90m    |[39m     [31m[1m^[22m[39m
+     [90m 14 |[39m         [36mconst[39m mockJob [33m=[39m { id[33m:[39m [32m'job-1'[39m[33m,[39m title[33m:[39m [32m'Test Job'[39m[33m,[39m budget[33m:[39m [32m'$500'[39m[33m,[39m creatorId[33m:[39m [32m'user-1'[39m }[33m;[39m
+     [90m 15 |[39m         [36mconst[39m mockWallet [33m=[39m { id[33m:[39m [32m'wallet-1'[39m[33m,[39m userId[33m:[39m [32m'user-1'[39m[33m,[39m balance[33m:[39m [35m1000[39m }[33m;[39m
+     [90m 16 |[39m[0m
+
+      at backend/__tests__/escrow.test.ts:13:5
+      at Object.<anonymous> (backend/__tests__/escrow.test.ts:11:1)
+
+  ● Escrow & Wallet System › should successfully fund a job escrow
+
+    Cannot write headers after they are sent to the client
+
+      at Response.writeHead (node_modules/light-my-request/lib/response.js:96:58)
+      at node_modules/fastify/lib/error-handler.js:45:19
+      at fallbackErrorHandler (node_modules/fastify/lib/error-handler.js:139:3)
+      at handleError (node_modules/fastify/lib/error-handler.js:35:5)
+      at onErrorHook (node_modules/fastify/lib/reply.js:867:5)
+      at _Reply.Reply.send (node_modules/fastify/lib/reply.js:139:5)
+      at node_modules/fastify/lib/wrap-thenable.js:45:17
+
+  ● Escrow & Wallet System › should fail to fund if balance is insufficient
+
+    thrown: "Exceeded timeout of 5000 ms for a test.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+    [0m [90m 50 |[39m     })[33m;[39m
+     [90m 51 |[39m
+    [31m[1m>[22m[39m[90m 52 |[39m     it([32m'should fail to fund if balance is insufficient'[39m[33m,[39m [36masync[39m () [33m=>[39m {
+     [90m    |[39m     [31m[1m^[22m[39m
+     [90m 53 |[39m         [36mconst[39m mockJob [33m=[39m { id[33m:[39m [32m'job-1'[39m[33m,[39m title[33m:[39m [32m'Test Job'[39m[33m,[39m budget[33m:[39m [32m'$500'[39m[33m,[39m creatorId[33m:[39m [32m'user-1'[39m }[33m;[39m
+     [90m 54 |[39m         [36mconst[39m mockWallet [33m=[39m { id[33m:[39m [32m'wallet-1'[39m[33m,[39m userId[33m:[39m [32m'user-1'[39m[33m,[39m balance[33m:[39m [35m100[39m }[33m;[39m
+     [90m 55 |[39m[0m
+
+      at backend/__tests__/escrow.test.ts:52:5
+      at Object.<anonymous> (backend/__tests__/escrow.test.ts:11:1)
+
+  ● Escrow & Wallet System › should fail to fund if balance is insufficient
+
+    Cannot write headers after they are sent to the client
+
+      at Response.writeHead (node_modules/light-my-request/lib/response.js:96:58)
+      at node_modules/fastify/lib/error-handler.js:45:19
+      at fallbackErrorHandler (node_modules/fastify/lib/error-handler.js:139:3)
+      at handleError (node_modules/fastify/lib/error-handler.js:35:5)
+      at onErrorHook (node_modules/fastify/lib/reply.js:867:5)
+      at wrapOnSendEnd (node_modules/fastify/lib/reply.js:545:5)
+      at next (node_modules/fastify/lib/hooks.js:300:7)
+      at onSendHookRunner (node_modules/fastify/lib/hooks.js:320:3)
+      at onSendHook (node_modules/fastify/lib/reply.js:531:5)
+      at preSerializationHookEnd (node_modules/fastify/lib/reply.js:522:3)
+      at preSerializationHook (node_modules/fastify/lib/reply.js:498:5)
+      at _Reply.Reply.send (node_modules/fastify/lib/reply.js:205:7)
+      at node_modules/fastify/lib/wrap-thenable.js:75:13
+
+  ● Escrow & Wallet System › should successfully release payment to freelancer
+
+    Cannot write headers after they are sent to the client
+
+      at Response.writeHead (node_modules/light-my-request/lib/response.js:96:58)
+      at node_modules/fastify/lib/error-handler.js:45:19
+      at fallbackErrorHandler (node_modules/fastify/lib/error-handler.js:139:3)
+      at handleError (node_modules/fastify/lib/error-handler.js:35:5)
+      at onErrorHook (node_modules/fastify/lib/reply.js:867:5)
+      at wrapOnSendEnd (node_modules/fastify/lib/reply.js:545:5)
+      at next (node_modules/fastify/lib/hooks.js:300:7)
+      at onSendHookRunner (node_modules/fastify/lib/hooks.js:320:3)
+      at onSendHook (node_modules/fastify/lib/reply.js:531:5)
+      at preSerializationHookEnd (node_modules/fastify/lib/reply.js:522:3)
+      at preSerializationHook (node_modules/fastify/lib/reply.js:498:5)
+      at _Reply.Reply.send (node_modules/fastify/lib/reply.js:205:7)
+      at handleError (node_modules/fastify/lib/error-handler.js:78:11)
+      at onErrorHook (node_modules/fastify/lib/reply.js:867:5)
+      at _Reply.Reply.send (node_modules/fastify/lib/reply.js:139:5)
+      at onDone (node_modules/fastify/lib/content-type-parser.js:215:13)
+      at Request.onEnd (node_modules/fastify/lib/content-type-parser.js:276:7)
+
+  ● Escrow & Wallet System › should successfully release payment to freelancer
+
+    thrown: "Exceeded timeout of 5000 ms for a test.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+    [0m [90m 68 |[39m     })[33m;[39m
+     [90m 69 |[39m
+    [31m[1m>[22m[39m[90m 70 |[39m     it([32m'should successfully release payment to freelancer'[39m[33m,[39m [36masync[39m () [33m=>[39m {
+     [90m    |[39m     [31m[1m^[22m[39m
+     [90m 71 |[39m         [36mconst[39m mockEscrow [33m=[39m { id[33m:[39m [32m'escrow-1'[39m[33m,[39m jobId[33m:[39m [32m'job-1'[39m[33m,[39m amountLocked[33m:[39m [35m500[39m[33m,[39m status[33m:[39m [32m'HELD'[39m }[33m;[39m
+     [90m 72 |[39m         [36mconst[39m mockFreelancerWallet [33m=[39m { id[33m:[39m [32m'wallet-2'[39m[33m,[39m userId[33m:[39m [32m'freelancer-1'[39m[33m,[39m balance[33m:[39m [35m0[39m }[33m;[39m
+     [90m 73 |[39m[0m
+
+      at backend/__tests__/escrow.test.ts:70:5
+      at Object.<anonymous> (backend/__tests__/escrow.test.ts:11:1)
+
+Test Suites: 1 failed, 1 total
+Tests:       3 failed, 3 total
+Snapshots:   0 total
+Time:        22.784 s
+Ran all test suites matching backend/__tests__/escrow.test.ts.
