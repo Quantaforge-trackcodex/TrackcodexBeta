@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TrackCodex</title>
+    <script>
+      // SPA Redirect for OAuth Callbacks (path -> hash)
+      if (window.location.pathname.startsWith("/auth/")) {
+        const newPath =
+          "/#" + window.location.pathname + window.location.search;
+        window.history.replaceState(null, "", newPath);
+      }
+    </script>
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,<svg viewBox='0 0 512 512' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M256 64L448 256L320 384L128 192L256 64Z' fill='%23135bec'/><path d='M256 448L64 256L192 128L384 320L256 448Z' fill='%230a46c2'/></svg>"
+    />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+      rel="stylesheet"
+    />
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "var(--gh-primary)",
+              "gh-bg": "var(--gh-bg)",
+              "gh-bg-secondary": "var(--gh-bg-secondary)",
+              "gh-bg-tertiary": "var(--gh-bg-tertiary)",
+              "gh-border": "var(--gh-border)",
+              "gh-text": "var(--gh-text)",
+              "gh-text-secondary": "var(--gh-text-secondary)",
+              "vscode-editor": "#1e1e1e",
+              "vscode-sidebar": "#252526",
+              "vscode-border": "#333333",
+              "vscode-activity-bar": "#333333",
+            },
+            fontFamily: {
+              display: [
+                "Inter",
+                "SF Pro Display",
+                "-apple-system",
+                "BlinkMacSystemFont",
+                "Segoe UI",
+                "Roboto",
+                "sans-serif",
+              ],
+              mono: [
+                "JetBrains Mono",
+                "ui-monospace",
+                "SFMono-Regular",
+                "Menlo",
+                "Monaco",
+                "Consolas",
+                "monospace",
+              ],
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      :root {
+        --gh-bg: #ffffff;
+        --gh-bg-secondary: #f6f8fa;
+        --gh-bg-tertiary: #efefef;
+        --gh-border: #d0d7de;
+        --gh-text: #24292f;
+        --gh-text-secondary: #57606a;
+        --gh-primary: #0969da;
+        --glass-border: rgba(255, 255, 255, 0.1);
+        --neon-primary: #8b5cf6;
+        --neon-secondary: #38bdf8;
+      }
+
+      .dark {
+        /* Deep Space Theme */
+        --gh-bg: #030014; /* Void Black/Blue */
+        --gh-bg-secondary: rgba(15, 23, 42, 0.6); /* Glassy Slate */
+        --gh-bg-tertiary: rgba(30, 41, 59, 0.5);
+        --gh-border: rgba(255, 255, 255, 0.08);
+        --gh-text: #e2e8f0;
+        --gh-text-secondary: #94a3b8;
+        --gh-primary: #58a6ff;
+        --glass-border: rgba(255, 255, 255, 0.08);
+      }
+
+      :root.high-contrast {
+        --gh-border: #aeaeae;
+        --gh-text: #000000;
+        --gh-text-secondary: #444444;
+      }
+
+      .dark.high-contrast {
+        --gh-bg: #000000;
+        --gh-bg-secondary: #0a0a0a;
+        --gh-border: #ffffff;
+        --gh-text: #ffffff;
+        --gh-text-secondary: #cccccc;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: "Inter", sans-serif;
+        overflow: hidden;
+        height: 100vh;
+        background-color: var(--gh-bg);
+        color: var(--gh-text);
+        background-image:
+          radial-gradient(
+            circle at 15% 50%,
+            rgba(139, 92, 246, 0.08),
+            transparent 25%
+          ),
+          radial-gradient(
+            circle at 85% 30%,
+            rgba(56, 189, 248, 0.08),
+            transparent 25%
+          );
+        background-attachment: fixed;
+      }
+
+      .glass-panel {
+        background: var(--gh-bg-secondary);
+        -webkit-backdrop-filter: blur(12px);
+        backdrop-filter: blur(12px);
+        border: 1px solid var(--glass-border);
+      }
+
+      .neon-text {
+        text-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+      }
+
+      .material-symbols-outlined {
+        font-variation-settings:
+          "FILL" 0,
+          "wght" 400,
+          "GRAD" 0,
+          "opsz" 24;
+        display: inline-block;
+        vertical-align: middle;
+      }
+
+      .material-symbols-outlined.filled {
+        font-variation-settings: "FILL" 1;
+      }
+
+      /* More prominent scrollbars for accessibility */
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 6px; /* Thinner for modern look */
+        height: 6px;
+      }
+
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+      }
+
+      .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: rgba(139, 92, 246, 0.5); /* Neon hover */
+      }
+
+      /* Utilitarian Transitions */
+      html.anim-standard * {
+        transition:
+          background-color 0.2s ease,
+          border-color 0.2s ease,
+          color 0.2s ease,
+          transform 0.2s ease,
+          box-shadow 0.2s ease;
+      }
+
+      html.anim-fast * {
+        transition:
+          background-color 0.1s ease,
+          border-color 0.1s ease,
+          color 0.1s ease,
+          transform 0.1s ease;
+      }
+
+      .reduce-motion * {
+        transition-duration: 0.001ms !important;
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+      }
+
+      /* ... Font variables ... */
+      .font-inter {
+        --font-display: "Inter", sans-serif;
+      }
+      .font-system {
+        --font-display:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+          Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+          "Segoe UI Symbol";
+      }
+      .font-mono {
+        --font-display: "JetBrains Mono", monospace;
+      }
+
+      @keyframes fadeInScale {
+        from {
+          opacity: 0;
+          transform: scale(0.95);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+
+      .animate-fab {
+        animation: fadeInScale 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+
+      /* Global Micro-animations */
+      .hover-lift {
+        transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+      .hover-lift:hover {
+        transform: translateY(-2px);
+      }
+
+      .animate-fade-in {
+        animation: fadeIn 0.4s ease-out forwards;
+      }
+      .animate-slide-up {
+        animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes slideInRight {
+        from {
+          transform: translateX(20px);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+
+      .animate-slide-in-right {
+        animation: slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      }
+    </style>
+    <!-- Import map removed to avoid conflicts with Vite bundle -->
+  </head>
+
+  <body class="antialiased">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>

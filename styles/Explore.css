@@ -1,0 +1,251 @@
+.explore-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.explore-header {
+  margin-bottom: 2rem;
+}
+
+.explore-header h1 {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+}
+
+.explore-header p {
+  color: var(--text-secondary);
+  font-size: 1rem;
+}
+
+.explore-tabs {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.explore-tabs .tab {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.explore-tabs .tab:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.explore-tabs .tab.active {
+  color: var(--primary-color);
+  border-bottom-color: var(--primary-color);
+}
+
+.explore-content {
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+}
+
+.search-section {
+  margin-bottom: 1rem;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  transition: border-color 0.2s;
+}
+
+.search-box:focus-within {
+  border-color: var(--primary-color);
+}
+
+.search-box svg {
+  color: var(--text-secondary);
+}
+
+.search-box input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+
+.search-box input::placeholder {
+  color: var(--text-secondary);
+}
+
+.explore-section {
+  margin-bottom: 2rem;
+}
+
+.explore-section h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+}
+
+.section-subtitle {
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+}
+
+.user-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.user-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: all 0.2s;
+}
+
+.user-card:hover {
+  border-color: var(--primary-color);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.user-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.user-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.user-info {
+  flex: 1;
+}
+
+.user-name {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.user-username {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.follow-btn {
+  padding: 0.5rem 1.25rem;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.follow-btn:hover {
+  background: var(--primary-hover);
+  transform: scale(1.05);
+}
+
+.follow-btn.following {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.follow-btn.following:hover {
+  background: var(--error-color);
+  color: white;
+  border-color: var(--error-color);
+}
+
+.user-bio {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  margin-bottom: 1rem;
+}
+
+.user-stats {
+  display: flex;
+  gap: 1.5rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.user-stats strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.loading {
+  text-align: center;
+  padding: 3rem;
+  color: var(--text-secondary);
+  font-size: 1.125rem;
+}
+
+.coming-soon {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--text-secondary);
+}
+
+.coming-soon svg {
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.coming-soon h2 {
+  font-size: 1.5rem;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  .explore-container {
+    padding: 1rem;
+  }
+
+  .user-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .explore-tabs .tab {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+  }
+}

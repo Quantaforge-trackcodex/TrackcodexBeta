@@ -1,0 +1,20 @@
+.themePreview {
+  background-color: var(--theme-bg);
+}
+
+.themeText {
+  color: var(--theme-text);
+}
+
+.themePrimary {
+  color: var(--theme-primary);
+}
+
+.themeButton {
+  background-color: var(--theme-bg);
+  color: var(--theme-text);
+}
+
+.themeButtonIcon {
+  color: var(--theme-primary);
+}

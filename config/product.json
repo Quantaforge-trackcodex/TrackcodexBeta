@@ -1,0 +1,18 @@
+{
+  "nameShort": "TrackCodex",
+  "nameLong": "TrackCodex Workspace",
+  "applicationName": "trackcodex-workspace",
+  "dataFolderName": ".trackcodex",
+  "win32MutexName": "trackcodex",
+  "licenseName": "MIT",
+  "licenseUrl": "https://github.com/gitpod-io/openvscode-server/blob/main/LICENSE.txt",
+  "reportIssueUrl": "https://github.com/Quantaforge-trackcodex/issues",
+  "extensionsGallery": {
+    "serviceUrl": "https://open-vsx.org/vscode/gallery",
+    "itemUrl": "https://open-vsx.org/vscode/item"
+  },
+  "linkProtectionTrustedDomains": [
+    "https://trackcodex.com",
+    "http://localhost:3000"
+  ]
+}

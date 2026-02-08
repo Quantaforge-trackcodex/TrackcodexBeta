@@ -1,0 +1,16 @@
+{
+    "recommendations": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "ms-vscode.vscode-typescript-next",
+        "prisma.prisma",
+        "bradlc.vscode-tailwindcss",
+        "ms-azuretools.vscode-docker",
+        "orta.vscode-jest",
+        "ms-playwright.playwright",
+        "christian-kohler.path-intellisense",
+        "formulahendry.auto-rename-tag",
+        "aaron-bond.better-comments",
+        "eamodio.gitlens"
+    ]
+}

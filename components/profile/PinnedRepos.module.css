@@ -1,0 +1,6 @@
+.languageDot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: var(--lang-color, #8b949e);
+}
