@@ -1,8 +1,0 @@
-.heatmapBar {
-  height: var(--bar-height, 50%);
-  opacity: var(--bar-opacity, 0.5);
-}
-
-.techProgressBar {
-  width: var(--progress-width, 0%);
-}

@@ -1,8 +1,0 @@
-.tokenUsageBar {
-  width: var(--usage-width, 78%);
-}
-
-.workspaceBar {
-  width: var(--workspace-width, 0%);
-  background-color: var(--workspace-color, #8b949e);
-}
