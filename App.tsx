@@ -59,6 +59,9 @@ const ForgeAIView = React.lazy(() => import("./views/ForgeAI"));
 const NotificationsView = React.lazy(() => import("./views/NotificationsView"));
 const AcceptInvite = React.lazy(() => import("./views/AcceptInvite"));
 const WorkspaceSettings = React.lazy(() => import("./views/WorkspaceSettings"));
+const LevelView = React.lazy(() => import("./views/LevelView"));
+const StrataHub = React.lazy(() => import("./views/StrataHub"));
+const TaskVault = React.lazy(() => import("./views/TaskVault"));
 const AdminRoomView = React.lazy(() => import("./views/Admin"));
 const PlatformMatrix = React.lazy(() => import("./views/PlatformMatrix"));
 const Terms = React.lazy(() => import("./views/legal/Terms"));
@@ -405,7 +408,7 @@ const ProtectedApp = () => {
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [isAddMenuOpen, isNotificationsOpen]);
+  }, [isAddMenuOpen, isNotificationsOpen, isProfileDropdownOpen]);
 
   // --- REAL NOTIFICATIONS LOGIC ---
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
@@ -449,15 +452,15 @@ const ProtectedApp = () => {
     notifications.length > 0
       ? notifications
       : [
-          {
-            id: "mock1",
-            type: "system" as const,
-            title: "Welcome",
-            message: "No new notifications yet.",
-            createdAt: new Date().toISOString(),
-            read: true,
-          },
-        ];
+        {
+          id: "mock1",
+          type: "system" as const,
+          title: "Welcome",
+          message: "No new notifications yet.",
+          createdAt: new Date().toISOString(),
+          read: true,
+        },
+      ];
 
   return (
     <div className="flex flex-col h-screen w-full overflow-hidden text-gh-text font-display bg-gh-bg transition-colors duration-300">
@@ -537,8 +540,8 @@ const ProtectedApp = () => {
                     {displayNotifications.some(
                       (n: NotificationItem) => !n.read,
                     ) && (
-                      <span className="absolute top-0 right-0 size-2 bg-blue-500 rounded-full border-2 border-gh-bg"></span>
-                    )}
+                        <span className="absolute top-0 right-0 size-2 bg-blue-500 rounded-full border-2 border-gh-bg"></span>
+                      )}
                   </button>
 
                   {isNotificationsOpen && (
@@ -559,15 +562,14 @@ const ProtectedApp = () => {
                           >
                             <div className="flex items-start gap-3">
                               <div
-                                className={`mt-0.5 size-8 rounded-lg flex items-center justify-center shrink-0 ${
-                                  notif.type === "job"
-                                    ? "bg-amber-500/10 text-amber-500"
-                                    : notif.type === "comment"
-                                      ? "bg-blue-500/10 text-blue-500"
-                                      : notif.type === "community"
-                                        ? "bg-purple-500/10 text-purple-500"
-                                        : "bg-gh-text-secondary/10 text-gh-text-secondary"
-                                }`}
+                                className={`mt-0.5 size-8 rounded-lg flex items-center justify-center shrink-0 ${notif.type === "job"
+                                  ? "bg-amber-500/10 text-amber-500"
+                                  : notif.type === "comment"
+                                    ? "bg-blue-500/10 text-blue-500"
+                                    : notif.type === "community"
+                                      ? "bg-purple-500/10 text-purple-500"
+                                      : "bg-gh-text-secondary/10 text-gh-text-secondary"
+                                  }`}
                               >
                                 <span className="material-symbols-outlined !text-[16px]">
                                   {notif.type === "job"
@@ -589,11 +591,11 @@ const ProtectedApp = () => {
                                   <span className="text-[10px] text-gh-text-secondary">
                                     {notif.createdAt
                                       ? new Date(
-                                          notif.createdAt,
-                                        ).toLocaleTimeString([], {
-                                          hour: "2-digit",
-                                          minute: "2-digit",
-                                        })
+                                        notif.createdAt,
+                                      ).toLocaleTimeString([], {
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                      })
                                       : "Now"}
                                   </span>
                                 </div>
@@ -706,19 +708,22 @@ const ProtectedApp = () => {
                 </div>
 
                 <div className="relative profile-dropdown-container">
-                  <div
+                  <button
                     onClick={() =>
                       setIsProfileDropdownOpen(!isProfileDropdownOpen)
                     }
-                    className="cursor-pointer"
+                    className={`cursor-pointer p-1.5 rounded-full outline-none group ${isProfileDropdownOpen
+                      ? "bg-gh-bg-tertiary ring-2 ring-primary/30"
+                      : "hover:bg-gh-bg-tertiary hover:ring-2 hover:ring-gh-border/50"
+                      }`}
                     title="Profile Settings"
                   >
                     <img
                       src={profile.avatar}
-                      className={`size-6 rounded-full border transition-all ${isProfileDropdownOpen ? "border-gh-text scale-110 shadow-lg shadow-primary/20" : "border-gh-border hover:border-gh-text"}`}
+                      className="size-7 rounded-full border border-gh-border object-cover"
                       alt="Profile"
                     />
-                  </div>
+                  </button>
 
                   {isProfileDropdownOpen && (
                     <UserProfileDropdown
@@ -776,10 +781,9 @@ const ProtectedApp = () => {
               />
               <Route path="/profile" element={<ProfileView />} />
               <Route path="/profile/:userId" element={<PublicProfile />} />
-              <Route
-                path="/stars"
-                element={<Navigate to="/repositories" replace />}
-              />
+              <Route path="/stars" element={<LevelView />} />
+              <Route path="/stratahub" element={<StrataHub />} />
+              <Route path="/tasks" element={<TaskVault />} />
               <Route path="/notifications" element={<NotificationsView />} />
               <Route path="/org-dashboard" element={<AdminDashboard />} />
 

@@ -1,0 +1,53 @@
+.level-badge {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.level-badge-level {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-weight: 900;
+  color: white;
+  position: relative;
+}
+
+.level-badge-small .level-badge-level {
+  width: 40px;
+  height: 40px;
+  font-size: 18px;
+}
+
+.level-badge-medium .level-badge-level {
+  width: 64px;
+  height: 64px;
+  font-size: 28px;
+}
+
+.level-badge-large .level-badge-level {
+  width: 96px;
+  height: 96px;
+  font-size: 40px;
+}
+
+.level-badge-number {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.level-badge-rank {
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.level-badge-small .level-badge-rank {
+  font-size: 11px;
+}
+
+.level-badge-large .level-badge-rank {
+  font-size: 18px;
+}

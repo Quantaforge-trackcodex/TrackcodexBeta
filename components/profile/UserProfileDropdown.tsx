@@ -4,7 +4,8 @@ import { UserProfile } from "../../services/profile";
 import { enterpriseApi, Enterprise } from "../../services/enterprise";
 
 interface MenuItemProps {
-  icon: string;
+  icon?: string;
+  customImage?: React.ReactNode;
   label: string;
   onClick: () => void;
   badge?: string;
@@ -13,6 +14,7 @@ interface MenuItemProps {
 
 const MenuItem = ({
   icon,
+  customImage,
   label,
   onClick,
   badge,
@@ -22,9 +24,15 @@ const MenuItem = ({
     onClick={onClick}
     className="w-full flex items-center gap-3 px-3 py-1.5 text-[13px] text-gh-text-secondary hover:text-white hover:bg-white/5 transition-colors group text-left"
   >
-    <span className="material-symbols-outlined !text-[18px] opacity-70 group-hover:opacity-100">
-      {icon}
-    </span>
+    {customImage ? (
+      <div className="w-[18px] h-[18px] opacity-70 group-hover:opacity-100 flex items-center justify-center">
+        {customImage}
+      </div>
+    ) : (
+      <span className="material-symbols-outlined !text-[18px] opacity-70 group-hover:opacity-100">
+        {icon}
+      </span>
+    )}
     <span className="flex-1">{label}</span>
     {badge && (
       <span
@@ -69,7 +77,7 @@ const UserProfileDropdown = ({
   };
 
   return (
-    <div className="absolute top-full right-0 mt-2 w-72 bg-gh-bg-secondary border border-gh-border rounded-xl shadow-2xl z-[500] py-3 animate-in fade-in zoom-in-95 duration-200 backdrop-blur-xl bg-gh-bg-secondary/95">
+    <div className="absolute top-full right-0 mt-2 w-72 bg-gh-bg-secondary border border-gh-border rounded-xl shadow-2xl z-[500] py-3 backdrop-blur-xl bg-gh-bg-secondary/95">
       {/* Header Info */}
       <div
         onClick={() => handleNavigate("/profile")}
@@ -126,40 +134,28 @@ const UserProfileDropdown = ({
         />
         <MenuItem
           icon="star"
-          label="Your stars"
+          label="Level"
           onClick={() => handleNavigate("/stars")}
         />
         <MenuItem
           icon="code"
-          label="Your gists"
+          label="Portfolio"
           onClick={() => handleNavigate("/editor")}
         />
         <MenuItem
-          icon="corporate_fare"
-          label="Your organizations"
-          onClick={() => handleNavigate("/organizations")}
+          icon="business"
+          label="StrataHub"
+          onClick={() => handleNavigate("/stratahub")}
         />
-        {enterprises.length > 0 ? (
-          enterprises.map((ent) => (
-            <MenuItem
-              key={ent.id}
-              icon="domain"
-              label={ent.name}
-              onClick={() => handleNavigate(`/enterprise/${ent.slug}`)}
-            />
-          ))
-        ) : (
-          <MenuItem
-            icon="domain"
-            label="Create Enterprise"
-            onClick={() => handleNavigate("/enterprise/new")}
-            badge="New"
-          />
-        )}
         <MenuItem
           icon="favorite"
-          label="Your sponsors"
+          label="TrackCoin"
           onClick={() => handleNavigate("/community")}
+        />
+        <MenuItem
+          icon="task_alt"
+          label="TaskVault"
+          onClick={() => handleNavigate("/tasks")}
         />
 
         <div className="h-px bg-gh-border my-2 mx-3"></div>
@@ -172,7 +168,7 @@ const UserProfileDropdown = ({
         />
         <MenuItem
           icon="smart_toy"
-          label="Copilot settings"
+          label="Forge Settings"
           onClick={() => handleNavigate("/settings/forge-ai")}
         />
         <MenuItem
@@ -195,7 +191,7 @@ const UserProfileDropdown = ({
         {!enterprises.some((e) => e.slug === "acme") && (
           <MenuItem
             icon="rocket_launch"
-            label="Try Enterprise"
+            label="Try Strata"
             onClick={() => handleNavigate("/enterprise/acme")}
             badge="Free"
             badgeColor="text-amber-400 border-amber-500/30"

@@ -1,0 +1,84 @@
+.character-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.character-avatar-border {
+  position: relative;
+  border-radius: 50%;
+  border: 3px solid;
+  padding: 3px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.character-avatar-border:hover {
+  transform: scale(1.05);
+  filter: brightness(1.1);
+}
+
+.character-avatar-image {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
+.character-level-badge {
+  position: absolute;
+  bottom: -5px;
+  right: -5px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 12px;
+  border: 2px solid var(--background-primary, #0d1117);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.character-avatar-large .character-level-badge {
+  width: 32px;
+  height: 32px;
+  font-size: 14px;
+}
+
+.character-avatar-xlarge.character-level-badge {
+  width: 40px;
+  height: 40px;
+  font-size: 18px;
+  bottom: -8px;
+  right: -8px;
+}
+
+.character-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 120%;
+  height: 120%;
+  border-radius: 50%;
+  opacity: 0.3;
+  filter: blur(15px);
+  z-index: -1;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.3;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+}

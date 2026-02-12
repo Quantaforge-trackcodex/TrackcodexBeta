@@ -42,12 +42,6 @@ const Footer: React.FC = () => {
           </button>
         </nav>
       </div>
-
-      <div className="footer-privacy">
-        <button className="footer-privacy-link">
-          Do not share my personal information
-        </button>
-      </div>
     </footer>
   );
 };

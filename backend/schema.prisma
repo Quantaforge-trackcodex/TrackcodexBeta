@@ -66,6 +66,20 @@ model User {
   activities           Activity[]
   environmentReviewers EnvironmentReviewer[]
   deploymentApprovals  DeploymentApproval[]
+
+  // Character System
+  characterId   String? // Selected character key ("blaze", "aqua", etc.)
+  characterName String? // Display name of character
+
+  // Gamification System
+  experiencePoints Int    @default(0) // Total XP earned
+  level            Int    @default(1) // Current level (1-100+)
+  rank             String @default("Novice") // Bronze, Silver, Gold, etc.
+  levelProgress    Float  @default(0.0) // Progress to next level (0-100%)
+
+  // Gamification Relations
+  pointsHistory PointTransaction[]
+  achievements  UserAchievement[]
 }
 
 model Profile {
@@ -981,4 +995,59 @@ model CodeSymbol {
 
   @@index([repoId])
   @@index([name])
+}
+
+// --- GAMIFICATION SYSTEM ---
+
+// Character definitions (12 chibi characters)
+model Character {
+  id          String @id @default(uuid())
+  key         String @unique // "blaze", "aqua", "shadow", etc.
+  name        String // "Blaze", "Aqua", "Shadow", etc.
+  description String @db.Text // Personality description
+  color       String // Primary color hex
+  theme       String // "Warriors & Adventurers", "Mages & Spellcasters", etc.
+  classType   String // "Warrior", "Mage", "Rogue", "Support", "Tank"
+  avatarUrl   String // Character illustration path
+  startingXP  Int    @default(0) // Optional starting bonus
+
+  createdAt DateTime @default(now())
+}
+
+// Track all XP-earning activities
+model PointTransaction {
+  id       String @id @default(uuid())
+  userId   String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  points   Int // Points earned/spent
+  activity String // "REPO_CREATED", "PR_MERGED", "ISSUE_RESOLVED", etc.
+  metadata Json? // Additional context
+
+  createdAt DateTime @default(now())
+}
+
+// Achievement system
+model Achievement {
+  id          String  @id @default(uuid())
+  key         String  @unique // "FIRST_REPO", "100_COMMITS", etc.
+  name        String
+  description String
+  icon        String? // Icon identifier
+  points      Int // XP reward
+  tier        String  @default("BRONZE") // BRONZE, SILVER, GOLD, PLATINUM
+
+  users UserAchievement[]
+
+  createdAt DateTime @default(now())
+}
+
+model UserAchievement {
+  id            String      @id @default(uuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievementId String
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  unlockedAt    DateTime    @default(now())
+
+  @@unique([userId, achievementId])
 }

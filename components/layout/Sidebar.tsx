@@ -145,12 +145,16 @@ const Sidebar = () => {
           isExpanded={isExpanded}
         />
 
-        <SidebarItem
-          to="/platform-matrix"
-          icon="insights"
-          label="Platform Matrix"
-          isExpanded={isExpanded}
-        />
+        {/* Role Restricted Admin Panel - moved to top */}
+        {isAdmin && (
+          <SidebarItem
+            to="/admin"
+            icon="verified_user"
+            label="Admin Panel"
+            isExpanded={isExpanded}
+          />
+        )}
+
         <SidebarItem
           to="/repositories"
           icon="account_tree"
@@ -201,28 +205,26 @@ const Sidebar = () => {
           isExpanded={isExpanded}
         />
 
-        {/* Role Restricted Admin Panel */}
-        {isAdmin && (
-          <div className="pt-4 mt-4 border-t border-gh-border">
-            <SidebarItem
-              to="/admin"
-              icon="verified_user"
-              label="Admin Panel"
-              isExpanded={isExpanded}
-            />
-          </div>
-        )}
+        {/* Platform Matrix - moved to bottom */}
+        <div className="pt-4 mt-4 border-t border-gh-border">
+          <SidebarItem
+            to="/platform-matrix"
+            icon="insights"
+            label="Platform Matrix"
+            isExpanded={isExpanded}
+          />
+        </div>
       </div>
 
       {/* User Quick Profile - Static Display Only */}
       <div className="p-3 bg-gh-bg-secondary shrink-0">
         <div
-          className={`flex items-center gap-3 p-2 rounded-xl transition-all ${!isExpanded ? "justify-center" : ""}`}
+          className={`flex items-center gap-3 p-2 rounded-xl transition-colors ${!isExpanded ? "justify-center" : ""}`}
         >
           <div className="relative shrink-0">
             <img
               src={profile.avatar}
-              className="size-8 rounded-lg border border-gh-border transition-all object-cover"
+              className="size-8 rounded-lg border border-gh-border transition-colors object-cover"
               alt=""
             />
             <div className="absolute -bottom-0.5 -right-0.5 size-2.5 bg-emerald-500 rounded-full border-2 border-gh-bg" />

@@ -1,0 +1,129 @@
+.character-card {
+  background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+  backdrop-filter: blur(10px);
+  border: 2px solid;
+  border-radius: 16px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.character-card:hover {
+  transform: translateY(-5px);
+  background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04));
+}
+
+.character-card-selected {
+  border-width: 3px !important;
+}
+
+.character-card-image-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 12px;
+  background: linear-gradient(135deg, rgba(0,0,0,0.2), rgba(0,0,0,0.1));
+}
+
+.character-card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.character-card:hover .character-card-image {
+  transform: scale(1.1);
+}
+
+.character-bonus-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: linear-gradient(135deg, #FFD700, #FFA500);
+  color: #000;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: bold;
+  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.4);
+}
+
+.character-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.character-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.character-card-name {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.character-card-class {
+  font-size: 12px;
+  color: var(--text-secondary, #8b949e);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.character-card-description {
+  font-size: 13px;
+  color: var(--text-secondary, #8b949e);
+  line-height: 1.5;
+  margin: 0;
+  min-height: 60px;
+}
+
+.character-card-theme {
+  margin-top: 4px;
+}
+
+.character-theme-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.character-selected-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 6px;
+  text-align: center;
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Responsive grid */
+@media (max-width: 768px) {
+  .character-card {
+    padding: 12px;
+  }
+  
+  .character-card-name {
+    font-size: 16px;
+  }
+  
+  .character-card-description {
+    font-size: 12px;
+    min-height: 50px;
+  }
+}
