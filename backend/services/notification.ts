@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 export class NotificationService {
 
     // Create & Broadcast
-    static async create(userId: string, type: string, title: string, message: string) {
+    static async create(userId: string, type: string, title: string, message: string, link?: string, metadata?: any) {
         try {
             // 1. Save to DB
             const notif = await prisma.notification.create({
@@ -15,7 +15,9 @@ export class NotificationService {
                     type,
                     title,
                     message,
-                    read: false
+                    read: false,
+                    link,
+                    metadata: metadata || {}
                 }
             });
 

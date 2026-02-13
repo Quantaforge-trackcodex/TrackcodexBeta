@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useParams, Outlet, useOutletContext } from 'react-router-dom';
-import { Organization } from '../../types';
+import { Strata } from '../../types';
 
 import SettingsContextSwitcher from '../settings/SettingsContextSwitcher';
 
@@ -19,10 +19,10 @@ const SettingsNavItem = ({ to, label, icon }: { to: string; label: string; icon:
   </NavLink>
 );
 
-const OrgSettingsLayout: React.FC = () => {
-  const { org } = useOutletContext<{ org: Organization }>();
+const StrataSettingsLayout: React.FC = () => {
+  const { strata } = useOutletContext<{ strata: Strata }>();
   const { orgId } = useParams();
-  const basePath = `/org/${orgId}/settings`;
+  const basePath = `/strata/${orgId}/settings`;
 
   return (
     <div className="flex-1 flex bg-gh-bg font-display">
@@ -31,10 +31,10 @@ const OrgSettingsLayout: React.FC = () => {
         <aside className="w-[240px] shrink-0 space-y-8">
           <div className="px-1 pt-8">
             <SettingsContextSwitcher
-              currentContext="organization"
-              orgName={org.name}
-              orgAvatar={org.avatar}
-              orgId={orgId}
+              currentContext="strata"
+              strataName={strata.name}
+              strataAvatar={strata.avatar}
+              strataId={orgId}
             />
           </div>
 
@@ -60,7 +60,7 @@ const OrgSettingsLayout: React.FC = () => {
         {/* Dynamic Content Area */}
         <main className="flex-1 min-w-0">
           <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <Outlet context={{ org }} />
+            <Outlet context={{ strata }} />
           </div>
         </main>
       </div>
@@ -68,4 +68,4 @@ const OrgSettingsLayout: React.FC = () => {
   );
 };
 
-export default OrgSettingsLayout;
+export default StrataSettingsLayout;

@@ -157,6 +157,8 @@ export const api = {
   },
   notifications: {
     list: (userId: string) => request<any[]>(`/notifications?userId=${userId}`),
+    markRead: (id: string) => request<void>(`/notifications/${id}/read`, { method: "POST" }),
+    markAllRead: (userId: string) => request<void>("/notifications/read-all", { method: "POST", body: JSON.stringify({ userId }) }),
   },
   // Generic methods for services
   get: <T>(path: string) => request<T>(path),

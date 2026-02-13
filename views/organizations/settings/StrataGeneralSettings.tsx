@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { Organization } from "../../../types";
+import { Strata } from "../../../types";
 import { useOutletContext } from "react-router-dom";
+import { detectSocialPlatform } from "../../../utils/socialMediaDetector";
 
 const OrgGeneralSettings = () => {
-  const { org } = useOutletContext<{ org: Organization }>();
+  const { strata: org } = useOutletContext<{ strata: Strata }>();
   const [name, setName] = useState(org.name);
   const [description, setDescription] = useState(org.description);
   const [email, setEmail] = useState("");
@@ -95,21 +96,33 @@ const OrgGeneralSettings = () => {
             <label className="block font-bold text-gh-text mb-2">
               Social accounts
             </label>
+            <p className="text-xs text-gh-text-secondary mb-3">
+              Paste your social media profile URLs and we'll automatically detect the platform
+            </p>
             <div className="space-y-2">
-              {socialLinks.map((link, i) => (
-                <div key={i} className="flex items-center">
-                  <span className="material-symbols-outlined text-gh-text-secondary text-lg mr-2">
-                    link
-                  </span>
-                  <input
-                    aria-label={`Link to social profile ${i + 1}`}
-                    value={link}
-                    onChange={(e) => handleSocialChange(i, e.target.value)}
-                    placeholder={`Link to social profile ${i + 1}`}
-                    className="w-full bg-gh-bg-secondary border border-gh-border rounded-md px-3 py-2 text-gh-text focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all placeholder:text-gh-text-secondary"
-                  />
-                </div>
-              ))}
+              {socialLinks.map((link, i) => {
+                const platform = link ? detectSocialPlatform(link) : null;
+
+                return (
+                  <div key={i} className="relative flex items-center">
+                    <span className={`material-symbols-outlined text-lg mr-2 ${platform ? platform.color : "text-gh-text-secondary"}`}>
+                      {platform ? platform.icon : "link"}
+                    </span>
+                    <input
+                      aria-label={`Link to social profile ${i + 1}`}
+                      value={link}
+                      onChange={(e) => handleSocialChange(i, e.target.value)}
+                      placeholder={`Link to social profile ${i + 1}`}
+                      className="w-full bg-gh-bg-secondary border border-gh-border rounded-md px-3 py-2 text-gh-text focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all placeholder:text-gh-text-secondary"
+                    />
+                    {platform && (
+                      <span className="absolute right-3 top-2 text-xs text-gh-text-secondary bg-gh-bg px-2 py-0.5 rounded border border-gh-border">
+                        {platform.name}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
 

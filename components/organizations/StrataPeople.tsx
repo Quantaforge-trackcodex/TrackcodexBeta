@@ -1,11 +1,11 @@
 import React from 'react';
-import { OrgMember, Organization } from '../../types';
+import { Strata } from '../../types';
 import { useOutletContext } from 'react-router-dom';
 
-const OrgPeople = () => {
-    const { org } = useOutletContext<{ org: Organization }>();
-    const members = org.members;
-    
+const StrataPeople = () => {
+    const { strata } = useOutletContext<{ strata: Strata }>();
+    const members = strata.members;
+
     return (
         <div className="animate-in fade-in duration-500">
             <div className="flex items-center justify-between mb-6">
@@ -45,4 +45,4 @@ const OrgPeople = () => {
     );
 };
 
-export default OrgPeople;
+export default StrataPeople;

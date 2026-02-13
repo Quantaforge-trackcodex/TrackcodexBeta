@@ -68,8 +68,7 @@ const HomeView = () => {
 
         {/* Grid for Job Hub and Learn & Grow */}
         <div
-          className={`grid grid-cols-1 lg:grid-cols-12 gap-10 mb-12 animate-slide-up ${styles.animatedSection}`}
-          style={{ "--animation-delay": "0.2s" } as React.CSSProperties}
+          className={`grid grid-cols-1 lg:grid-cols-12 gap-10 mb-12 animate-slide-up ${styles.animatedSection} ${styles.delay200}`}
         >
           <div className="lg:col-span-5">
             <div className="flex items-center justify-between mb-6">

@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { UserProfile } from "../../services/profile";
-import { enterpriseApi, Enterprise } from "../../services/enterprise";
+import { strataNetworkApi, StrataNetwork } from "../../services/strata";
 
 interface MenuItemProps {
   icon: string;
@@ -48,11 +48,11 @@ const UserProfileDropdown = ({
   logout,
 }: UserProfileDropdownProps) => {
   const navigate = useNavigate();
-  const [enterprises, setEnterprises] = React.useState<Enterprise[]>([]);
+  const [enterprises, setEnterprises] = React.useState<StrataNetwork[]>([]);
 
   const loadEnterprises = async () => {
     try {
-      const data = await enterpriseApi.getMyEnterprises();
+      const data = await strataNetworkApi.getMyNetworks();
       setEnterprises(data);
     } catch (e) {
       console.error("Failed to load user enterprises", e);
@@ -125,19 +125,19 @@ const UserProfileDropdown = ({
           onClick={() => handleNavigate("/repositories")}
         />
         <MenuItem
-          icon="star"
+          icon="military_tech"
           label="Level"
-          onClick={() => handleNavigate("/stars")}
+          onClick={() => handleNavigate("/leaderboard")}
         />
         <MenuItem
-          icon="code"
+          icon="work"
           label="Portfolio"
-          onClick={() => handleNavigate("/editor")}
+          onClick={() => handleNavigate("/portfolio")}
         />
         <MenuItem
           icon="corporate_fare"
           label="StrataHub"
-          onClick={() => handleNavigate("/organizations")}
+          onClick={() => handleNavigate("/strata")}
         />
         <MenuItem
           icon="favorite"
@@ -147,7 +147,7 @@ const UserProfileDropdown = ({
         <MenuItem
           icon="inventory_2"
           label="TaskVault"
-          onClick={() => handleNavigate("/tasks")}
+          onClick={() => handleNavigate("/taskvault")}
         />
 
         <div className="h-px bg-gh-border my-2 mx-3"></div>
@@ -157,11 +157,6 @@ const UserProfileDropdown = ({
           icon="settings"
           label="Settings"
           onClick={() => handleNavigate("/settings")}
-        />
-        <MenuItem
-          icon="smart_toy"
-          label="Forge Settings"
-          onClick={() => handleNavigate("/settings/forge-ai")}
         />
         <MenuItem
           icon="science"
@@ -184,7 +179,7 @@ const UserProfileDropdown = ({
           <MenuItem
             icon="rocket_launch"
             label="Try Strata"
-            onClick={() => handleNavigate("/enterprise/acme")}
+            onClick={() => handleNavigate("/network/acme")}
             badge="Free"
             badgeColor="text-amber-400 border-amber-500/30"
           />

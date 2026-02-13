@@ -281,18 +281,16 @@ export interface SystemMetrics {
   pendingFlags: number;
 }
 
-// --- Organization Types ---
+// --- Strata Types ---
 
-// --- Organization Types ---
-
-export type OrgRole = "OWNER" | "ADMIN" | "MEMBER" | "BILLING_MANAGER";
+export type StrataRole = "OWNER" | "ADMIN" | "MEMBER" | "BILLING_MANAGER";
 export type TeamRole = "MAINTAINER" | "MEMBER";
 
-export interface OrgMember {
+export interface StrataMember {
   username: string;
   name: string;
   avatar: string;
-  role: OrgRole;
+  role: StrataRole;
   lastActive: string;
 }
 
@@ -304,14 +302,14 @@ export interface Team {
   repoCount: number;
 }
 
-export interface Organization {
+export interface Strata {
   id: string;
   name: string;
   avatar: string;
   description: string;
   website?: string;
   location?: string;
-  members: OrgMember[];
+  members: StrataMember[];
   teams: Team[];
   repositories: Repository[];
 }
@@ -421,11 +419,17 @@ export interface OnboardingTask {
 
 export interface Notification {
   id: string;
+  userId?: string;
   title: string;
   message: string;
-  type: "job_match" | "system" | "message" | "alert";
+  type: string; // job, mention, community, review_request, security, system
   read: boolean;
   timestamp: string;
   link?: string;
-  metadata?: any;
+  metadata?: {
+    repo?: string;
+    author?: string;
+    avatar?: string;
+    [key: string]: any;
+  };
 }

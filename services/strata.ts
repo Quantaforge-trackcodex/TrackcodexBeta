@@ -1,19 +1,19 @@
 import { api } from "./api";
 
-export interface Enterprise {
+export interface StrataNetwork {
   id: string;
   slug: string;
   name: string;
   plan: string;
   status: string;
-  members: EnterpriseMember[];
-  organizations?: any[];
+  members: StrataNetworkMember[];
+  strata?: any[];
   _count?: { members: number };
   ssoConfig?: any;
   createdAt: string;
 }
 
-export interface EnterpriseMember {
+export interface StrataNetworkMember {
   id: string;
   userId: string;
   role: string;
@@ -25,22 +25,22 @@ export interface EnterpriseMember {
   };
 }
 
-export const enterpriseApi = {
-  // Create an Enterprise
+export const strataNetworkApi = {
+  // Create a StrataNetwork
   create: (data: { name: string; slug: string }) =>
-    api.post<Enterprise>("/enterprises", data),
+    api.post<StrataNetwork>("/enterprises", data),
 
   // Get details
-  get: (slug: string) => api.get<Enterprise>(`/enterprises/${slug}`),
+  get: (slug: string) => api.get<StrataNetwork>(`/enterprises/${slug}`),
 
   // Invite member
   addMember: (slug: string, data: { userId: string; role: string }) =>
-    api.post<EnterpriseMember>(`/enterprises/${slug}/members`, data),
+    api.post<StrataNetworkMember>(`/enterprises/${slug}/members`, data),
 
   // Get members
   getMembers: (slug: string) =>
-    api.get<{ members: EnterpriseMember[] }>(`/enterprises/${slug}/members`),
+    api.get<{ members: StrataNetworkMember[] }>(`/enterprises/${slug}/members`),
 
   // List my enterprises
-  getMyEnterprises: () => api.get<Enterprise[]>("/enterprises"),
+  getMyNetworks: () => api.get<StrataNetwork[]>("/enterprises"),
 };

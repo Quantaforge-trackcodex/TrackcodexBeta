@@ -15,10 +15,10 @@ export interface LocationData {
 
 export interface LocationError {
   code:
-    | "PERMISSION_DENIED"
-    | "POSITION_UNAVAILABLE"
-    | "TIMEOUT"
-    | "GEOCODING_FAILED";
+  | "PERMISSION_DENIED"
+  | "POSITION_UNAVAILABLE"
+  | "TIMEOUT"
+  | "GEOCODING_FAILED";
   message: string;
 }
 
@@ -96,11 +96,6 @@ class LocationService {
     try {
       const response = await fetch(
         `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&addressdetails=1`,
-        {
-          headers: {
-            "User-Agent": "TrackCodex/1.0",
-          },
-        },
       );
 
       if (!response.ok) {

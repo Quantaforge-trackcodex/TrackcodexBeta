@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { enterpriseApi, Enterprise } from "../../services/enterprise";
+import { strataNetworkApi, StrataNetwork } from "../../services/strata";
 import { useAuth } from "../../context/AuthContext";
 import Sidebar from "../../components/layout/Sidebar";
 
@@ -14,7 +14,7 @@ export default function EnterpriseDashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const [enterprise, setEnterprise] = useState<Enterprise | null>(null);
+  const [network, setNetwork] = useState<StrataNetwork | null>(null);
   const [members, setMembers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMembers, setLoadingMembers] = useState(false);
@@ -35,7 +35,8 @@ export default function EnterpriseDashboard() {
   const loadMembers = async () => {
     setLoadingMembers(true);
     try {
-      const res = await enterpriseApi.getMembers(slug!);
+      // Assuming strataNetworkApi is the correct API for members as well
+      const res = await strataNetworkApi.getMembers(slug!);
       setMembers(res.members || []);
     } catch (e) {
       console.error("Failed to load members", e);
@@ -44,19 +45,20 @@ export default function EnterpriseDashboard() {
     }
   };
 
-  const loadEnterprise = async () => {
+  const loadNetwork = async () => { // Renamed from loadEnterprise
+    if (!slug) return; // Added slug check
     try {
       setLoading(true);
-      const data = await enterpriseApi.get(slug!);
-      setEnterprise(data);
+      const data = await strataNetworkApi.get(slug);
+      setNetwork(data); // Changed setEnterprise to setNetwork
     } catch (e: any) {
-      setError(e.message || "Failed to load enterprise");
+      setError(e.message || "Failed to load network"); // Changed message
     } finally {
       setLoading(false);
     }
   };
 
-  if (loading) return <Loading />;
+  if (loading) return <Loading />; // Kept original Loading component
 
   if (error) {
     return (
@@ -117,11 +119,10 @@ export default function EnterpriseDashboard() {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-6 py-3 text-sm font-medium border-b-2 transition ${
-                  activeTab === tab
-                    ? "border-blue-500 text-blue-400"
-                    : "border-transparent text-gray-400 hover:text-white"
-                }`}
+                className={`px-6 py-3 text-sm font-medium border-b-2 transition ${activeTab === tab
+                  ? "border-blue-500 text-blue-400"
+                  : "border-transparent text-gray-400 hover:text-white"
+                  }`}
               >
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
               </button>

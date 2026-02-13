@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import LinkedAccounts from "./LinkedAccounts";
 import SessionManager from "./SessionManager";
 import SecurityAuditLog from "./SecurityAuditLog";
 import DeleteAccountModal from "./DeleteAccountModal";
@@ -66,9 +65,6 @@ const SecuritySettings = () => {
             actionLabel="Add passkey"
           />
         </div>
-
-        {/* Linked Accounts Component */}
-        <LinkedAccounts />
       </section>
 
       <section className="pt-10 border-t border-gh-border">

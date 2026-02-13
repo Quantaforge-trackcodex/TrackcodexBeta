@@ -8,7 +8,7 @@ import {
   LibraryResource,
   LibraryCategory,
   Job,
-  Organization,
+  Strata,
   Candidate,
   TrialRepo,
   GrowthPathItem,
@@ -454,7 +454,7 @@ export const MOCK_JOBS: Job[] = [
   },
 ];
 
-export const MOCK_ORGANIZATIONS: Organization[] = [
+export const MOCK_STRATA: Strata[] = [
   {
     id: "quantaforge",
     name: "Quantaforge",

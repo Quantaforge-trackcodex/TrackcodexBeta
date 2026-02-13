@@ -1,11 +1,11 @@
 import React from 'react';
-import { Team, Organization } from '../../types';
+import { Strata } from '../../types';
 import { useOutletContext } from 'react-router-dom';
 
-const OrgTeams = () => {
-    const { org } = useOutletContext<{ org: Organization }>();
-    const teams = org.teams;
-    
+const StrataTeams = () => {
+    const { strata } = useOutletContext<{ strata: Strata }>();
+    const teams = strata.teams;
+
     return (
         <div className="animate-in fade-in duration-500">
             <div className="flex items-center justify-between mb-6">
@@ -31,8 +31,8 @@ const OrgTeams = () => {
                             </div>
                         </div>
                         <div className="flex items-center gap-6 text-sm text-slate-400">
-                           <span className="flex items-center gap-1.5"><span className="material-symbols-outlined !text-base">group</span> {team.memberCount} members</span>
-                           <span className="flex items-center gap-1.5"><span className="material-symbols-outlined !text-base">account_tree</span> {team.repoCount} repositories</span>
+                            <span className="flex items-center gap-1.5"><span className="material-symbols-outlined !text-base">group</span> {team.memberCount} members</span>
+                            <span className="flex items-center gap-1.5"><span className="material-symbols-outlined !text-base">account_tree</span> {team.repoCount} repositories</span>
                         </div>
                     </div>
                 ))}
@@ -41,4 +41,4 @@ const OrgTeams = () => {
     );
 };
 
-export default OrgTeams;
+export default StrataTeams;

@@ -99,6 +99,11 @@ model User {
   postLikes            CommunityPostLike[]
   communitiesCreated   Community[]         @relation("CommunityCreator")
   communityMemberships CommunityMember[]
+  notifications        Notification[]
+
+  // Skill Radar
+  skillScore    UserSkillScore?
+  skillMetrics  SkillRawMetrics?
 }
 
 model Profile {
@@ -1262,4 +1267,114 @@ model PortfolioItem {
   @@index([userId])
   @@index([userId, featured])
   @@index([userId, order])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  link      String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+}
+
+// --- Skill Radar Engine ---
+
+model UserSkillScore {
+  userId String @id
+  user   User   @relation(fields: [userId], references: [id])
+
+  // Normalized Scores (0-100)
+  coding          Float @default(0)
+  quality         Float @default(0)
+  bugDetection    Float @default(0)
+  security        Float @default(0)
+  collaboration   Float @default(0)
+  architecture    Float @default(0)
+  consistency     Float @default(0)
+  communityImpact Float @default(0)
+
+  lastCalculatedAt DateTime @default(now())
+
+  snapshots RadarSnapshot[]
+}
+
+model SkillRawMetrics {
+  userId String @id
+  user   User   @relation(fields: [userId], references: [id])
+
+  // Coding
+  commitsPushed   Int @default(0)
+  prCreated       Int @default(0)
+  prMerged        Int @default(0)
+  linesChanged    Int @default(0)
+  mergeSuccessRate Float @default(0.0)
+
+  // Quality
+  prApprovalRate   Float @default(0.0)
+  rejectionRate    Float @default(0.0)
+  revertRate       Float @default(0.0)
+  testCoverageGain Float @default(0.0)
+
+  // Bug Detection
+  bugsReported    Int   @default(0)
+  bugsFixed       Int   @default(0)
+  bugAccuracy     Float @default(0.0)
+  
+  // Security
+  securityIssuesReported Int @default(0)
+  vulnerabilitiesFixed   Int @default(0)
+  
+  // Collaboration
+  commentsPosted       Int @default(0)
+  prReviewsGiven       Int @default(0)
+  crossRepoContribs    Int @default(0)
+  
+  // Architecture
+  reposCreated         Int @default(0)
+  workspacesCreated    Int @default(0)
+  largeFeaturesMerged  Int @default(0)
+  designDocsCreated    Int @default(0)
+  
+  // Consistency
+  currentStreak        Int @default(0)
+  weeklyActiveDays     Int @default(0)
+  
+  // Community
+  starsReceived        Int @default(0)
+  forks                Int @default(0)
+  followers            Int @default(0)
+  karma                Int @default(0)
+
+  updatedAt DateTime @updatedAt
+}
+
+model ActivityEvent {
+  id        String   @id @default(uuid())
+  userId    String
+  type      String   // e.g., 'COMMIT_PUSH', 'PR_MERGE', 'BUG_FIX'
+  metadata  Json?
+  timestamp DateTime @default(now())
+  
+  // Optional relations for context
+  repoId      String?
+  workspaceId String?
+  
+  @@index([userId, type])
+  @@index([timestamp])
+}
+
+model RadarSnapshot {
+  id        String   @id @default(uuid())
+  userId    String
+  userScore UserSkillScore @relation(fields: [userId], references: [userId])
+  
+  scores    Json     // Stores the state of 8 axes at this point in time
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
 }

@@ -46,7 +46,15 @@ export interface UserProfile {
   linkedinUrl?: string;
   redditUrl?: string;
   achievements?: Achievement[];
+  achievements?: Achievement[];
   projectUrl?: string; // Single project/portfolio URL
+
+  // New GitHub-style Profile Fields
+  pronouns?: string;
+  publicEmail?: string;
+  displayLocalTime?: boolean;
+  timezone?: string; // IANA timezone string (e.g. "Asia/Kolkata")
+  socialLinks?: string[]; // Generic list of 4 social links
   // GPS Location fields
   useGPSLocation?: boolean; // Whether to use GPS for location
   gpsLocation?: string; // GPS-derived location string
@@ -83,6 +91,10 @@ const DEFAULT_PROFILE: UserProfile = {
   linkedinUrl: "in/abhigyan-patwari-81809b261",
   redditUrl: "u/DeathShot7777",
   projectUrl: "https://trackcodex.dev",
+  pronouns: "Don't specify",
+  displayLocalTime: false,
+  publicEmail: "",
+  socialLinks: ["", "", "", ""],
   achievements: [
     {
       name: "Arctic Code Vault Contributor",

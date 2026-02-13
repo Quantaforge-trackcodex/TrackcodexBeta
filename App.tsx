@@ -9,7 +9,7 @@ import {
 } from "react-router-dom";
 import { ThemeProvider } from "./context/ThemeContext";
 import { AuthProvider, useAuth } from "./context/AuthContext";
-import { NotificationProvider } from "./context/NotificationContext";
+import { NotificationProvider, useNotifications } from "./context/NotificationContext";
 import { api } from "./services/api";
 import { RealtimeProvider } from "./contexts/RealtimeContext";
 
@@ -46,6 +46,7 @@ const Overview = React.lazy(() => import("./views/Overview"));
 const WorkspacesView = React.lazy(() => import("./views/Workspaces"));
 const CreateWorkspaceView = React.lazy(() => import("./views/CreateWorkspace"));
 const PublicProfile = React.lazy(() => import("./views/PublicProfile"));
+const Portfolio = React.lazy(() => import("./views/Portfolio"));
 // const WorkspaceDetailView = React.lazy(
 //   () => import("./views/WorkspaceDetailView"),
 // );
@@ -57,7 +58,9 @@ const ForgeAIView = React.lazy(() => import("./views/ForgeAI"));
 const NotificationsView = React.lazy(() => import("./views/NotificationsView"));
 const AcceptInvite = React.lazy(() => import("./views/AcceptInvite"));
 const WorkspaceSettings = React.lazy(() => import("./views/WorkspaceSettings"));
+const Leaderboard = React.lazy(() => import("./views/Leaderboard"));
 const AdminRoomView = React.lazy(() => import("./views/Admin"));
+const TaskVault = React.lazy(() => import("./views/TaskVault"));
 const PlatformMatrix = React.lazy(() => import("./views/PlatformMatrix"));
 const Terms = React.lazy(() => import("./views/legal/Terms"));
 const Privacy = React.lazy(() => import("./views/legal/Privacy"));
@@ -70,42 +73,42 @@ import RoleGuard from "./auth/RoleGuard";
 const CommunityView = React.lazy(() => import("./views/Community"));
 const DiscussionDetail = React.lazy(() => import("./views/DiscussionDetail"));
 
-// Organization Views
-const OrganizationIndexView = React.lazy(
-  () => import("./views/organizations/OrganizationIndexView"),
+// Strata Views
+const StrataIndexView = React.lazy(
+  () => import("./views/organizations/StrataIndexView"),
 );
-const OrganizationDetailView = React.lazy(
-  () => import("./views/organizations/OrganizationDetailView"),
+const StrataDetailView = React.lazy(
+  () => import("./views/organizations/StrataDetailView"),
 );
-const OrgOverview = React.lazy(
-  () => import("./components/organizations/OrgOverview"),
+const StrataOverview = React.lazy(
+  () => import("./components/organizations/StrataOverview"),
 );
-const OrgRepositories = React.lazy(
-  () => import("./components/organizations/OrgRepositories"),
+const StrataRepositories = React.lazy(
+  () => import("./components/organizations/StrataRepositories"),
 );
-const OrgPeople = React.lazy(
-  () => import("./components/organizations/OrgPeople"),
+const StrataPeople = React.lazy(
+  () => import("./components/organizations/StrataPeople"),
 );
-const OrgTeams = React.lazy(
-  () => import("./components/organizations/OrgTeams"),
+const StrataTeams = React.lazy(
+  () => import("./components/organizations/StrataTeams"),
 );
-const OrgSettingsLayout = React.lazy(
-  () => import("./components/organizations/OrgSettingsLayout"),
+const StrataSettingsLayout = React.lazy(
+  () => import("./components/organizations/StrataSettingsLayout"),
 );
-const OrgGeneralSettings = React.lazy(
-  () => import("./views/organizations/settings/OrgGeneralSettings"),
+const StrataGeneralSettings = React.lazy(
+  () => import("./views/organizations/settings/StrataGeneralSettings"),
 );
-const OrgAuthenticationSecurity = React.lazy(
-  () => import("./views/organizations/settings/OrgAuthenticationSecurity"),
+const StrataAuthenticationSecurity = React.lazy(
+  () => import("./views/organizations/settings/StrataAuthenticationSecurity"),
 );
-const OrgEnvironments = React.lazy(
-  () => import("./views/organizations/settings/OrgEnvironments"),
+const StrataEnvironments = React.lazy(
+  () => import("./views/organizations/settings/StrataEnvironments"),
 );
-const OrgPermissions = React.lazy(
-  () => import("./views/organizations/settings/OrgPermissions"),
+const StrataPermissions = React.lazy(
+  () => import("./views/organizations/settings/StrataPermissions"),
 );
-const OrgWebhooks = React.lazy(
-  () => import("./views/organizations/settings/OrgWebhooks"),
+const StrataWebhooks = React.lazy(
+  () => import("./views/organizations/settings/StrataWebhooks"),
 );
 
 // Settings Sub-views
@@ -141,6 +144,39 @@ const PersonalAccessTokensSettings = React.lazy(
 );
 const IntegrationsSettings = React.lazy(
   () => import("./views/settings/IntegrationsSettings"),
+);
+const SessionsSettings = React.lazy(
+  () => import("./views/settings/SessionsSettings"),
+);
+const SSHKeysSettings = React.lazy(
+  () => import("./views/settings/SSHKeysSettings"),
+);
+const AhiCsSettings = React.lazy(
+  () => import("./views/settings/AhiCsSettings"),
+);
+const PrivacySettings = React.lazy(
+  () => import("./views/settings/PrivacySettings"),
+);
+const BillingUsage = React.lazy(
+  () => import("./views/settings/billing/BillingUsage"),
+);
+const BillingAnalytics = React.lazy(
+  () => import("./views/settings/billing/BillingAnalytics"),
+);
+const BillingBudgets = React.lazy(
+  () => import("./views/settings/billing/BillingBudgets"),
+);
+const BillingLicensing = React.lazy(
+  () => import("./views/settings/billing/BillingLicensing"),
+);
+const BillingPaymentInfo = React.lazy(
+  () => import("./views/settings/billing/BillingPaymentInfo"),
+);
+const BillingPaymentHistory = React.lazy(
+  () => import("./views/settings/billing/BillingPaymentHistory"),
+);
+const BillingAdditional = React.lazy(
+  () => import("./views/settings/billing/BillingAdditional"),
 );
 
 // --- NEW HIRING & GROWTH VIEWS ---
@@ -302,6 +338,7 @@ interface NotificationItem {
   read: boolean;
   hasActions?: boolean; // Keep for toast compatibility
   time?: string; // Keep for fallback mock data
+  skipToast?: boolean; // New flag to suppress popup
 }
 
 const ProtectedApp = ({ isFocusMode }: { isFocusMode: boolean }) => {
@@ -347,16 +384,20 @@ const ProtectedApp = ({ isFocusMode }: { isFocusMode: boolean }) => {
     return profileService.subscribe(setProfile);
   }, []);
 
+  const isStandalone =
+    window.location.hostname.startsWith("workspace.") ||
+    new URLSearchParams(window.location.search).get("standalone") === "true";
+
   const isIdeView = ["/editor", "/workspace/", "/trials/live-session"].some(
     (path) => location.pathname.includes(path),
-  );
+  ) || isStandalone;
 
   // Global Key Handlers
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Save: Ctrl+S or Cmd+S
-      if ((e.ctrlKey || e.metaKey) && e.key === "s") {
-        e.preventDefault(); // Prevent browser save
+      // Save: Ctrl+N or Cmd+N
+      if ((e.ctrlKey || e.metaKey) && e.key === "n") {
+        e.preventDefault(); // Prevent browser new window
         logActivity("save", { context: location.pathname });
         setNotification({
           id: `save-notif-${Date.now()}`,
@@ -369,6 +410,34 @@ const ProtectedApp = ({ isFocusMode }: { isFocusMode: boolean }) => {
         });
       }
 
+      // Open Workspace in New Window: Ctrl+Space or Cmd+Space
+      if ((e.ctrlKey || e.metaKey) && e.key === " ") {
+        e.preventDefault(); // Prevent page scroll
+        e.stopPropagation(); // Stop event from bubbling
+
+        // Open workspace in a new window with standalone mode
+        let workspaceUrl;
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+          // Localhost: use query param to trigger standalone mode
+          workspaceUrl = `${window.location.origin}/?standalone=true#/workspaces`;
+        } else {
+          // Production: use subdomain
+          workspaceUrl = `https://workspace.trackcodex.com`;
+        }
+
+        window.open(workspaceUrl, '_blank', 'width=1200,height=800');
+        setNotification({
+          id: `workspace-notif-${Date.now()}`,
+          type: "info" as const,
+          title: "Workspace Opened",
+          message: "Workspace opened in a new window.",
+          createdAt: new Date().toISOString(),
+          read: false,
+          hasActions: false,
+        });
+        return false; // Additional prevention
+      }
+
       // Command Palette: Ctrl+K or Cmd+K
       if ((e.ctrlKey || e.metaKey) && e.key === "k") {
         e.preventDefault(); // Prevent browser search focus
@@ -376,8 +445,8 @@ const ProtectedApp = ({ isFocusMode }: { isFocusMode: boolean }) => {
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown, true); // Use capture phase
+    return () => window.removeEventListener("keydown", handleKeyDown, true);
   }, [location.pathname]);
 
   // Close menus when clicking outside
@@ -398,31 +467,25 @@ const ProtectedApp = ({ isFocusMode }: { isFocusMode: boolean }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isAddMenuOpen, isNotificationsOpen, isProfileDropdownOpen]);
 
-  // --- REAL NOTIFICATIONS LOGIC ---
-  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-  const { user, logout } = useAuth(); // Assuming AuthContext provides user and logout
+  // Use notification context
+  const { notifications, markAllAsRead } = useNotifications();
+  const { logout } = useAuth(); // Restore logout for UserProfileDropdown
 
-  // Fetch Initial Notifications
-  useEffect(() => {
-    if (!user?.id) return;
-    api.notifications
-      .list(user.id)
-      .then((data) => setNotifications(data))
-      .catch((err) => console.error("Failed to fetch notifications", err));
-  }, [user]);
-
-  // Listen for Real-Time Notification Events (via custom event from ChatWidget/WebSocket)
+  // Listen for Real-Time Notification Events (Toast only)
   useEffect(() => {
     const handleRealTimeNotif = (event: Event) => {
       const e = event as CustomEvent<NotificationItem>;
       const newNotif = e.detail;
-      setNotifications((prev: NotificationItem[]) => [newNotif, ...prev]);
-      // Also show toast
-      setNotification({
-        ...newNotif, // Spread first to get all properties
-        id: newNotif.id || `toast-${Date.now()}`, // Use existing ID or generate
-        hasActions: false,
-      });
+
+      // Context handles list update, we only handle toast here
+      // Only show toast if not skipped
+      if (!newNotif.skipToast) {
+        setNotification({
+          ...newNotif,
+          id: newNotif.id || `toast-${Date.now()}`,
+          hasActions: false,
+        });
+      }
     };
     window.addEventListener(
       "trackcodex-realtime-notification",
@@ -435,17 +498,20 @@ const ProtectedApp = ({ isFocusMode }: { isFocusMode: boolean }) => {
       );
   }, []);
 
-  // Use the fetched notifications instead of Mock
-  const displayNotifications: NotificationItem[] =
+  // Use the fetched notifications from Context
+  // We explicitly cast to any to avoid type mismatches with legacy NotificationItem during refactor
+  // or we just trust the shape is compatible enough for the UI
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const displayNotifications: any[] =
     notifications.length > 0
       ? notifications
       : [
         {
           id: "mock1",
-          type: "system" as const,
+          type: "system",
           title: "Welcome",
           message: "No new notifications yet.",
-          createdAt: new Date().toISOString(),
+          timestamp: new Date().toISOString(), // Changed from createdAt
           read: true,
         },
       ];
@@ -534,12 +600,15 @@ const ProtectedApp = ({ isFocusMode }: { isFocusMode: boolean }) => {
                         <span className="text-xs font-bold text-gh-text">
                           Notifications
                         </span>
-                        <button className="text-[10px] text-primary hover:underline font-bold">
+                        <button
+                          onClick={markAllAsRead}
+                          className="text-[10px] text-primary hover:underline font-bold"
+                        >
                           Mark all read
                         </button>
                       </div>
                       <div className="max-h-[300px] overflow-y-auto custom-scrollbar">
-                        {displayNotifications.map((notif: NotificationItem) => (
+                        {displayNotifications.map((notif: any) => (
                           <div
                             key={notif.id}
                             className={`px-4 py-3 border-b border-gh-border/50 hover:bg-gh-bg transition-colors cursor-pointer ${!notif.read ? "bg-primary/5" : ""}`}
@@ -624,7 +693,7 @@ const ProtectedApp = ({ isFocusMode }: { isFocusMode: boolean }) => {
                       <button
                         onClick={() => {
                           setIsAddMenuOpen(false);
-                          navigate("/organizations");
+                          navigate("/strata");
                         }}
                         className="w-full text-left px-4 py-2.5 text-sm text-gh-text hover:text-white hover:bg-gh-bg flex items-center gap-2"
                       >
@@ -665,11 +734,12 @@ const ProtectedApp = ({ isFocusMode }: { isFocusMode: boolean }) => {
 
           <ErrorBoundary>
             <Routes>
+              <Route path="/taskvault" element={<TaskVault />} />
               <Route path="/" element={<Navigate to="/dashboard/home" />} />
               <Route path="/dashboard/home" element={<HomeView />} />
               <Route path="/onboarding/welcome" element={<WelcomeView />} />
               <Route
-                path="/enterprise/:slug"
+                path="/network/:slug"
                 element={<EnterpriseDashboard />}
               />
               <Route path="/accept-invite" element={<AcceptInvite />} />
@@ -693,29 +763,33 @@ const ProtectedApp = ({ isFocusMode }: { isFocusMode: boolean }) => {
               />
               <Route path="/profile" element={<ProfileView />} />
               <Route path="/profile/:userId" element={<PublicProfile />} />
+              <Route path="/portfolio" element={<Portfolio />} />
+              <Route path="/leaderboard" element={<Leaderboard />} />
               <Route
                 path="/stars"
                 element={<Navigate to="/repositories" replace />}
               />
-              <Route path="/notifications" element={<NotificationsView />} />
-              <Route path="/org-dashboard" element={<AdminDashboard />} />
 
-              <Route path="/organizations" element={<OrganizationIndexView />} />
-              <Route path="/org/:orgId" element={<OrganizationDetailView />}>
-                <Route index element={<OrgOverview />} />
-                <Route path="repositories" element={<OrgRepositories />} />
-                <Route path="people" element={<OrgPeople />} />
-                <Route path="teams" element={<OrgTeams />} />
-                <Route path="settings" element={<OrgSettingsLayout />}>
+              <Route path="/notifications" element={<NotificationsView />} />
+
+              <Route path="/strata-dashboard" element={<AdminDashboard />} />
+
+              <Route path="/strata" element={<StrataIndexView />} />
+              <Route path="/strata/:orgId" element={<StrataDetailView />}>
+                <Route index element={<StrataOverview />} />
+                <Route path="repositories" element={<StrataRepositories />} />
+                <Route path="people" element={<StrataPeople />} />
+                <Route path="teams" element={<StrataTeams />} />
+                <Route path="settings" element={<StrataSettingsLayout />}>
                   <Route index element={<Navigate to="general" replace />} />
-                  <Route path="general" element={<OrgGeneralSettings />} />
+                  <Route path="general" element={<StrataGeneralSettings />} />
                   <Route
                     path="authentication"
-                    element={<OrgAuthenticationSecurity />}
+                    element={<StrataAuthenticationSecurity />}
                   />
-                  <Route path="environments" element={<OrgEnvironments />} />
-                  <Route path="permissions" element={<OrgPermissions />} />
-                  <Route path="webhooks" element={<OrgWebhooks />} />
+                  <Route path="environments" element={<StrataEnvironments />} />
+                  <Route path="permissions" element={<StrataPermissions />} />
+                  <Route path="webhooks" element={<StrataWebhooks />} />
                   <Route path="*" element={<Navigate to="general" replace />} />
                 </Route>
                 <Route path="*" element={<Navigate to="" replace />} />
@@ -832,6 +906,17 @@ const ProtectedApp = ({ isFocusMode }: { isFocusMode: boolean }) => {
                   element={<PersonalAccessTokensSettings />}
                 />
                 <Route path="integrations" element={<IntegrationsSettings />} />
+                <Route path="sessions" element={<SessionsSettings />} />
+                <Route path="ssh-keys" element={<SSHKeysSettings />} />
+                <Route path="ahi-cs" element={<AhiCsSettings />} />
+                <Route path="privacy" element={<PrivacySettings />} />
+                <Route path="billing/usage" element={<BillingUsage />} />
+                <Route path="billing/analytics" element={<BillingAnalytics />} />
+                <Route path="billing/budgets" element={<BillingBudgets />} />
+                <Route path="billing/licensing" element={<BillingLicensing />} />
+                <Route path="billing/payment-info" element={<BillingPaymentInfo />} />
+                <Route path="billing/payment-history" element={<BillingPaymentHistory />} />
+                <Route path="billing/additional" element={<BillingAdditional />} />
                 <Route path="*" element={<Navigate to="profile" replace />} />
               </Route>
 

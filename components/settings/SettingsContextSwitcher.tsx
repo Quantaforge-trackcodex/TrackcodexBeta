@@ -3,17 +3,17 @@ import { useNavigate } from "react-router-dom";
 import { profileService } from "../../services/profile";
 
 interface SettingsContextSwitcherProps {
-  currentContext: "personal" | "organization";
-  orgName?: string;
-  orgAvatar?: string;
-  orgId?: string;
+  currentContext: "personal" | "strata";
+  strataName?: string;
+  strataAvatar?: string;
+  strataId?: string;
 }
 
 const SettingsContextSwitcher: React.FC<SettingsContextSwitcherProps> = ({
   currentContext,
-  orgName,
-  orgAvatar,
-  orgId,
+  strataName,
+  strataAvatar,
+  strataId,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
@@ -39,8 +39,8 @@ const SettingsContextSwitcher: React.FC<SettingsContextSwitcherProps> = ({
     setIsOpen(false);
   };
 
-  const handleOrgClick = (id: string) => {
-    navigate(`/org/${id}/settings/general`);
+  const handleStrataClick = (id: string) => {
+    navigate(`/strata/${id}/settings/general`);
     setIsOpen(false);
   };
 
@@ -59,18 +59,18 @@ const SettingsContextSwitcher: React.FC<SettingsContextSwitcherProps> = ({
             />
           ) : (
             <img
-              src={orgAvatar}
+              src={strataAvatar}
               className="size-8 rounded-md border border-gh-border p-0.5"
-              alt="Org"
+              alt="Strata"
             />
           )}
           <div>
             <div className="text-sm font-bold text-gh-text group-hover:text-primary transition-colors">
-              {currentContext === "personal" ? profile.username : orgName}
+              {currentContext === "personal" ? profile.username : strataName}
             </div>
             <div className="flex items-center gap-1 text-[10px] text-gh-text-secondary font-medium">
               <span>
-                {currentContext === "personal" ? "Personal" : "Organization"}
+                {currentContext === "personal" ? "Personal" : "Strata"}
               </span>
               <span className="material-symbols-outlined !text-[12px]">
                 sync_alt
@@ -122,25 +122,25 @@ const SettingsContextSwitcher: React.FC<SettingsContextSwitcherProps> = ({
 
             <div className="h-px bg-gh-border my-1 mx-2"></div>
 
-            {/* Mock Organization Option */}
+            {/* Mock Strata Option */}
             <button
-              onClick={() => handleOrgClick("quantaforge")}
-              className={`w-full flex items-center gap-3 p-2 rounded-lg transition-colors ${currentContext === "organization" && orgId === "quantaforge" ? "bg-primary/10" : "hover:bg-gh-bg hover:text-gh-text"}`}
+              onClick={() => handleStrataClick("quantaforge")}
+              className={`w-full flex items-center gap-3 p-2 rounded-lg transition-colors ${currentContext === "strata" && strataId === "quantaforge" ? "bg-primary/10" : "hover:bg-gh-bg hover:text-gh-text"}`}
             >
               <div className="size-8 rounded-md bg-purple-500/20 flex items-center justify-center text-purple-400 border border-purple-500/30">
                 <span className="material-symbols-outlined !text-lg">hub</span>
               </div>
               <div className="text-left">
                 <div
-                  className={`text-sm font-bold ${currentContext === "organization" && orgId === "quantaforge" ? "text-primary" : "text-gh-text"}`}
+                  className={`text-sm font-bold ${currentContext === "strata" && strataId === "quantaforge" ? "text-primary" : "text-gh-text"}`}
                 >
                   quantaforge
                 </div>
                 <div className="text-xs text-gh-text-secondary">
-                  Organization
+                  Strata
                 </div>
               </div>
-              {currentContext === "organization" && orgId === "quantaforge" && (
+              {currentContext === "strata" && strataId === "quantaforge" && (
                 <span className="material-symbols-outlined text-primary ml-auto">
                   check
                 </span>
@@ -153,7 +153,7 @@ const SettingsContextSwitcher: React.FC<SettingsContextSwitcherProps> = ({
               </div>
               <div className="text-left">
                 <div className="text-sm font-bold text-gh-text-secondary">
-                  Create Organization
+                  Create Strata
                 </div>
               </div>
             </button>

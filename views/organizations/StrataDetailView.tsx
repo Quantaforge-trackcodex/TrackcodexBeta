@@ -1,9 +1,9 @@
 import React from "react";
 import { useParams, NavLink, Outlet } from "react-router-dom";
-import { MOCK_ORGANIZATIONS } from "../../constants";
+import { MOCK_STRATA } from "../../constants";
 
 // FIX: Changed component to React.FC to correctly handle the 'key' prop when used in a list.
-const OrgTab: React.FC<{
+const StrataTab: React.FC<{
   to: string;
   icon: string;
   label: string;
@@ -14,10 +14,9 @@ const OrgTab: React.FC<{
     to={to}
     end={end}
     className={({ isActive }) =>
-      `flex items-center gap-2 px-3 py-2 text-[13px] font-medium border-b-2 transition-all cursor-pointer shrink-0 ${
-        isActive
-          ? "text-gh-text border-[#f78166]"
-          : "text-gh-text-secondary border-transparent hover:border-gh-border-active hover:text-gh-text"
+      `flex items-center gap-2 px-3 py-2 text-[13px] font-medium border-b-2 transition-all cursor-pointer shrink-0 ${isActive
+        ? "text-gh-text border-[#f78166]"
+        : "text-gh-text-secondary border-transparent hover:border-gh-border-active hover:text-gh-text"
       }`
     }
   >
@@ -31,21 +30,21 @@ const OrgTab: React.FC<{
   </NavLink>
 );
 
-const OrganizationDetailView = () => {
+const StrataDetailView = () => {
   const { orgId } = useParams();
-  const org = MOCK_ORGANIZATIONS.find((o) => o.id === orgId);
+  const strata = MOCK_STRATA.find((o) => o.id === orgId);
 
-  if (!org) {
+  if (!strata) {
     return (
       <div className="p-8 text-center text-slate-400">
-        Organization not found.
+        Strata not found.
       </div>
     );
   }
 
   const tabs = [
     {
-      to: `/org/${orgId}`,
+      to: `/strata/${orgId}`,
       icon: "space_dashboard",
       label: "Overview",
       end: true,
@@ -54,10 +53,10 @@ const OrganizationDetailView = () => {
       to: "repositories",
       icon: "account_tree",
       label: "Repositories",
-      badge: org.repositories.length,
+      badge: strata.repositories.length,
     },
-    { to: "people", icon: "group", label: "People", badge: org.members.length },
-    { to: "teams", icon: "groups", label: "Teams", badge: org.teams.length },
+    { to: "people", icon: "group", label: "People", badge: strata.members.length },
+    { to: "teams", icon: "groups", label: "Teams", badge: strata.teams.length },
     { to: "settings", icon: "settings", label: "Settings" },
   ];
 
@@ -67,26 +66,26 @@ const OrganizationDetailView = () => {
         <div className="max-w-[1400px] mx-auto px-8">
           <div className="flex items-center gap-6 mb-8">
             <img
-              src={org.avatar}
-              alt={org.name}
+              src={strata.avatar}
+              alt={strata.name}
               className="size-20 rounded-lg border-2 border-gh-border p-1 object-cover"
             />
             <div>
               <h1 className="text-3xl font-black text-gh-text tracking-tight">
-                {org.name}
+                {strata.name}
               </h1>
               <div className="flex items-center gap-4 mt-2 text-sm text-gh-text-secondary">
-                {org.location && (
+                {strata.location && (
                   <span className="flex items-center gap-1.5">
                     <span className="material-symbols-outlined !text-base">
                       location_on
                     </span>
-                    {org.location}
+                    {strata.location}
                   </span>
                 )}
-                {org.website && (
+                {strata.website && (
                   <a
-                    href={`https://${org.website}`}
+                    href={`https://${strata.website}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-1.5 hover:text-primary hover:underline"
@@ -94,7 +93,7 @@ const OrganizationDetailView = () => {
                     <span className="material-symbols-outlined !text-base">
                       link
                     </span>
-                    {org.website}
+                    {strata.website}
                   </a>
                 )}
               </div>
@@ -102,17 +101,17 @@ const OrganizationDetailView = () => {
           </div>
           <nav className="flex items-center gap-2 overflow-x-auto no-scrollbar">
             {tabs.map((tab) => (
-              <OrgTab key={tab.label} {...tab} />
+              <StrataTab key={tab.label} {...tab} />
             ))}
           </nav>
         </div>
       </header>
 
       <main className="flex-1 p-8 max-w-[1400px] mx-auto w-full">
-        <Outlet context={{ org }} />
+        <Outlet context={{ strata }} />
       </main>
     </div>
   );
 };
 
-export default OrganizationDetailView;
+export default StrataDetailView;

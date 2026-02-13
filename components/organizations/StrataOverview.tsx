@@ -1,7 +1,6 @@
-
 import React from 'react';
-import { Organization, PinnedRepo } from '../../types';
-import { useNavigate, useOutletContext } from 'react-router-dom';
+import { Strata, PinnedRepo } from '../../types';
+import { useOutletContext } from 'react-router-dom';
 
 // FIX: Changed component to React.FC to correctly handle the 'key' prop when used in a list.
 const PinnedRepoCard: React.FC<{ repo: PinnedRepo }> = ({ repo }) => (
@@ -28,12 +27,11 @@ const PinnedRepoCard: React.FC<{ repo: PinnedRepo }> = ({ repo }) => (
     </div>
 );
 
-const OrgOverview = () => {
-    const { org } = useOutletContext<{ org: Organization }>();
-    const navigate = useNavigate();
+const StrataOverview = () => {
+    const { strata } = useOutletContext<{ strata: Strata }>();
 
-    // Mock pinned repos from org repos
-    const pinnedRepos: PinnedRepo[] = org.repositories.slice(0, 4).map(r => ({
+    // Mock pinned repos from strata repos
+    const pinnedRepos: PinnedRepo[] = strata.repositories.slice(0, 4).map(r => ({
         name: r.name,
         description: r.description,
         language: r.techStack,
@@ -72,4 +70,4 @@ const OrgOverview = () => {
     );
 };
 
-export default OrgOverview;
+export default StrataOverview;

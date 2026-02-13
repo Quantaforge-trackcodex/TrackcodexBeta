@@ -1,5 +1,5 @@
-import React from "react";
-import { NavLink, useLocation, Outlet } from "react-router-dom";
+import React, { useState } from "react";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
 
 const SettingsSidebarItem = ({
   to,
@@ -13,16 +13,77 @@ const SettingsSidebarItem = ({
   <NavLink
     to={to}
     className={({ isActive }) =>
-      `flex items-center gap-3 px-3 py-2 rounded-md text-[13px] font-medium transition-all ${
-        isActive
-          ? "bg-gh-bg-secondary text-gh-text font-bold border-l-2 border-primary"
-          : "text-gh-text-secondary hover:bg-gh-bg-secondary hover:text-gh-text"
+      `flex items-center gap-3 px-3 py-2 rounded-md text-[13px] font-medium transition-all ${isActive
+        ? "bg-gh-bg-secondary text-gh-text font-bold border-l-2 border-primary"
+        : "text-gh-text-secondary hover:bg-gh-bg-secondary hover:text-gh-text"
       }`
     }
   >
     <span className="material-symbols-outlined !text-[18px] opacity-70">
       {icon}
     </span>
+    {label}
+  </NavLink>
+);
+
+const ExpandableMenuItem = ({
+  icon,
+  label,
+  children,
+}: {
+  icon: string;
+  label: string;
+  children: React.ReactNode;
+}) => {
+  const [isExpanded, setIsExpanded] = useState(true);
+  const location = useLocation();
+
+  // Check if any child route is active
+  const isChildActive = React.Children.toArray(children).some((child: any) => {
+    return location.pathname.includes(child.props.to);
+  });
+
+  return (
+    <div>
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-[13px] font-medium transition-all ${isChildActive
+          ? "bg-gh-bg-secondary text-gh-text font-bold"
+          : "text-gh-text-secondary hover:bg-gh-bg-secondary hover:text-gh-text"
+          }`}
+      >
+        <div className="flex items-center gap-3">
+          <span className="material-symbols-outlined !text-[18px] opacity-70">
+            {icon}
+          </span>
+          {label}
+        </div>
+        <span
+          className={`material-symbols-outlined !text-[16px] transition-transform ${isExpanded ? "rotate-0" : "-rotate-90"
+            }`}
+        >
+          expand_more
+        </span>
+      </button>
+      {isExpanded && (
+        <div className="ml-9 mt-1 space-y-0.5">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const SubMenuItem = ({ to, label }: { to: string; label: string }) => (
+  <NavLink
+    to={to}
+    className={({ isActive }) =>
+      `block px-3 py-1.5 rounded-md text-[12px] transition-all ${isActive
+        ? "text-gh-text font-bold bg-gh-bg"
+        : "text-gh-text-secondary hover:text-gh-text hover:bg-gh-bg/50"
+      }`
+    }
+  >
     {label}
   </NavLink>
 );
@@ -68,6 +129,11 @@ const SettingsLayout: React.FC = () => {
                 label="Accessibility"
                 icon="accessibility"
               />
+              <SettingsSidebarItem
+                to="/settings/privacy"
+                label="Privacy"
+                icon="lock"
+              />
             </nav>
           </section>
 
@@ -76,20 +142,34 @@ const SettingsLayout: React.FC = () => {
               Access
             </h3>
             <nav className="flex flex-col gap-0.5">
-              <SettingsSidebarItem
-                to="/settings/security"
-                label="Security"
-                icon="shield"
-              />
-              <SettingsSidebarItem
-                to="/settings/billing"
-                label="Billing and plans"
-                icon="credit_card"
-              />
+              <ExpandableMenuItem icon="credit_card" label="Billing and licensing">
+                <SubMenuItem to="/settings/billing" label="Overview" />
+                <SubMenuItem to="/settings/billing/usage" label="Usage" />
+                <SubMenuItem to="/settings/billing/analytics" label="Premium request analytics" />
+                <SubMenuItem to="/settings/billing/budgets" label="Budgets and alerts" />
+                <SubMenuItem to="/settings/billing/licensing" label="Licensing" />
+                <SubMenuItem to="/settings/billing/payment-info" label="Payment information" />
+                <SubMenuItem to="/settings/billing/payment-history" label="Payment history" />
+                <SubMenuItem to="/settings/billing/additional" label="Additional billing details" />
+              </ExpandableMenuItem>
               <SettingsSidebarItem
                 to="/settings/emails"
                 label="Emails"
                 icon="mail"
+              />
+              <ExpandableMenuItem icon="shield" label="Security">
+                <SubMenuItem to="/settings/security" label="Password and authentication" />
+                <SubMenuItem to="/settings/integrations" label="Integrations" />
+              </ExpandableMenuItem>
+              <SettingsSidebarItem
+                to="/settings/sessions"
+                label="Sessions"
+                icon="devices"
+              />
+              <SettingsSidebarItem
+                to="/settings/ssh-keys"
+                label="SSH and GPG keys"
+                icon="key"
               />
             </nav>
           </section>
@@ -117,11 +197,46 @@ const SettingsLayout: React.FC = () => {
                 label="Personal access tokens"
                 icon="key"
               />
+            </nav>
+          </section>
+
+
+          <section>
+            <h3 className="px-3 text-[11px] font-black uppercase text-gh-text-secondary tracking-widest mb-3">
+              StrataHub
+            </h3>
+            <nav className="flex flex-col gap-0.5">
               <SettingsSidebarItem
-                to="/settings/integrations"
-                label="Integrations"
-                icon="extension"
+                to="/strata"
+                label="StrataHub"
+                icon="corporate_fare"
               />
+            </nav>
+          </section>
+
+          <section>
+            <h3 className="px-3 text-[11px] font-black uppercase text-gh-text-secondary tracking-widest mb-3">
+              AHI & CS System
+            </h3>
+            <nav className="flex flex-col gap-0.5">
+              <SettingsSidebarItem
+                to="/settings/ahi-cs"
+                label="AHI & CS System"
+                icon="psychology"
+              />
+            </nav>
+          </section>
+
+          <section>
+            <h3 className="px-3 text-[11px] font-black uppercase text-gh-text-secondary tracking-widest mb-3">
+              Moderation
+            </h3>
+            <nav className="flex flex-col gap-0.5">
+              <ExpandableMenuItem icon="gavel" label="Moderation">
+                <SubMenuItem to="/admin/community" label="Blocked users" />
+                <SubMenuItem to="/admin/interaction-limits" label="Interaction limits" />
+                <SubMenuItem to="/admin/code-review-limits" label="Code review limits" />
+              </ExpandableMenuItem>
             </nav>
           </section>
         </aside>

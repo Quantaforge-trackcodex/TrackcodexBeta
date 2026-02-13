@@ -59,11 +59,10 @@ const IntegrationCard: React.FC<{
     </div>
     <button
       onClick={onToggle}
-      className={`px-4 py-2 rounded-lg text-xs font-bold border transition-all ${
-        integration.connected
-          ? "bg-transparent border-gh-border text-gh-text-secondary hover:text-white hover:border-red-500/50 hover:bg-red-500/10"
-          : "bg-primary border-transparent text-white hover:bg-blue-600 shadow-lg shadow-primary/20"
-      }`}
+      className={`px-4 py-2 rounded-lg text-xs font-bold border transition-all ${integration.connected
+        ? "bg-transparent border-gh-border text-gh-text-secondary hover:text-white hover:border-red-500/50 hover:bg-red-500/10"
+        : "bg-primary border-transparent text-white hover:bg-blue-600 shadow-lg shadow-primary/20"
+        }`}
     >
       {integration.connected ? "Disconnect" : "Connect"}
     </button>
@@ -73,6 +72,15 @@ const IntegrationCard: React.FC<{
 const IntegrationsSettings = () => {
   // Initial State with Mock Data
   const [integrations, setIntegrations] = useState<Integration[]>([
+    {
+      id: "google",
+      name: "Google",
+      description:
+        "Connect your Google account to sign in faster and sync data.",
+      icon: "mail",
+      connected: false,
+      color: "text-red-500",
+    },
     {
       id: "github",
       name: "GitHub",
@@ -298,7 +306,7 @@ const IntegrationsSettings = () => {
       >
         <div className="space-y-4">
           {integrations
-            .filter((i) => ["github", "gitlab"].includes(i.id))
+            .filter((i) => ["google", "github", "gitlab"].includes(i.id))
             .map((integration) => (
               <IntegrationCard
                 key={integration.id}
@@ -315,7 +323,7 @@ const IntegrationsSettings = () => {
       >
         <div className="space-y-4">
           {integrations
-            .filter((i) => !["github", "gitlab"].includes(i.id))
+            .filter((i) => !["google", "github", "gitlab"].includes(i.id))
             .map((integration) => (
               <IntegrationCard
                 key={integration.id}

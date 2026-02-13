@@ -1,12 +1,12 @@
 import React from 'react';
-import { Repository, Organization } from '../../types';
+import { Strata } from '../../types';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 
-const OrgRepositories = () => {
-    const { org } = useOutletContext<{ org: Organization }>();
-    const repos = org.repositories;
+const StrataRepositories = () => {
+    const { strata } = useOutletContext<{ strata: Strata }>();
+    const repos = strata.repositories;
     const navigate = useNavigate();
-    
+
     return (
         <div className="animate-in fade-in duration-500">
             <div className="flex items-center justify-between mb-6">
@@ -23,7 +23,7 @@ const OrgRepositories = () => {
                     <div key={repo.id} className="py-5 border-b border-[#30363d] flex items-center justify-between">
                         <div>
                             <div className="flex items-center gap-3">
-                                <h3 
+                                <h3
                                     onClick={() => navigate(`/repo/${repo.id}`)}
                                     className="text-lg font-bold text-primary hover:underline cursor-pointer"
                                 >
@@ -47,4 +47,4 @@ const OrgRepositories = () => {
     );
 };
 
-export default OrgRepositories;
+export default StrataRepositories;

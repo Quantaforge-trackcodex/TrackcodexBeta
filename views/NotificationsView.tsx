@@ -1,101 +1,54 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import EmptyState from "../components/common/EmptyState";
-
-const MOCK_INBOX = [
-  {
-    id: 1,
-    type: "job",
-    title: "New Mission Offer: AI Core Optimization",
-    repo: "cyberdyne/skynet-core",
-    message:
-      'Cyberdyne Systems wants you for "AI Core Optimization". This is a high-priority mission with a reward bounty of $50,000.',
-    time: "2m ago",
-    read: false,
-    author: "Cyberdyne HR",
-    avatar: "https://ui-avatars.com/api/?name=C+S&background=random",
-  },
-  {
-    id: 2,
-    type: "mention",
-    title: "Mentioned in PR #42",
-    repo: "trackcodex/frontend",
-    message:
-      "@alex-coder Great work on the refactor! Can you check the responsiveness on mobile?",
-    time: "1h ago",
-    read: true,
-    author: "sarah-connor",
-    avatar: "https://ui-avatars.com/api/?name=S+C&background=random",
-  },
-  {
-    id: 3,
-    type: "community",
-    title: 'Trending: "Rust vs C++ in 2024"',
-    repo: "community/discussions",
-    message: "Your post is trending with 150 upvotes and 45 comments.",
-    time: "3h ago",
-    read: true,
-    author: "System",
-    avatar: "https://ui-avatars.com/api/?name=T+C&background=000&color=fff",
-  },
-  {
-    id: 4,
-    type: "review_request",
-    title: "Review Requested: Feature/Dark-Mode",
-    repo: "trackcodex/design-system",
-    message: "requested your review on this pull request.",
-    time: "5h ago",
-    read: true,
-    author: "design-lead",
-    avatar: "https://ui-avatars.com/api/?name=D+L&background=random",
-  },
-  {
-    id: 5,
-    type: "security",
-    title: "Security Alert: Lodash Vulnerability",
-    repo: "trackcodex/backend-api",
-    message:
-      "Dependabot detected a high severity vulnerability in lodash version 4.17.15.",
-    time: "1d ago",
-    read: true,
-    author: "dependabot",
-    avatar: "https://avatars.githubusercontent.com/in/29110?v=4",
-  },
-];
+import { useNotifications } from "../context/NotificationContext";
+import { formatDistanceToNow } from "date-fns";
 
 const NotificationsView = () => {
   const navigate = useNavigate();
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const [filter, setFilter] = useState("Inbox");
-  const [notifications, setNotifications] = useState(MOCK_INBOX);
   const [searchQuery, setSearchQuery] = useState("is:unread");
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  // Filter logic
+  const filteredNotifications = notifications.filter(n => {
+    if (filter === "Inbox") return !n.read;
+    if (filter === "Saved") return false; // Not implemented
+    if (filter === "Done") return n.read;
+    return true;
+  }).filter(n => {
+    // Basic search impl
+    if (!searchQuery) return true;
+    if (searchQuery.includes("is:unread")) return !n.read;
+    return n.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      n.message.toLowerCase().includes(searchQuery.toLowerCase());
+  });
 
-  const markAsRead = (id: number) => {
-    setNotifications(
-      notifications.map((n) => (n.id === id ? { ...n, read: true } : n)),
-    );
-  };
-
-  const markAllRead = () => {
-    setNotifications(notifications.map((n) => ({ ...n, read: true })));
-  };
+  const repoCounts = React.useMemo(() => {
+    const counts: Record<string, number> = {};
+    notifications.forEach(n => {
+      const repo = n.metadata?.repo;
+      if (!n.read && repo) {
+        counts[repo] = (counts[repo] || 0) + 1;
+      }
+    });
+    return Object.entries(counts).map(([name, count]) => ({ name, count }));
+  }, [notifications]);
 
   return (
     <div className="flex h-full bg-[#0d1117] text-[#c9d1d9] font-sans">
       {/* Sidebar Filter */}
-      <div className="w-[296px] border-r border-[#30363d] p-0 flex flex-col hidden md:flex shrink-0">
+      <div className="w-[296px] border-r border-[#30363d] p-0 flex flex-col hidden md:flex shrink-0 h-full">
         <div className="flex flex-col gap-0.5 py-2">
           {["Inbox", "Saved", "Done"].map((f) => (
             <div key={f} className="px-2">
               <button
                 onClick={() => setFilter(f)}
                 className={`w-full text-left px-3 py-1.5 rounded-md text-[14px] flex items-center justify-between transition-colors outline-none
-                                ${
-                                  filter === f
-                                    ? "bg-[#1f6feb]/10 text-[#c9d1d9] font-semibold border-l-2 border-[#1f6feb] rounded-l-none"
-                                    : "text-[#c9d1d9] hover:bg-[#161b22]"
-                                }`}
+                                ${filter === f
+                    ? "bg-[#1f6feb]/10 text-[#c9d1d9] font-semibold border-l-2 border-[#1f6feb] rounded-l-none"
+                    : "text-[#c9d1d9] hover:bg-[#161b22]"
+                  }`}
               >
                 <div className="flex items-center gap-3">
                   <span className="material-symbols-outlined !text-[16px] opacity-70">
@@ -119,27 +72,92 @@ const NotificationsView = () => {
 
         <div className="h-px bg-[#30363d] my-2 mx-0"></div>
 
-        <div className="px-4 py-2">
-          <h3 className="text-[12px] font-semibold text-[#8b949e] mb-2 px-1">
+        {/* Filters Section */}
+        <div className="px-2 py-2">
+          <h3 className="text-[12px] font-semibold text-[#8b949e] mb-2 px-3">
             Filters
           </h3>
           <div className="flex flex-col gap-0.5">
             {[
-              "Assigned",
-              "Participating",
-              "Mentioned",
-              "Team mentioned",
-              "Review requested",
+              {
+                label: "Assigned",
+                icon: "adjust",
+                color: "text-[#f78166]",
+              },
+              {
+                label: "Participating",
+                icon: "chat_bubble",
+                color: "text-[#c9d1d9]",
+              },
+              {
+                label: "Mentioned",
+                icon: "waving_hand",
+                color: "text-[#e3b341]",
+              },
+              {
+                label: "Team mentioned",
+                icon: "groups",
+                color: "text-[#e3b341]",
+              },
+              {
+                label: "Review requested",
+                icon: "reviews",
+                color: "text-[#c9d1d9]",
+              },
             ].map((f) => (
               <button
-                key={f}
-                className="text-left px-2 py-1.5 rounded-md text-[14px] text-[#c9d1d9] hover:bg-[#161b22] hover:text-[#58a6ff] transition-colors flex items-center gap-2"
+                key={f.label}
+                className="w-full text-left px-3 py-1.5 rounded-md text-[14px] text-[#c9d1d9] hover:bg-[#161b22] hover:text-[#58a6ff] transition-colors flex items-center gap-3"
               >
-                <div className="size-1.5 rounded-full bg-[#8b949e]/40"></div>
-                {f}
+                <span
+                  className={`material-symbols-outlined !text-[16px] ${f.color}`}
+                >
+                  {f.icon}
+                </span>
+                {f.label}
+              </button>
+            ))}
+            <button className="w-full text-left px-3 py-1.5 rounded-md text-[14px] text-[#8b949e] hover:bg-[#161b22] hover:text-[#58a6ff] transition-colors flex items-center gap-3">
+              <span className="material-symbols-outlined !text-[16px]">
+                add
+              </span>
+              Add new filter
+            </button>
+          </div>
+        </div>
+
+        <div className="h-px bg-[#30363d] my-2 mx-0"></div>
+
+        {/* Repositories Section */}
+        <div className="px-2 py-2 flex-1 overflow-y-auto custom-scrollbar">
+          <h3 className="text-[12px] font-semibold text-[#8b949e] mb-2 px-3">
+            Repositories
+          </h3>
+          <div className="flex flex-col gap-0.5">
+            {repoCounts.map((repo) => (
+              <button
+                key={repo.name}
+                className="w-full text-left px-3 py-1.5 rounded-md text-[14px] text-[#c9d1d9] hover:bg-[#161b22] hover:text-[#58a6ff] transition-colors flex items-start justify-between gap-2"
+              >
+                <span className="truncate leading-tight text-[13px]">
+                  {repo.name}
+                </span>
+                <span className="bg-[#30363d] text-[#8b949e] text-[10px] px-1.5 py-0.5 rounded-full font-medium shrink-0">
+                  {repo.count}
+                </span>
               </button>
             ))}
           </div>
+        </div>
+
+        {/* Manage Notifications Footer */}
+        <div className="p-4 border-t border-[#30363d] mt-auto">
+          <button className="text-[12px] text-[#8b949e] hover:text-[#58a6ff] flex items-center gap-1 transition-colors">
+            Manage notifications
+            <span className="material-symbols-outlined !text-[14px]">
+              arrow_drop_down
+            </span>
+          </button>
         </div>
       </div>
 
@@ -150,10 +168,14 @@ const NotificationsView = () => {
           {/* Search Bar Area */}
           <div className="flex items-center gap-2 flex-1 max-w-4xl">
             <div className="flex items-center gap-1 bg-[#21262d] border border-[#30363d] rounded-md overflow-hidden">
-              <button className="px-3 py-1.5 text-[13px] font-medium text-[#c9d1d9] hover:bg-[#30363d] border-r border-[#30363d]">
+              <button
+                onClick={() => { setFilter("Inbox"); setSearchQuery(""); }}
+                className={`px-3 py-1.5 text-[13px] font-medium text-[#c9d1d9] hover:bg-[#30363d] border-r border-[#30363d] ${filter === "Inbox" && !searchQuery.includes("is:unread") ? "bg-[#30363d]" : ""}`}>
                 All
               </button>
-              <button className="px-3 py-1.5 text-[13px] font-medium text-[#c9d1d9] bg-[#1f6feb] text-white">
+              <button
+                onClick={() => setSearchQuery("is:unread")}
+                className={`px-3 py-1.5 text-[13px] font-medium text-[#c9d1d9] ${searchQuery.includes("is:unread") ? "bg-[#1f6feb] text-white" : "hover:bg-[#30363d]"}`}>
                 Unread
               </button>
             </div>
@@ -174,7 +196,9 @@ const NotificationsView = () => {
                 aria-label="Search notifications"
                 placeholder="Search notifications"
               />
-              <button className="absolute right-2 top-1/2 -translate-y-1/2 text-[#8b949e] hover:text-[#c9d1d9]">
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-[#8b949e] hover:text-[#c9d1d9]">
                 <span className="material-symbols-outlined !text-[16px]">
                   close
                 </span>
@@ -195,7 +219,7 @@ const NotificationsView = () => {
 
         <div className="flex-1 overflow-y-auto px-6 py-6 custom-scrollbar">
           {/* "Clear out the clutter" Banner */}
-          {notifications.length > 0 && unreadCount > 0 && (
+          {filteredNotifications.length > 0 && unreadCount > 0 && filter === "Inbox" && (
             <div className="bg-gradient-to-r from-[#161b22] to-[#1f2428] border border-[#30363d] rounded-md p-6 mb-6 flex items-start justify-between shadow-sm">
               <div className="flex gap-4">
                 <span className="material-symbols-outlined !text-[36px] text-[#58a6ff] mt-1">
@@ -216,7 +240,7 @@ const NotificationsView = () => {
                   Dismiss
                 </button>
                 <button
-                  onClick={markAllRead}
+                  onClick={markAllAsRead}
                   className="px-4 py-1.5 bg-[#238636] border border-[#2ea043] rounded-md text-[14px] font-medium text-white hover:bg-[#2ea043] transition-colors shadow-sm"
                 >
                   Mark all as done
@@ -226,7 +250,7 @@ const NotificationsView = () => {
           )}
 
           {/* Notification List */}
-          {notifications.length === 0 ? (
+          {filteredNotifications.length === 0 ? (
             <div className="flex-1 flex items-center justify-center">
               <EmptyState />
             </div>
@@ -243,25 +267,27 @@ const NotificationsView = () => {
                 </div>
               </div>
               <div className="divide-y divide-[#30363d]">
-                {notifications.map((notif) => (
+                {filteredNotifications.map((notif) => (
                   <div
                     key={notif.id}
                     className={`p-3 flex gap-3 hover:bg-[#21262d] transition-colors group cursor-pointer ${!notif.read ? "bg-[#1f2428]" : "bg-[#0d1117]"}`}
-                    onClick={() => markAsRead(notif.id)}
+                    onClick={() => {
+                      if (!notif.read) markAsRead(notif.id);
+                      if (notif.link) navigate(notif.link);
+                    }}
                   >
                     <div className="pt-1.5 shrink-0 px-2">
                       <span
-                        className={`material-symbols-outlined !text-[18px] ${
-                          notif.type === "job"
-                            ? "text-amber-500"
-                            : notif.type === "mention"
-                              ? "text-blue-500"
-                              : notif.type === "review_request"
-                                ? "text-purple-500"
-                                : notif.type === "security"
-                                  ? "text-rose-500"
-                                  : "text-[#8b949e]"
-                        }`}
+                        className={`material-symbols-outlined !text-[18px] ${notif.type === "job"
+                          ? "text-amber-500"
+                          : notif.type === "mention"
+                            ? "text-blue-500"
+                            : notif.type === "review_request"
+                              ? "text-purple-500"
+                              : notif.type === "security"
+                                ? "text-rose-500"
+                                : "text-[#8b949e]"
+                          }`}
                       >
                         {notif.type === "job"
                           ? "work"
@@ -278,11 +304,11 @@ const NotificationsView = () => {
                     <div className="flex-1 min-w-0 pt-0.5">
                       <div className="flex items-center gap-2 mb-0.5">
                         <span className="text-[12px] font-medium text-[#8b949e]">
-                          {notif.repo}
+                          {notif.metadata?.repo || "System"}
                         </span>
                         <span className="text-[#8b949e] text-[12px]">•</span>
                         <span className="text-[12px] text-[#8b949e]">
-                          {notif.time}
+                          {formatDistanceToNow(new Date(notif.timestamp), { addSuffix: true })}
                         </span>
                       </div>
 
@@ -302,6 +328,10 @@ const NotificationsView = () => {
                       <button
                         title="Done"
                         className="p-1 hover:bg-[#30363d] rounded text-[#8b949e] hover:text-[#58a6ff]"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          markAsRead(notif.id);
+                        }}
                       >
                         <span className="material-symbols-outlined !text-[18px]">
                           check
@@ -310,6 +340,7 @@ const NotificationsView = () => {
                       <button
                         title="Unsubscribe"
                         className="p-1 hover:bg-[#30363d] rounded text-[#8b949e] hover:text-[#c9d1d9]"
+                        onClick={(e) => e.stopPropagation()}
                       >
                         <span className="material-symbols-outlined !text-[18px]">
                           notifications_off

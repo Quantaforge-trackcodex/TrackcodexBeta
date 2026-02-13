@@ -1,55 +1,83 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { MOCK_ORGANIZATIONS } from "../constants";
-import { Organization } from "../types";
-import { enterpriseApi, Enterprise } from "../services/enterprise";
+import { MOCK_STRATA } from "../constants";
+import { Strata } from "../types";
+import { strataNetworkApi, StrataNetwork } from "../services/strata";
 
-// Organization Card Component
-const OrganizationCard: React.FC<{ org: Organization }> = ({ org }) => {
+// Strata Card Component
+const StrataCard: React.FC<{ strata: Strata }> = ({ strata }) => {
     const navigate = useNavigate();
+
     return (
         <div
-            onClick={() => navigate(`/org/${org.id}`)}
-            className="bg-gh-bg-secondary border border-gh-border rounded-xl p-5 hover:border-primary/50 transition-all group cursor-pointer flex items-center gap-4"
+            onClick={() => navigate(`/strata/${strata.id}`)}
+            className="bg-gh-bg-secondary border border-gh-border rounded-xl p-6 hover:border-gh-border-active transition-all cursor-pointer group hover:shadow-lg hover:shadow-black/20"
         >
-            <img
-                src={org.avatar}
-                alt={org.name}
-                className="size-14 rounded-lg border-2 border-gh-border p-1 object-cover"
-            />
-            <div className="flex-1 min-w-0">
-                <h3 className="text-base font-bold text-gh-text group-hover:text-primary transition-colors truncate">
-                    {org.name}
-                </h3>
-                <p className="text-sm text-gh-text-secondary mt-1 line-clamp-1">
-                    {org.description}
-                </p>
+            <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-4">
+                    <img
+                        src={strata.avatar}
+                        alt={strata.name}
+                        className="size-12 rounded-lg border border-gh-border object-cover group-hover:scale-105 transition-transform"
+                    />
+                    <div>
+                        <h3 className="text-lg font-bold text-gh-text group-hover:text-primary transition-colors">
+                            {strata.name}
+                        </h3>
+                        <p className="text-sm text-gh-text-secondary">
+                            {strata.location || "Remote"}
+                        </p>
+                    </div>
+                </div>
+                <span className="bg-gh-bg border border-gh-border text-gh-text-secondary text-xs px-2.5 py-1 rounded-full font-medium">
+                    {strata.members.length} members
+                </span>
             </div>
-            <span className="material-symbols-outlined text-gh-text-secondary group-hover:text-primary transition-colors">
-                arrow_forward
-            </span>
+
+            <p className="text-sm text-gh-text-secondary mb-6 line-clamp-2 leading-relaxed">
+                {strata.description}
+            </p>
+
+            <div className="flex items-center gap-4 border-t border-gh-border pt-4">
+                <div className="flex items-center gap-1.5 text-xs text-gh-text-secondary">
+                    <span className="material-symbols-outlined !text-[16px]">
+                        folder_open
+                    </span>
+                    <span className="font-medium text-gh-text">
+                        {strata.repositories.length}
+                    </span>{" "}
+                    repositories
+                </div>
+                <div className="flex items-center gap-1.5 text-xs text-gh-text-secondary">
+                    <span className="material-symbols-outlined !text-[16px]">groups</span>
+                    <span className="font-medium text-gh-text">
+                        {strata.teams.length}
+                    </span>{" "}
+                    teams
+                </div>
+            </div>
         </div>
     );
 };
 
-// Enterprise Card Component
-const EnterpriseCard: React.FC<{ enterprise: Enterprise }> = ({ enterprise }) => {
+// Strata Network Card Component
+const StrataNetworkCard: React.FC<{ network: StrataNetwork }> = ({ network }) => {
     const navigate = useNavigate();
     return (
         <div
-            onClick={() => navigate(`/enterprise/${enterprise.slug}`)}
+            onClick={() => navigate(`/network/${network.slug}`)}
             className="bg-gh-bg-secondary border border-gh-border rounded-xl p-5 hover:border-primary/50 transition-all group cursor-pointer"
         >
             <div className="flex items-center gap-4 mb-4">
                 <div className="size-14 rounded-lg bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center font-bold text-white text-xl">
-                    {enterprise.name.charAt(0)}
+                    {network.name.charAt(0)}
                 </div>
                 <div className="flex-1 min-w-0">
                     <h3 className="text-base font-bold text-gh-text group-hover:text-primary transition-colors truncate">
-                        {enterprise.name}
+                        {network.name}
                     </h3>
                     <span className="text-xs text-gh-text-secondary uppercase tracking-widest">
-                        {enterprise.plan} Plan
+                        {network.plan} Plan
                     </span>
                 </div>
                 <span className="material-symbols-outlined text-gh-text-secondary group-hover:text-primary transition-colors">
@@ -59,15 +87,15 @@ const EnterpriseCard: React.FC<{ enterprise: Enterprise }> = ({ enterprise }) =>
             <div className="grid grid-cols-3 gap-3 pt-3 border-t border-gh-border">
                 <div className="text-center">
                     <div className="text-lg font-bold text-gh-text">
-                        {enterprise._count?.members || 0}
+                        {network._count?.members || 0}
                     </div>
                     <div className="text-xs text-gh-text-secondary">Members</div>
                 </div>
                 <div className="text-center">
                     <div className="text-lg font-bold text-gh-text">
-                        {enterprise.organizations?.length || 0}
+                        {network.strata?.length || 0}
                     </div>
-                    <div className="text-xs text-gh-text-secondary">Orgs</div>
+                    <div className="text-xs text-gh-text-secondary">Strata</div>
                 </div>
                 <div className="text-center">
                     <div className="text-lg font-bold text-green-400">98%</div>
@@ -80,22 +108,22 @@ const EnterpriseCard: React.FC<{ enterprise: Enterprise }> = ({ enterprise }) =>
 
 const StrataHub = () => {
     const navigate = useNavigate();
-    const [enterprises, setEnterprises] = useState<Enterprise[]>([]);
-    const [loadingEnterprises, setLoadingEnterprises] = useState(true);
+    const [networks, setNetworks] = useState<StrataNetwork[]>([]);
+    const [loadingNetworks, setLoadingNetworks] = useState(true);
 
     useEffect(() => {
-        loadEnterprises();
+        loadNetworks();
     }, []);
 
-    const loadEnterprises = async () => {
+    const loadNetworks = async () => {
         try {
-            const data = await enterpriseApi.getMyEnterprises();
-            setEnterprises(data);
+            const data = await strataNetworkApi.getMyNetworks();
+            setNetworks(data);
         } catch (error) {
-            console.error("Failed to load enterprises:", error);
-            setEnterprises([]);
+            console.error("Failed to load networks:", error);
+            setNetworks([]);
         } finally {
-            setLoadingEnterprises(false);
+            setLoadingNetworks(false);
         }
     };
 
@@ -108,11 +136,11 @@ const StrataHub = () => {
                         StrataHub
                     </h1>
                     <p className="text-gh-text-secondary text-lg">
-                        Manage your organizations and enterprise accounts from one unified hub.
+                        Manage your strata and network accounts from one unified hub.
                     </p>
                 </div>
 
-                {/* Organizations Section */}
+                {/* Strata Section */}
                 <section className="mb-12">
                     <div className="flex items-center justify-between mb-6">
                         <div>
@@ -120,43 +148,43 @@ const StrataHub = () => {
                                 <span className="material-symbols-outlined text-primary">
                                     corporate_fare
                                 </span>
-                                Organizations
+                                Strata
                             </h2>
                             <p className="text-sm text-gh-text-secondary mt-1">
-                                Your personal and team organizations
+                                Your personal and team strata
                             </p>
                         </div>
                         <button
-                            onClick={() => navigate("/organizations/new")}
+                            onClick={() => navigate("/strata/new")}
                             className="bg-primary hover:bg-blue-600 text-white px-5 py-2.5 rounded-lg font-bold text-sm flex items-center gap-2 transition-all shadow-lg shadow-primary/20"
                         >
                             <span className="material-symbols-outlined text-lg">add</span>
-                            New Organization
+                            New Strata
                         </button>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {MOCK_ORGANIZATIONS.length === 0 ? (
+                        {MOCK_STRATA.length === 0 ? (
                             <div className="col-span-full py-16 border-2 border-dashed border-gh-border rounded-2xl text-center">
                                 <span className="material-symbols-outlined text-6xl text-gh-text-secondary mb-4 block">
                                     corporate_fare
                                 </span>
                                 <h3 className="text-lg font-bold text-gh-text mb-2">
-                                    No organizations yet
+                                    No strata yet
                                 </h3>
                                 <p className="text-gh-text-secondary mb-4">
-                                    Create your first organization to get started
+                                    Create your first strata to get started
                                 </p>
                                 <button
-                                    onClick={() => navigate("/organizations/new")}
+                                    onClick={() => navigate("/strata/new")}
                                     className="bg-gh-bg-secondary hover:bg-gh-bg-tertiary text-gh-text px-5 py-2 rounded-lg font-bold text-sm border border-gh-border transition-all"
                                 >
-                                    Create Organization
+                                    Create Strata
                                 </button>
                             </div>
                         ) : (
-                            MOCK_ORGANIZATIONS.map((org) => (
-                                <OrganizationCard key={org.id} org={org} />
+                            MOCK_STRATA.map((strata) => (
+                                <StrataCard key={strata.id} strata={strata} />
                             ))
                         )}
                     </div>
@@ -165,7 +193,7 @@ const StrataHub = () => {
                 {/* Divider */}
                 <div className="h-px bg-gh-border mb-12" />
 
-                {/* Enterprise Section */}
+                {/* Network Section */}
                 <section>
                     <div className="flex items-center justify-between mb-6">
                         <div>
@@ -173,46 +201,46 @@ const StrataHub = () => {
                                 <span className="material-symbols-outlined text-purple-500">
                                     domain
                                 </span>
-                                Enterprise
+                                Strata Network
                             </h2>
                             <p className="text-sm text-gh-text-secondary mt-1">
                                 Enterprise-grade features and management
                             </p>
                         </div>
-                        {enterprises.length > 0 && (
+                        {networks.length > 0 && (
                             <button
-                                onClick={() => navigate("/enterprise/new")}
+                                onClick={() => navigate("/network/new")}
                                 className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2.5 rounded-lg font-bold text-sm flex items-center gap-2 transition-all shadow-lg shadow-purple-600/20"
                             >
                                 <span className="material-symbols-outlined text-lg">add</span>
-                                New Enterprise
+                                New Network
                             </button>
                         )}
                     </div>
 
-                    {loadingEnterprises ? (
+                    {loadingNetworks ? (
                         <div className="py-16 text-center">
                             <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-gh-border border-t-primary"></div>
-                            <p className="text-gh-text-secondary mt-4">Loading enterprises...</p>
+                            <p className="text-gh-text-secondary mt-4">Loading networks...</p>
                         </div>
-                    ) : enterprises.length === 0 ? (
+                    ) : networks.length === 0 ? (
                         <div className="py-16 border-2 border-dashed border-gh-border rounded-2xl text-center bg-gradient-to-br from-purple-500/5 to-blue-600/5">
                             <span className="material-symbols-outlined text-6xl text-purple-500 mb-4 block">
                                 domain
                             </span>
                             <h3 className="text-lg font-bold text-gh-text mb-2">
-                                Unlock Enterprise Features
+                                Unlock Network Features
                             </h3>
                             <p className="text-gh-text-secondary mb-6 max-w-md mx-auto">
-                                Get advanced security, compliance tools, premium support, and centralized
+                                Get advanced security, compliance tools, premium support, and localized
                                 management for your organization.
                             </p>
                             <button
-                                onClick={() => navigate("/enterprise/new")}
+                                onClick={() => navigate("/network/new")}
                                 className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-6 py-3 rounded-lg font-bold text-sm flex items-center gap-2 transition-all shadow-lg shadow-purple-600/30 mx-auto"
                             >
                                 <span className="material-symbols-outlined">rocket_launch</span>
-                                Create Enterprise
+                                Create Network
                                 <span className="ml-2 px-2 py-0.5 bg-white/20 rounded text-xs">
                                     New
                                 </span>
@@ -220,8 +248,8 @@ const StrataHub = () => {
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {enterprises.map((enterprise) => (
-                                <EnterpriseCard key={enterprise.id} enterprise={enterprise} />
+                            {networks.map((network) => (
+                                <StrataNetworkCard key={network.id} network={network} />
                             ))}
                         </div>
                     )}

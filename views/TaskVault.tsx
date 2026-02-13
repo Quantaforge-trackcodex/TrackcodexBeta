@@ -231,8 +231,8 @@ const TaskVault = () => {
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
                                 className={`pb-3 text-sm font-medium border-b-2 transition-colors ${activeTab === tab
-                                        ? "border-primary text-gh-text"
-                                        : "border-transparent text-gh-text-secondary hover:text-gh-text"
+                                    ? "border-primary text-gh-text"
+                                    : "border-transparent text-gh-text-secondary hover:text-gh-text"
                                     }`}
                             >
                                 {tab}
