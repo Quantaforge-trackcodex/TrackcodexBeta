@@ -31,10 +31,9 @@ const JobApplicationsView = () => {
 
             {/* Board */}
             <div className="flex-1 p-6 overflow-hidden">
-                <KanbanBoard jobId={id} />
+                {id ? <KanbanBoard jobId={id} /> : <div>Invalid Job ID</div>}
             </div>
         </div>
-    );
     );
 };
 

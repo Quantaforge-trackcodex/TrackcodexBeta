@@ -31,6 +31,8 @@ import statsRoutes from "./stats";
 import { userRoutes } from "./users";
 import { leaderboardRoutes } from "./leaderboard";
 import { extensionRoutes } from "./extensions";
+import { ideConfigRoutes } from "./ideconfig";
+import { galleryRoutes } from "./gallery";
 
 export async function routes(fastify: FastifyInstance) {
   fastify.addHook("onRequest", async (request) => {
@@ -75,6 +77,8 @@ export async function routes(fastify: FastifyInstance) {
   await fastify.register(messageRoutes);
   await fastify.register(leaderboardRoutes);
   await fastify.register(extensionRoutes);
+  await fastify.register(ideConfigRoutes);
+  await fastify.register(galleryRoutes, { prefix: "/api/gallery" });
 
   const { default: deploymentRoutes } = await import("./deployments");
   await fastify.register(deploymentRoutes);

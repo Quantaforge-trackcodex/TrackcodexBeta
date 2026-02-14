@@ -77,6 +77,26 @@ export class OpenVSXService {
     }
 
     /**
+     * Sanitize extension metadata to replace VS Code branding.
+     */
+    private sanitizeExtension(ext: OpenVSXExtension): OpenVSXExtension {
+        const replaceBranding = (text: string) => {
+            if (!text) return text;
+            return text
+                .replace(/Visual Studio Code/g, "TrackCodex")
+                .replace(/VS Code/g, "TrackCodex")
+                .replace(/Code - OSS/g, "TrackCodex")
+                .replace(/Microsoft Corporation/g, "Quantaforze LLC");
+        };
+
+        return {
+            ...ext,
+            displayName: replaceBranding(ext.displayName),
+            description: replaceBranding(ext.description),
+        };
+    }
+
+    /**
      * Search extensions on Open VSX registry.
      */
     async search(
@@ -116,9 +136,9 @@ export class OpenVSXService {
 
         const data = await response.json() as SearchResult;
 
-        // Enrich with icon URLs
+        // Enrich with icon URLs and sanitize branding
         data.extensions = data.extensions.map((ext) => ({
-            ...ext,
+            ...this.sanitizeExtension(ext),
             iconUrl: ext.files?.icon || `https://open-vsx.org/api/${ext.namespace}/${ext.name}/file/icon`,
         }));
 
@@ -147,8 +167,9 @@ export class OpenVSXService {
         data.iconUrl = data.files?.icon || undefined;
         data.downloadUrl = data.files?.download || undefined;
 
-        setCache(cacheKey, data);
-        return data;
+        const sanitized = this.sanitizeExtension(data);
+        setCache(cacheKey, sanitized);
+        return sanitized;
     }
 
     /**

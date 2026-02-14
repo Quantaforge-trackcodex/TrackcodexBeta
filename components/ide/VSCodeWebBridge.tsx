@@ -115,6 +115,13 @@ const VSCodeWebBridge: React.FC<VSCodeWebBridgeProps> = ({
           console.error("❌ VS Code error:", payload.message);
           break;
 
+        case "run-command":
+          sendMessageToVSCode({
+            type: "run-command",
+            payload: payload
+          });
+          break;
+
         default:
           console.log("📨 VS Code message:", type, payload);
       }
@@ -138,9 +145,10 @@ const VSCodeWebBridge: React.FC<VSCodeWebBridgeProps> = ({
     iframe.contentWindow.postMessage(message, "http://localhost:8080");
   };
 
-  // Handle workspace switching
+  // Handle workspace switching and remote commands
   useEffect(() => {
     if (!isLoading && workspaceId) {
+      // 1. Switch Workspace
       sendMessageToVSCode({
         type: "switch-workspace",
         payload: {
@@ -148,6 +156,17 @@ const VSCodeWebBridge: React.FC<VSCodeWebBridgeProps> = ({
           workspacePath,
         },
       });
+
+      // 2. Handle pending commands from URL
+      const searchParams = new URLSearchParams(window.location.search);
+      const command = searchParams.get("command");
+      if (command) {
+        console.log(`🚀 Executing remote command: ${command}`);
+        sendMessageToVSCode({
+          type: "run-command",
+          payload: { command }
+        });
+      }
     }
   }, [workspaceId, workspacePath, isLoading]);
 

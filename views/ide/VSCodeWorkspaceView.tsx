@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import VSCodeWebBridge from "../../components/ide/VSCodeWebBridge";
+import { useTheme } from "../../context/ThemeContext";
 
 /**
  * VSCodeWorkspaceView — Full VS Code Web Integration
@@ -22,6 +23,24 @@ const VSCodeWorkspaceView: React.FC = () => {
     const [vsCodeUrl, setVsCodeUrl] = useState<string | null>(null);
     const [workspaceName, setWorkspaceName] = useState("Workspace");
     const [errorMsg, setErrorMsg] = useState<string>("");
+    const { resolvedTheme } = useTheme();
+
+    // ── Sync Theme with VS Code Settings ───────────────────────
+    useEffect(() => {
+        const syncTheme = async () => {
+            try {
+                await fetch("/api/v1/ide/theme", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ theme: resolvedTheme.type })
+                });
+            } catch (err) {
+                console.warn("Failed to sync theme with IDE:", err);
+            }
+        };
+
+        syncTheme();
+    }, [resolvedTheme.type]);
 
     // ── Start workspace & get VS Code URL ──────────────────────
     const startWorkspace = useCallback(async () => {

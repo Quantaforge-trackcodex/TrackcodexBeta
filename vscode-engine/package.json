@@ -1,0 +1,9 @@
+{
+  "name": "vscode-engine",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "code-server": "^4.109.2"
+  }
+}

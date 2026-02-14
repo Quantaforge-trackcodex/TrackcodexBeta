@@ -25,7 +25,7 @@ const WorkspaceSettings: React.FC = () => {
   const [workspace, setWorkspace] = useState<Record<string, any> | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<
-    "general" | "members" | "security"
+    "general" | "members" | "security" | "ide"
   >("general");
   const [members, setMembers] = useState<WorkspaceMember[]>([]);
   const [currentUserRole, setCurrentUserRole] = useState<string | null>(null);
@@ -152,8 +152,8 @@ const WorkspaceSettings: React.FC = () => {
           <button
             onClick={() => setActiveTab("general")}
             className={`w-full text-left px-4 py-2 rounded-md transition-colors flex items-center gap-3 ${activeTab === "general"
-                ? "bg-blue-500/10 text-blue-400"
-                : "text-gh-text-secondary hover:bg-gh-bg-secondary hover:text-gh-text"
+              ? "bg-blue-500/10 text-blue-400"
+              : "text-gh-text-secondary hover:bg-gh-bg-secondary hover:text-gh-text"
               }`}
           >
             <span className="material-symbols-outlined text-[20px]">
@@ -164,8 +164,8 @@ const WorkspaceSettings: React.FC = () => {
           <button
             onClick={() => setActiveTab("members")}
             className={`w-full text-left px-4 py-2 rounded-md transition-colors flex items-center gap-3 ${activeTab === "members"
-                ? "bg-blue-500/10 text-blue-400"
-                : "text-gh-text-secondary hover:bg-gh-bg-secondary hover:text-gh-text"
+              ? "bg-blue-500/10 text-blue-400"
+              : "text-gh-text-secondary hover:bg-gh-bg-secondary hover:text-gh-text"
               }`}
           >
             <span className="material-symbols-outlined text-[20px]">group</span>
@@ -174,12 +174,22 @@ const WorkspaceSettings: React.FC = () => {
           <button
             onClick={() => setActiveTab("security")}
             className={`w-full text-left px-4 py-2 rounded-md transition-colors flex items-center gap-3 ${activeTab === "security"
-                ? "bg-blue-500/10 text-blue-400"
-                : "text-gh-text-secondary hover:bg-gh-bg-secondary hover:text-gh-text"
+              ? "bg-blue-500/10 text-blue-400"
+              : "text-gh-text-secondary hover:bg-gh-bg-secondary hover:text-gh-text"
               }`}
           >
             <span className="material-symbols-outlined text-[20px]">lock</span>
             Security
+          </button>
+          <button
+            onClick={() => setActiveTab("ide")}
+            className={`w-full text-left px-4 py-2 rounded-md transition-colors flex items-center gap-3 ${activeTab === "ide"
+              ? "bg-blue-500/10 text-blue-400"
+              : "text-gh-text-secondary hover:bg-gh-bg-secondary hover:text-gh-text"
+              }`}
+          >
+            <span className="material-symbols-outlined text-[20px]">terminal</span>
+            IDE Preferences
           </button>
         </div>
 
@@ -345,6 +355,84 @@ const WorkspaceSettings: React.FC = () => {
               hasPassword={!!workspace.hasPassword}
               onPasswordChange={() => setRefreshKey((prev) => prev + 1)}
             />
+          )}
+
+          {activeTab === "ide" && id && (
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-xl font-bold text-gh-text mb-2">IDE Preferences</h2>
+                <p className="text-sm text-gh-text-secondary">
+                  Manage your TrackCodex IDE environment. These settings apply specifically to this workspace.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {[
+                  {
+                    id: "settings",
+                    name: "Settings Editor",
+                    desc: "Configure IDE behavior and features",
+                    icon: "settings",
+                    command: "workbench.action.openSettings"
+                  },
+                  {
+                    id: "palette",
+                    name: "Command Palette",
+                    desc: "Run any IDE command directly",
+                    icon: "terminal",
+                    command: "workbench.action.showCommands"
+                  },
+                  {
+                    id: "keys",
+                    name: "Keyboard Shortcuts",
+                    desc: "Customize your keybindings",
+                    icon: "keyboard",
+                    command: "workbench.action.openGlobalKeybindings"
+                  },
+                  {
+                    id: "extensions",
+                    name: "Extensions",
+                    desc: "Manage installed plugins and tools",
+                    icon: "extension",
+                    command: "workbench.view.extensions"
+                  },
+                  {
+                    id: "themes",
+                    name: "Themes & Color",
+                    desc: "Personalize your workspace appearance",
+                    icon: "palette",
+                    command: "workbench.action.selectTheme"
+                  }
+                ].map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => navigate(`/workspace/${id}?command=${item.command}`)}
+                    className="flex flex-col items-start p-5 bg-gh-bg-secondary border border-gh-border rounded-xl hover:border-primary/50 hover:bg-gh-bg-tertiary transition-all group text-left"
+                  >
+                    <div className="size-10 rounded-lg bg-gh-bg flex items-center justify-center text-gh-text-secondary group-hover:text-primary mb-4 border border-gh-border">
+                      <span className="material-symbols-outlined text-[24px]">{item.icon}</span>
+                    </div>
+                    <h3 className="font-bold text-gh-text mb-1">{item.name}</h3>
+                    <p className="text-xs text-gh-text-secondary">{item.desc}</p>
+                  </button>
+                ))}
+              </div>
+
+              <section className="mt-8 p-6 bg-blue-500/5 border border-blue-500/20 rounded-xl">
+                <div className="flex gap-4">
+                  <div className="size-10 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400 shrink-0">
+                    <span className="material-symbols-outlined">info</span>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-gh-text mb-1">Seamless Integration</h4>
+                    <p className="text-xs text-gh-text-secondary leading-relaxed">
+                      TrackCodex Workspace Settings are bridged directly with the underlying IDE.
+                      Clicking any of the options above will take you back to your workspace and open the corresponding preference panel automatically.
+                    </p>
+                  </div>
+                </div>
+              </section>
+            </div>
           )}
         </div>
       </div>

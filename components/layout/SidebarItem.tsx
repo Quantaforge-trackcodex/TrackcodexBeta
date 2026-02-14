@@ -23,10 +23,9 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
       to={to}
       className={({ isActive }) => `
         flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all relative group/item
-        ${
-          isActive
-            ? "bg-primary/15 text-white font-bold shadow-[0_0_20px] shadow-primary/30 border border-primary/20"
-            : "text-gh-text-secondary hover:bg-gh-bg hover:text-gh-text hover:translate-x-1 hover:shadow-lg hover:shadow-primary/10 hover:border-l-2 hover:border-primary/50"
+        ${isActive
+          ? "bg-primary/15 text-white font-bold shadow-[0_0_20px] shadow-primary/30 border border-primary/20"
+          : "text-gh-text-secondary hover:bg-gh-bg hover:text-gh-text hover:translate-x-1 hover:shadow-lg hover:shadow-primary/10 hover:border-l-2 hover:border-primary/50"
         }
         ${!isExpanded ? "justify-center mx-2" : "mx-2"}
       `}

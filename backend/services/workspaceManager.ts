@@ -30,10 +30,12 @@ export class WorkspaceManager {
         fs.mkdirSync(workspacePath, { recursive: true });
       }
 
-      console.log(`[WorkspaceManager] Serving workspace ${workspaceId} via code-server`);
+      console.log(`[WorkspaceManager] Serving workspace ${workspaceId} via @vscode/test-web`);
 
+      // @vscode/test-web mounts the project root at /static/mount
+      // Workspaces are in ./workspaces/{id} relative to root
       return {
-        url: `http://localhost:8080/?folder=${encodeURIComponent(workspacePath)}`,
+        url: `http://127.0.0.1:8080/?folder=/static/mount/workspaces/${workspaceId}`,
         port: 8080,
       };
     } catch (error: any) {

@@ -1,0 +1,135 @@
+<!-- Copyright (C) Quantaforze LLC. All rights reserved. -->
+<!DOCTYPE html>
+<html>
+	<head>
+		<script>
+			performance.mark('code/didStartRenderer');
+		</script>
+		<meta charset="utf-8" />
+
+		<!-- Mobile tweaks -->
+		<meta name="mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-title" content="TrackCodex">
+		<link rel="apple-touch-icon" href="{{WORKBENCH_WEB_BASE_URL}}/resources/server/code-192.png" />
+
+		<!-- Disable pinch zooming -->
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+
+		<!-- Workbench Configuration -->
+		<meta id="vscode-workbench-web-configuration" data-settings="{{WORKBENCH_WEB_CONFIGURATION}}">
+
+		<!-- Workbench Auth Session -->
+		<meta id="vscode-workbench-auth-session" data-settings="{{WORKBENCH_AUTH_SESSION}}">
+
+		<!-- Workbench Icon/Manifest/CSS -->
+		<link rel="icon" href="{{WORKBENCH_WEB_BASE_URL}}/resources/server/favicon.ico" type="image/x-icon" />
+		<link rel="manifest" href="{{WORKBENCH_WEB_BASE_URL}}/resources/server/manifest.json" crossorigin="use-credentials" />
+		<link rel="stylesheet" href="{{WORKBENCH_WEB_BASE_URL}}/out/vs/code/browser/workbench/workbench.css">
+
+	</head>
+
+	<body aria-label="">
+	<script>
+		// TrackCodex: Redirect Extension Gallery to Local Proxy for Rebranding
+		(function() {
+			try {
+				const meta = document.getElementById('vscode-workbench-web-configuration');
+				if (meta) {
+					const rawSettings = meta.getAttribute('data-settings');
+					if (rawSettings) {
+						let settings = JSON.parse(rawSettings);
+						settings.productConfiguration = settings.productConfiguration || {};
+						
+						// TrackCodex Branding Overrides
+						settings.productConfiguration.nameShort = "TrackCodex";
+						settings.productConfiguration.nameLong = "TrackCodex";
+						settings.productConfiguration.applicationName = "trackcodex";
+						settings.productConfiguration.dataFolderName = ".trackcodex";
+						settings.productConfiguration.reportIssueUrl = "";
+						settings.productConfiguration.licenseUrl = "";
+
+						settings.productConfiguration.extensionsGallery = {
+							serviceUrl: window.location.protocol + '//' + window.location.hostname + ':4000/api/gallery',
+							itemUrl: "https://open-vsx.org/vscode/item",
+							controlUrl: "",
+							recommendationsUrl: ""
+						};
+						meta.setAttribute('data-settings', JSON.stringify(settings));
+						console.log('✅ TrackCodex: Product Configuration Overridden (Gallery + Branding)');
+					}
+				}
+			} catch (e) {
+				console.error('❌ TrackCodex: Failed to redirect extension gallery.', e);
+			}
+
+			// TrackCodex: Dynamic UI Patching (MutationObserver with Shadow DOM Support)
+			try {
+				const sanitizeNode = (node) => {
+					if (node.nodeType === Node.TEXT_NODE && node.nodeValue) {
+						if (node.nodeValue.includes('Visual Studio Code') || 
+							node.nodeValue.includes('VS Code') ||
+							node.nodeValue.includes('Code - OSS')) {
+							node.nodeValue = node.nodeValue
+								.replace(/Visual Studio Code/g, "TrackCodex")
+								.replace(/VS Code/g, "TrackCodex")
+								.replace(/Code - OSS/g, "TrackCodex");
+						}
+					} else if (node.nodeType === Node.ELEMENT_NODE) {
+						if (node.shadowRoot) {
+							observeRoot(node.shadowRoot);
+						}
+						const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT, null, false);
+						let textNode;
+						while(textNode = walker.nextNode()) {
+							sanitizeNode(textNode);
+						}
+					}
+				};
+
+				const observeRoot = (root) => {
+					const observer = new MutationObserver((mutations) => {
+						for (const mutation of mutations) {
+							if (mutation.type === 'childList') {
+								mutation.addedNodes.forEach(sanitizeNode);
+							} else if (mutation.type === 'characterData') {
+								sanitizeNode(mutation.target);
+							}
+						}
+					});
+					observer.observe(root, { childList: true, subtree: true, characterData: true });
+				};
+
+				// Patch attachShadow to observe new shadow roots
+				const originalAttachShadow = Element.prototype.attachShadow;
+				Element.prototype.attachShadow = function(init) {
+					const shadowRoot = originalAttachShadow.call(this, init);
+					observeRoot(shadowRoot);
+					return shadowRoot;
+				};
+
+				// Observe the main document body
+				observeRoot(document.body);
+				console.log('✅ TrackCodex: Advanced UI MutationObserver (Shadow DOM) Active');
+
+			} catch (e) {
+				console.error('❌ TrackCodex: Failed to start Advanced MutationObserver', e);
+			}
+		})();
+	</script>
+	</body>
+
+	<!-- Startup (do not modify order of script tags!) -->
+	<script>
+		const baseUrl = new URL('{{WORKBENCH_WEB_BASE_URL}}', window.location.origin).toString();
+		globalThis._VSCODE_FILE_ROOT = baseUrl + '/out/';
+	</script>
+	<script>
+		performance.mark('code/willLoadWorkbenchMain');
+	</script>
+	<!-- always ensure built in english NLS messages -->
+	<script type="module" src="{{WORKBENCH_NLS_FALLBACK_URL}}"></script>
+	<!-- attempt to load NLS messages in case non-english -->
+	<script type="module" src="{{WORKBENCH_NLS_URL}}"></script>
+	<script type="module" src="{{WORKBENCH_WEB_BASE_URL}}/out/vs/code/browser/workbench/workbench.js"></script>
+</html>

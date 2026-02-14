@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useSidebarState } from "../../hooks/useSidebarState";
 import { profileService, UserProfile } from "../../services/profile";
+import { useAuth } from "../../context/AuthContext";
 import SidebarItem from "./SidebarItem";
 import { isAdmin as checkIsAdmin } from "../../auth/AccessMatrix";
-
-import { useNavigate } from "react-router-dom";
 
 const OrgSwitcher = ({
   isExpanded,
@@ -14,7 +13,6 @@ const OrgSwitcher = ({
   profile: UserProfile;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const navigate = useNavigate();
 
 
   return (
@@ -85,6 +83,7 @@ const OrgSwitcher = ({
 
 const Sidebar = () => {
   const { isExpanded, toggleSidebar, setIsExpanded } = useSidebarState();
+  const { user } = useAuth();
   const [profile, setProfile] = useState<UserProfile>(
     profileService.getProfile(),
   );
@@ -192,21 +191,57 @@ const Sidebar = () => {
           label="Profile"
           isExpanded={isExpanded}
         />
-        <SidebarItem
-          to="/settings"
-          icon="settings"
-          label="Settings"
-          isExpanded={isExpanded}
-        />
+      </div>
 
-        {/* Separator and Bottom Items */}
-        <div className="pt-4 mt-4 border-t border-gh-border">
+      {/* Footer Area - Pinned to Bottom */}
+      <div className="mt-auto border-t border-gh-border/50 bg-gh-bg-secondary/10">
+        <div className="py-2 space-y-1">
           <SidebarItem
-            to="/platform-matrix"
-            icon="insights"
-            label="Platform Matrix"
+            to="/settings"
+            icon="settings"
+            label="Settings"
             isExpanded={isExpanded}
           />
+          <SidebarItem
+            to="/help"
+            icon="help"
+            label="Help"
+            isExpanded={isExpanded}
+          />
+        </div>
+
+        {/* User Profile Section (Same to Same Design) */}
+        <div className="p-2 border-t border-gh-border/50 transition-all duration-300">
+          <div className={`flex items-center gap-3 rounded-xl transition-all group cursor-pointer ${isExpanded ? "hover:bg-gh-bg p-2 -m-1" : "justify-center"}`}>
+            <div className="relative shrink-0">
+              <img
+                src={user?.avatar || profile.avatar}
+                className="size-10 rounded-xl border border-gh-border group-hover:border-primary/50 transition-all object-cover shadow-lg"
+                alt={user?.name || profile.name}
+              />
+              <div className="absolute -bottom-0.5 -right-0.5 size-2.5 bg-green-500 border-2 border-gh-bg rounded-full shadow-sm" />
+
+            </div>
+
+            {isExpanded && (
+              <div className="flex flex-col min-w-0 flex-1 animate-in slide-in-from-left-2 duration-300">
+                <span className="text-[13px] font-bold text-gh-text truncate leading-none mb-1">
+                  {user?.name || profile.name}
+                </span>
+                <span className="text-[10px] text-gh-text-secondary truncate font-medium">
+                  {user?.email || "user@trackcodex.dev"}
+                </span>
+              </div>
+            )}
+
+            {isExpanded && (
+              <div className="flex items-center justify-center size-5 rounded-full border border-gh-border/50 text-gh-text-secondary group-hover:bg-gh-bg transition-all translate-x-1">
+                <span className="material-symbols-outlined !text-[12px]">
+                  circle
+                </span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
